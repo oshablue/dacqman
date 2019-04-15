@@ -1,0 +1,27 @@
+header, main, footer {
+  padding-left: 300px;
+}
+
+pre.pre-scrollable {
+  max-height: 340px;
+  overflow-y: scroll;
+}
+pre.preserve-whitespace {
+    white-space: pre-wrap;
+}
+pre {
+    font-size: 0.9em;
+}
+
+@media only screen and (max-width : 992px) {
+  header, main, footer {
+    padding-left: 2px;
+  }
+}
+
+/* rot dropdown icons */
+li.active a.collapsible-header i.sidenav-dd-expand  {
+    -ms-transform: rotate(180deg); /* IE 9 */
+    -webkit-transform: rotate(180deg); /* Chrome, Safari, Opera */
+    transform: rotate(180deg);
+  }

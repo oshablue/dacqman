@@ -1,0 +1,26 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/usr/local/Cellar/node/11.11.0/bin/node',
+1 verbose cli   '/usr/local/bin/npm',
+1 verbose cli   'update' ]
+2 info using npm@2.14.7
+3 info using node@v11.11.0
+4 verbose stack ReferenceError: internalBinding is not defined
+4 verbose stack     at evalmachine.<anonymous>:25:1
+4 verbose stack     at Object.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/cmd-shim/node_modules/graceful-fs/fs.js:11:1)
+4 verbose stack     at Module._compile (internal/modules/cjs/loader.js:799:30)
+4 verbose stack     at Object.Module._extensions..js (internal/modules/cjs/loader.js:810:10)
+4 verbose stack     at Module.load (internal/modules/cjs/loader.js:666:32)
+4 verbose stack     at tryModuleLoad (internal/modules/cjs/loader.js:606:12)
+4 verbose stack     at Function.Module._load (internal/modules/cjs/loader.js:598:3)
+4 verbose stack     at Module.require (internal/modules/cjs/loader.js:705:19)
+4 verbose stack     at require (internal/modules/cjs/helpers.js:14:16)
+4 verbose stack     at Object.<anonymous> (/usr/local/lib/node_modules/npm/node_modules/cmd-shim/node_modules/graceful-fs/graceful-fs.js:3:27)
+5 verbose cwd /Users/nisch/code/viffy
+6 error Darwin 18.2.0
+7 error argv "/usr/local/Cellar/node/11.11.0/bin/node" "/usr/local/bin/npm" "update"
+8 error node v11.11.0
+9 error npm  v2.14.7
+10 error internalBinding is not defined
+11 error If you need help, you may report this error at:
+11 error     <https://github.com/npm/npm/issues>
+12 verbose exit [ 1, true ]
