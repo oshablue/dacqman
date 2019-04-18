@@ -35,6 +35,17 @@ Or see your package.json file for the startup scripts
 https://electronjs.org/docs/tutorial/first-app
 
 
+## FTDI Device Prep for Async 245-Style FIFO
+
+This applies to our test application.
+
+1. Run FT_PROG or equivalent
+2. On your desired channel, if a multi-channel device:
+    1. Set the mode to 245 FIFO
+    2. Set the driver to D2XX
+3. Program the device
+
+
 ## Driver Management
 
 Mac OS X (Mojave/10.14.x)
@@ -57,6 +68,10 @@ as long as the selected value was in range.
 Hence, the move to node-ftdi with d2xx.  Once this could build with our newer
 node version (after adjustments to code), and then also:
 
+
+#### FT_PROG for Mac OS X / Linux
+
+*TODO!* (Test out options and report back ... )
 
 #### Installation and Setup for node-ftdi and d2xx
 

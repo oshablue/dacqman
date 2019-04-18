@@ -47,8 +47,9 @@
 
   <!-- Plotting / Charting / Data Visualization
        v3 to keep the refs to d3.scale.linear()
-       v5 will start using eg d3.scaleLinear -->
-  <script src="https://d3js.org/d3.v3.min.js"></script>
+       v5 will start using eg d3.scaleLinear
+       Previously using v3                          -->
+  <script src="https://d3js.org/d3.v4.min.js"></script>
 
   <link rel="stylesheet" href="css/custom.css">
 
@@ -217,7 +218,8 @@
     // From SP EG
     // You can also require other files to run in this process
     const sprend = require('./sprenderer.js')
-    const chartRend = require('./chartRend.js')
+    //const chartRend = require('./chartRend.js')
+    const chart = require('./simpleChartRend.js')
 
     // Add item
     ipcRenderer.on('item:add', function(e, item){
@@ -234,6 +236,18 @@
       ul.innerHTML = '';
       ul.className = '';
     });
+
+
+    // TODO - need to use some kind of buffer management here
+    // sprenderer (FTDI/D2XX) Port data received from peripheral device
+    // TODO - we're not really using ipc here -- fix this -- clean up / remove
+    ipcRenderer.on('port:ondata', function(e, data){
+      chart.update(data);
+    });
+
+    function mainWindowUpdateChartData(data) {
+      chart.update(data);
+    }
 
     // Remove item on double-click from main  list
     ul.addEventListener('dblclick', removeItem);
@@ -288,6 +302,12 @@
         accordion: true
       });
     //}
+      // Just for testing the chart update function
+      setTimeout(function() {
+        var newdat = [0,.01, .02, .03, .04, .05, .06, .07, .08, .09];
+        chart.update(newdat);
+      }, 3000);
+
     });
 
 

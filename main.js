@@ -68,7 +68,11 @@ ipcMain.on('item:add', function(e, item){
   addWindow.close();
 });
 
-
+// For serial port data received:
+ipcMain.on('port:ondata', function(e, data){
+  console.log("ipcMain received port:ondata");
+  mainWindow.webContents.send('port:ondata', data);
+});
 
 
 

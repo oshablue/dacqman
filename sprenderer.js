@@ -8,6 +8,9 @@ var port
 var device
 
 var ftdi = require('ftdi');
+const electron = require('electron');
+const {ipcRenderer} = electron;
+
 
 
 SerialPort.list((err, ports) => {
@@ -64,6 +67,10 @@ SerialPort.list((err, ports) => {
   port.open()
 }*/
 
+var buf = [];
+var nsamp = 4096;
+var filling = false;
+
 var serialOpenByName = function (name) {
 
   port = new ftdi.FtdiDevice(0);
@@ -78,7 +85,25 @@ var serialOpenByName = function (name) {
       console.log('port.on open');
     });
     port.on('data', function (data) {
-      console.log('Data: ', data);
+      //if ( data.length > 3000 ) {  // just testing - so would like to see a large sample
+      if ( !filling ) {
+        setTimeout(function() {
+          mainWindowUpdateChartData(buf);
+          buf = [];
+          filling = false;
+        }, 2000);
+        filling = true;
+      }
+      if ( filling ) {
+        data.forEach(function(d) {
+          buf.push(d);
+        });
+      }
+
+      //ipcRenderer.send('port:ondata', data);
+      //console.log('Data: (length): ', data.length);
+      console.log(data);
+      //}
     });
 
     // Really for this to work, you need to:
@@ -90,11 +115,17 @@ var serialOpenByName = function (name) {
     // the stuff below works
     // And testing with OScope - yes, single bit is 12MHz time long
     // Or 6MHz clock cycle or so -- so we're in the right ballpark
+    // We've updated the node-ftdi wrapper such that opening without a baudrate
+    // and data format may give errors (as expected) to the console, but now
+    // can return without error such that program execution continues -
+    // because using this with eg async 245 fifo mode doesn't require that information
+    // and futher that information has no meaning - so we only need the open call
     port.open({
-      baudrate: 12000000,
+      /*baudrate: 12000000,
       databits: 8,
       stopbits: 1,
       parity: 'none',
+      */
       // bitmode: 'cbus', // for bit bang
       // bitmask: 0xff    // for bit bang
     });
