@@ -100,12 +100,34 @@
       </p>
     </div>
 
-    <div id="activeSerialPortStuff" style="display:none;">
-      <h6>Active (Selected) Serial Port: </h6>
-      <span id="activePort"></span>
-      <span id="serialOpenBtnSpan"><button name="serialOpenBtn" id="serialOpenBtn" onclick="serialOpen()">Open</button></span>
-      <span id="serialCloseBtnSpan"><button name="serialCloseBtn" id="serialCloseBtn" onclick="serialClose()">Close</button></span>
-      <span id="serialTestWriteSpan"><button name="serialTestWrite" id="serialTestWrite" onclick="serialTestWrite()">Test Write</button></span>
+    <!-- .......................................... --><!--
+    ***********************************************
+      CARD - Serial Port Buttons / Controls (Init no display)
+    *********************************************** -->
+    <!-- Could add 2 levels of grid containment to this card section -->
+    <div id="activeSerialPortStuff" class="card teal lighten-4" style="display:none;">
+      <div class="card-content">
+        <span class="card-title">Selected Serial Port:&nbsp;
+          <span id="activePort"></span>
+        </span>
+        <br>
+        <div class="container-buttons">
+          Available controls:
+          <div class="card-action">
+            <p>Standard Buttons</p>
+            <span id="serialOpenBtnSpan">
+              <button name="serialOpenBtn" id="serialOpenBtn" onclick="serialOpen()">Open</button></span>
+            <span id="serialCloseBtnSpan">
+              <button name="serialCloseBtn" id="serialCloseBtn" onclick="serialClose()">Close</button></span>
+            <span id="serialTestWriteSpan">
+              <button name="serialTestWrite" id="serialTestWrite" onclick="serialTestWrite()">Test Write</button></span>
+          </div>
+          <div class="card-action">
+            <p>Custom Buttons Loaded From File:</p>
+            <div id="serialButtonsFromFileDiv"></div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- .......................................... --><!--
@@ -276,6 +298,9 @@
     function serialTestWrite() {
       sprend.serialTestWrite();
     }
+    function serialSendData(commandAndType, returnDataTo) {
+      sprend.serialSendData(commandAndType, returnDataTo);
+    }
 
     // Materialize - sidenav support
     // Without jQuery
@@ -301,6 +326,7 @@
       $('.collapsible').collapsible({
         accordion: true
       });
+      loadButtons();
     //}
       // Just for testing the chart update function
       setTimeout(function() {
@@ -310,7 +336,23 @@
 
     });
 
-
+    function loadButtons() {
+      // Can use user data path instead when running live not dev
+      const path = "./user-data/buttons-example.json"
+      var buttons = require(path).buttons; // Loads the JSON
+      console.log(JSON.stringify(buttons));
+      console.log(buttons.length + " buttons found.");
+      buttons.forEach( function (b) {
+        var newb = $('<button/>')
+          .text(b.title)
+          .prop('title', b.description)
+          .click(function () {
+            //alert(b.command.type + ': ' + b.command.value)
+            serialSendData(b.command, b.returnDataTo);
+          });
+        $('#serialButtonsFromFileDiv').append(newb);
+      });
+    }
 
   </script>
 

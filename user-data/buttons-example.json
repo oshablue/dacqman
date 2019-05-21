@@ -1,0 +1,22 @@
+{
+  "buttons": [
+    {
+      "title": "Get WF (P+Aq from RAM/Defaults)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x01, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart"
+    },
+    {
+      "title": "ADMM: VDC: N-E (Unatten/Std)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xD9, 0x09, 0x01, 0x50"
+      },
+      "description": "ADMM accessory command: Get the potential reading (voltage, Volts DC) from North-to-East, <i>i.e.</i> Reference Electrode to Structure",
+      "returnDataTo" : "log"
+    }
+  ]
+}

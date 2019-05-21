@@ -2,6 +2,15 @@ header, main, footer {
   padding-left: 300px;
 }
 
+.container-buttons {
+  padding: 4px;
+  /*border: 1px dotted steelblue;*/
+}
+.container-buttons button {
+  margin: 4px;
+  /*padding: 4px;*/
+}
+
 pre.pre-scrollable {
   max-height: 340px;
   overflow-y: scroll;
