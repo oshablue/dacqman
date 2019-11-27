@@ -12,7 +12,7 @@ var margin = {top: 50, right: 50, bottom: 50, left: 50}
   , height = chartHeight - margin.top - margin.bottom; // Use the window's height
 
 // The number of datapoints
-var n = 5000;
+var n = 2500; //5000;
 
 // 5. X scale will use the index of our data
 var xScale = d3.scaleLinear()
@@ -69,7 +69,7 @@ svg.selectAll(".dot")
 
 
 
-function update(newdata) {
+async function update(newdata) {
   svg.selectAll(".dot").remove();
   svg.selectAll("path.line").remove();
   svg.append("path")

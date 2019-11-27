@@ -13,6 +13,9 @@ package.json:
 // $ npm install (to run the added install script item in package.json)
 ```
 
+Was using serialport ^6.1.0
+
+
 ## Launching (during Dev)
 
 Example to launch, during development (not yet packaged):

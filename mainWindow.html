@@ -76,29 +76,71 @@
   <main>
 
     <nav>
-      <div class="nav-wrapper">
-        <a href="" class="brand-logo center">Viffy</a>
+      <div class="nav-wrapper sm">
+        <a href="" class="brand-logo center sm">Viffy</a>
       </div>
     </nav>
 
     <ul></ul>
 
-    <div id="error"></div>
-    <div id="ports"></div>
 
-    <div id="ports-info">
-      <p>Note: These are serial ports returned by serialport which means that
-        your device would be listed here if is intended to enumerate as a serial
-        port, real or virtual.  For example, using the FTDI VCP driver.
-      </p>
-      <p>
-        However, if your device is intended to be accessed as an FTDO D2XX driver
-        device target, then you should/will not see it in this listing until
-        the d2xx device listing is added to this code.  You can still click SELECTME
-        at any serial device here and you'll then see the buttons to test access to the
-        first detected d2xx FTDI device.
-      </p>
+    <ul id="serialPortSelectionAccordion" class="collapsible collapsible-accordion">
+      <li class="active">
+        <a class="collapsible-header">Serial Port Selection
+          <i class="material-icons sidenav-dd-expand">arrow_drop_down</i>
+        </a>
+        <div class="collapsible-body">
+
+          <h5>Virtual Serial Port (VCP) Devices</h5>
+          <div id="vcp_error"></div>
+          <div id="vcp_ports"></div>
+
+          <h5>FTDI-Driver (D2XX, etc.) Devices</h5>
+          <div id="ftdi_error"></div>
+          <div id="ftdi_ports"></div>
+
+          <hr />
+
+          <ul class="collapsible collapsible-accordion">
+            <li>
+              <a class="collapsible-header">Notes about the port discovery and implementation<i class="material-icons sidenav-dd-expand">arrow_drop_down</i></a>
+              <div class="collapsible-body">
+                <div id="ports-info">
+                  <p>Note: These are serial ports returned by serialport which means that
+                    your device would be listed here if is intended to enumerate as a serial
+                    port, real or virtual.  For example, using the FTDI VCP driver.
+                  </p>
+                  <p>
+                    However, if your device is intended to be accessed as an FTDO D2XX driver
+                    device target, then you should/will not see it in this listing until
+                    the d2xx device listing is added to this code.  You can still click SELECTME
+                    at any serial device here and you'll then see the buttons to test access to the
+                    first detected d2xx FTDI device.
+                  </p>
+                  <p>
+                    The FTDI (D2XX) devices are listed in the console.log output, so you can
+                    see which device is at index 0 (and thus the device to be opened).
+                  </p>
+                </div>
+              </div>
+            </li>
+          </ul>
+
+          <div id="ports_go_button"></div>
+
+        </div>
+      </li>
+    </ul>
+
+
+
+
+    <!-- TODO place into card or section, etc.-->
+    <div id="active_ports_ui_indicators">
+      <button id="btnDataPortStatus" class="btn-large blue hide" onclick="btnDataPortClick(this)">Data Port</button>
+      <button id="btnControlPortStatus" class="btn-large blue hide" onclick="btnControlPortClick(this)">Control Port</button>
     </div>
+
 
     <!-- .......................................... --><!--
     ***********************************************
@@ -129,6 +171,41 @@
         </div>
       </div>
     </div>
+
+
+    <!-- .......................................... --><!--
+    ***********************************************
+      CARD - Control Port Buttons / Controls (Init no display)
+    *********************************************** -->
+    <!-- Could add 2 levels of grid containment to this card section -->
+    <div id="activeControlPort" class="card teal lighten-4" style="display:none;">
+      <div class="card-content">
+        <span class="card-title">Control Port:&nbsp;
+          <span id="activeControlPortName"></span>
+        </span>
+        <br>
+        <div class="container-buttons">
+          Available controls:
+          <div class="card-action">
+            <p>Standard Buttons</p>
+            <span id="controlPortOpenBtnSpan">
+              <button name="controlPortOpenBtn" id="controlPortOpenBtn" onclick="controlPortOpen()">Open</button></span>
+            <span id="controlPortCloseBtnSpan">
+              <button name="controlPortCloseBtn" id="controlPortCloseBtn" onclick="controlPortClose()">Close</button></span>
+            <span id="controlTestWriteSpan">
+              <button name="controlPortTestWrite" id="controlPortTestWrite" onclick="controlTestWrite()">Test Write</button></span>
+          </div>
+          <div class="card-action">
+            <p>Custom Control Buttons Loaded From File:</p>
+            <div id="controlPortButtonsFromFileDiv"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+
 
     <!-- .......................................... --><!--
     ***********************************************
@@ -287,6 +364,10 @@
       $('#activeSerialPortStuff').show();
       d.innerHTML = button.name;
     }
+    function serialCheckbox(checkbox) {
+      //alert(checkbox.checked); // yeah the property works, even with the materializecss
+      sprend.serialCheckbox(checkbox);
+    }
     function serialOpen() {
       var d = document.querySelector("#activePort");
       var spname = d.innerHTML;
@@ -301,6 +382,16 @@
     function serialSendData(commandAndType, returnDataTo) {
       sprend.serialSendData(commandAndType, returnDataTo);
     }
+    function beginSerialComms() {
+      sprend.beginSerialComms();
+    }
+    function btnDataPortClick(button) {
+      sprend.btnDataPortClick(button);
+    }
+    function btnControlPortClick(button) {
+      sprend.btnControlPortClick(button);
+    }
+    // TODO wrap pass-through functions above and thus DRY ...
 
     // Materialize - sidenav support
     // Without jQuery
@@ -321,6 +412,7 @@
     //jQuery(document).ready(function($){
     $(document).ready(function(){
     //window.onload = function(){
+
       $('.sidenav').sidenav();
       $(".dropdown-trigger").dropdown();
       $('.collapsible').collapsible({
@@ -332,15 +424,22 @@
       setTimeout(function() {
         var newdat = [0,.01, .02, .03, .04, .05, .06, .07, .08, .09];
         chart.update(newdat);
-      }, 3000);
+      }, 300);
 
-    });
+      // Check for stuff that needs to execute on page load after population
+      serialCheckbox(); // arg not used ... TODO better way to do this of course
+
+    }); // $(document).ready()
 
     function loadButtons() {
+
+      // TODO use meta list for button files to be loaded and for various port-style devices
+
+      // Basic test functions and single-port style device buttons (aka DLITE legacy)
       // Can use user data path instead when running live not dev
       const path = "./user-data/buttons-example.json"
       var buttons = require(path).buttons; // Loads the JSON
-      console.log(JSON.stringify(buttons));
+      //console.log(JSON.stringify(buttons));
       console.log(buttons.length + " buttons found.");
       buttons.forEach( function (b) {
         var newb = $('<button/>')
@@ -352,6 +451,24 @@
           });
         $('#serialButtonsFromFileDiv').append(newb);
       });
+
+      // Dual-port style functions
+      //
+      // Control port
+      const cp_path = "./user-data/control-port-buttons.json"
+      var buttons = require(cp_path).buttons; // Loads the JSON
+      //console.log(JSON.stringify(buttons));
+      console.log(buttons.length + " control port buttons found.");
+      buttons.forEach( function (b) {
+        var newb = $('<button/>')
+          .text(b.title)
+          .prop('title', b.description)
+          .click(function () {
+            serialSendData(b.command, b.returnDataTo);
+          });
+        $('#controlPortButtonsFromFileDiv').append(newb);
+      });
+
     }
 
   </script>
