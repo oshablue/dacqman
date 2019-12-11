@@ -53,7 +53,52 @@ This applies to our test application.
 
 Mac OS X (Mojave/10.14.x)
 
-### D2XX
+
+### D2XX and VCP Current Implementation
+
+#### FTDI D2XX Driver Installation
+
+NOT using kext D2xxHelper.kext from FTDI (would be living in /Library/Extensions/) at this time,
+and yes using the kextstat | grep FTDI which returns the com.apple.driver.FTDIUSBSerialDriver (or equivalent)
+as being loaded and running.
+
+Yes, using the FTDI files from the D2xx setup:
+- ftd2xx.h
+- WinTypes.h
+in
+/usr/local/include/
+
+Yes, using the actual driver (current version) library file and the symlink for:
+- libftd2xx.dylib (current version)
+- symlink to the current version named: libftd2xx.dylib
+in
+/usr/local/lib/
+
+The node-ftdi (npm install ftdi) package thus wraps the d2xx driver, and requires the headers installed
+by the FTDI driver to build, and is used to access as an FtdiDevice the virtual port
+instance that enumerates and handles the rapid parallel data stream from the hardware.
+
+#### VCP
+
+Currently, though our hard-coding tests and chopping into the node-ftdi code did
+build and allow for d2xx node-ftdi use of the second enumerated port that is configured
+as a serial port, it seems cleanest and most easy to configure, to use the VCP,
+even the VCP variant of the enumerated control port, configured as a serial port.  
+Even via the Apple USB FTDI serial (VCP) driver.  You may need to explicitly load it,
+using sudo kextload -b etc etc, if you have unloaded it during d2xx installation or other
+testing.
+
+So, this Apple VCP should show up during kextstat | grep FTDI.
+
+And thus, the 2nd enumerated device associated with the hardware, that is, number
+zero or letter B (at the time of this writing) should show up both in the VCP section of the
+App here as well as in the FTDI Device section.  The code at this writing will use the VCP
+interface to talk to the control port.
+
+
+
+
+### D2XX Details and Dev Notes
 
 Ended up using d2xx with modified node-ftdi on Mac (so far) because baud rate
 aliasing didn't seem to be working, though the notes for aliasing are still below.
@@ -105,6 +150,8 @@ So far so good.
 
 Much appreciation for the node-ftdi package!
 
+See below for mod'ing custom variants of the package and installing.
+
 However, AFAICT it looked like it would not install with our project's node version
 (v11).  I.e. `npm install node-ftdi` hit errors upon `node-gyp` build.  Makes sense
 as it's possible from the visible commit messages that Node v4/5 was the last target.
@@ -112,7 +159,7 @@ And perhaps some legacy applications still depend on this.  And v8 updates and c
 are sufficient to break things.  The solution is in the updated code used here.  Though further
 updates are required to deal with some deprecations.
 
-`npm install ../3rd-party/node-fdti`
+`npm install ../3rd-party[or whatever this directory is called]/node-fdti`
 
 Installs the local-only node-ftdi package with the mods into our project (App)
 assuming that we're cd'd into the current project dir already.
@@ -127,6 +174,21 @@ $ npm install
 $ npm start
 ```
 Did it.
+
+In Summary:
+
+1. Change the code in ../my3rdPartyDir/node-ftdi/src
+2. Terminal/command line, already in the main project directory, and then:
+3. npm install ../my3rdPartyDir/node-ftdi (triggers errors, but copies files it seems)
+4. npm install (due to the inclusions in our project package.json, includes a rebuild)
+5. npm start . (works, with the updates in the 3rd party project, here node-ftdi)
+
+Requirements for the above build to work:
+```bash
+package.json: "ftdi": "file:../viffy-3rd/node-ftdi",
+and the electron-rebuild
+
+
 
 
 ### Useful command examples:

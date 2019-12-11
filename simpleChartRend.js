@@ -12,7 +12,7 @@ var margin = {top: 50, right: 50, bottom: 50, left: 50}
   , height = chartHeight - margin.top - margin.bottom; // Use the window's height
 
 // The number of datapoints
-var n = 2500; //5000;
+var n = 5000; //2500; //5000;
 
 // 5. X scale will use the index of our data
 var xScale = d3.scaleLinear()
@@ -65,7 +65,7 @@ svg.selectAll(".dot")
     .attr("class", "dot") // Assign a class for styling
     .attr("cx", function(d, i) { return xScale(i) })
     .attr("cy", function(d) { return yScale(d) }) //.y) })
-    .attr("r", 5);
+    .attr("r", 3);
 
 
 
@@ -82,7 +82,7 @@ async function update(newdata) {
       .attr("class", "dot") // Assign a class for styling
       .attr("cx", function(d, i) { return xScale(i) })
       .attr("cy", function(d) { return yScale(d) }) //.y) })
-      .attr("r", 1);
+      .attr("r", 0.02);
 } // update
 
 

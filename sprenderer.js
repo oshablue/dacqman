@@ -26,6 +26,18 @@ const Ftdi = require('ftdi');
 const electron = require('electron');
 const {ipcRenderer} = electron;
 
+
+var buf = []; // new Uint8Array; //[];
+var nsamp = 4096;
+var filling = false;
+var samples = 0;
+var tstart = 0;
+var tstop = 0;
+var time;
+
+
+
+
 // TODO -- static --> and then --> callback structure for correct data destination
 
 
@@ -58,6 +70,11 @@ SerialPort.list((err, ports) => {
   })
   table.end();
 })
+
+
+
+
+
 
 // List devices via D2XX FTDI (node ftdi)
 Ftdi.find( function(err, devices) {
@@ -247,13 +264,7 @@ var serialOpenByName = function (name) {
 /* ABOVE: Standard VCP Serial port, works with AppleUSBFTDI too */
 
 
-var buf = []; // new Uint8Array; //[];
-var nsamp = 4096;
-var filling = false;
-var samples = 0;
-var tstart = 0;
-var tstop = 0;
-var time;
+
 
 
 // BELOW: For D2XX FTDI -
@@ -404,6 +415,8 @@ var devSerialOpenByName = function (name) {
 
 
 
+
+
 var btnDataPortClick = function(button) {
   if ( $(button).hasClass("green") === false ) {
     console.log("data port button clicked: but not active - returning");
@@ -412,7 +425,12 @@ var btnDataPortClick = function(button) {
 }
 
 
+
+
+
+
 var btnControlPortClick = function(button) {
+
   if ( $(button).hasClass("green") === false ) {
     console.log("control port button clicked: but not active - returning");
     return;
@@ -449,6 +467,7 @@ var openDataPort = function(portHash) {
     console.log('dport.on error: ', err);
     // TODO -- UI error panel/log/indicator, etc.
   });
+
   dport.on('close', function(err) {
     console.log('close event subscription ');
     console.timeEnd("timeOpen");
@@ -488,6 +507,7 @@ var openDataPort = function(portHash) {
     $("#btnDataPortStatus").removeClass('green').addClass('blue-grey');
 
   });
+
   dport.on('open', function(err) {
     // TODO checkbox for run test on open
     //$("#serialPortGoButton").addClass("lighten-5");
@@ -497,13 +517,20 @@ var openDataPort = function(portHash) {
     console.log('dport.on open');
     console.time("timeOpen");
     //time = process.hrtime();  // restart the timer, storing in "time"
+
+    /*
+    //For Freq measurement real world samples over time
     setTimeout( function() {
       dport.close();
     }, 1000);
+    */
+
   });
   dport.on('data', function (data) {
     console.log ("dport.on data");
 
+    // Freq measuring stuff
+    /*
     if ( !time ) {
       time = process.hrtime();  // restart the timer, storing in "time"
     }
@@ -513,12 +540,23 @@ var openDataPort = function(portHash) {
     buf.push(...data);
     //console.log(JSON.stringify(buf));
     console.log("buf.length: " + buf.length);
+    */
+
     /*if ( buf.length >= 2500 ) {
       console.log("buf.length: " + buf.length);
       mainWindowUpdateChartData(buf.slice(0,2499));
       buf = [];
     }*/
+
+
+    // For slow data, or single snapshot mode
+    if ( data.length > 4000) {
+      mainWindowUpdateChartData(data);
+    }
+
+    /*
     samples += data.length;
+    */
 
   });
 
@@ -575,10 +613,108 @@ var openDataPort = function(portHash) {
 
 
 
+var getVcpPortNameFromPortInfoHash = function (infoHash) {
+  var serialNumberLessAorB = infoHash.serialNumber.substr(0, infoHash.serialNumber.length - 1);
+  var suffix = infoHash.serialNumber.substr(infoHash.serialNumber.length - 2, 1);
+  console.log("getVcpPortNameFromPortInfoHash: base serial number: " + serialNumberLessAorB + " with suffix found to be: " + suffix);
+
+  // Or simply just regex replace trailing A with 0 and trailing B with 1
+  var sn = infoHash.serialNumber.replace(/A$/,'0').replace(/B$/,'1');
+  console.log("getVcpPortNameFromPortInfoHash: regexd last digit swap: " + sn);
+
+  // On MAC OS X so far, the A or B trailing is replaced by corresponding 0 or 1
+  // div class cv contains text
+  var t = $('#vcp_ports').find("td[data-header='comName']").find(".cv:contains('" + sn + "')");
+  console.log("Number of VCP comNames matching the selected control port serialNumber: " + t.length);
+
+  console.log("comName is chosen as: " + $(t).text());
+
+  return $(t).text();
+
+
+  //
+  // TODO WIN32
+  // TODO BIG TIME -- for Windows implementation XXXX
+  //
+
+}
+
+
+
+
 // Below for FTDI D2XX - for the control port (serial style, but likely still under d2xx/ftdi)
+// ok or now includes VCP implementation as well for control port
 var openControlPort = function(portHash) {
   console.log("openControlPort: " + JSON.stringify(portHash));
 
+  console.log("Prior, openControlPort used the FTDI device to open the control port.");
+  console.log("However, there are wrapper/driver errors and this is not reliable.");
+  console.log("Thus, we are now using and require VCP access to the control port.");
+
+
+
+
+
+  // When using VCP driver access (serial port, etc.) for control port:
+  //*
+
+  // When listed in the FTDI device section, the serialNumber, less the trailing
+  // A or B matches the serialNumber as listed in the VCP listing.
+  // However, in the VCP listing, the locationId doesn't match the FTDI device
+  // locationId, and the serialNumber is the same for both instances in the VCP
+  // listing.
+  // It is the VCP listing comName that differentiates the two sections of the
+  // device, for Mac OS X anyway.
+  // VCP instance, Mac OS X: /dev/tty.usbserial-serialNumber0/1 where the last
+  // digit corresponds to A or B in the serialNumber for the FTDI device listing.
+
+  var comName = getVcpPortNameFromPortInfoHash(portHash);
+
+  var settings = {
+    autoOpen: false,
+    baudRate: 57600, //9600, //57600, //921600, //57600,
+    databits: 8,
+    stopbits: 1,
+    parity  : 'none',
+  };
+  cport = new SerialPort(comName, settings, function (err) {
+    if ( err ) {
+      return console.log('sprenderer: openControlPort: error on create new VCP style control port: ', err.message)
+    }
+  });
+  cport.on('error', function(err) {
+    console.log('cport.on error: ', err);
+    // TODO -- UI error panel/log/indicator, etc.
+  });
+  cport.on('close', function(err) {
+    console.log('cport.on close');
+    $("#btnControlPortStatus").removeClass("green").addClass('blue-grey');
+    $("#controlPortOpenBtn").prop('disabled', false);
+  });
+  cport.on('open', function() {
+    console.log('cport.on open');
+    $("#btnControlPortStatus").removeClass('hide blue-grey').addClass('green');
+    $("#activeControlPortName").text(getSelectedControlPortInfoHash().description);
+    $("#controlPortOpenBtn").prop('disabled', true);
+  });
+  cport.on('data', function (data) {
+    console.log ("cport.on data");
+    //console.log(data);
+    console.log("Same data parsed as ASCII chars: ");
+    console.log(hexBufToAscii(data));
+  });
+  cport.open()
+
+  //*/ // Above section: when using VCP driver access for control port
+
+
+
+
+
+
+
+  // When using FTDI device wrapper for the Control Port, use section next below:
+  /*
   cport = new Ftdi.FtdiDevice({
     locationId: portHash.locationId,
     serialNumber: portHash.serialNumber }); // for d2xx only
@@ -605,6 +741,7 @@ var openControlPort = function(portHash) {
     console.log ("cport.on data");
     console.log(data);
   });
+  */ // End of cport using FTDI Device wrapper/driver
 
   // Really for this to work, you need to:
   // Install the D2XX driver package
@@ -634,6 +771,7 @@ var openControlPort = function(portHash) {
   // any baud rate, even standard, will throw errors shown above just due to
   // irrelevance, it is thought ...
 
+  /*
   var settings = {
     baudrate: 57600, // either way, error(s) will be thrown at app log output (command line)
     databits: 8,
@@ -650,6 +788,7 @@ var openControlPort = function(portHash) {
     //// bitmask: 0xff    // for bit bang
     settings
   });
+  */
 
 }
 
@@ -670,6 +809,7 @@ function hexBufToAscii (dataAsHexBuf) {
 
 
 
+
 var serialClose = function () {
   if ( port ) port.close ( function (err) {
     console.log('port.close called')
@@ -678,6 +818,21 @@ var serialClose = function () {
     }
   });
 }
+
+
+
+
+
+var controlPortClose = function() {
+  if ( cport ) cport.close ( function (err) {
+    console.log ('controlPortClose called');
+    if ( err ) {
+      return console.log('sprenderer: error on cport close: ', err.message);
+    }
+  });
+}
+
+
 
 
 
@@ -700,9 +855,11 @@ var serialCheckbox = function (checkbox) {
 
 
 
+
 var getSelectedDataPortInfoHash = function() {
   return checkboxToPortHash($("[id^=UseForData][type=checkbox]:checked"));
 }
+
 
 
 
@@ -727,6 +884,7 @@ var beginSerialComms = function(button) {
   // TODO if no errors, then collapse the selection window ...
   $("#serialPortSelectionAccordion").collapsible('close'); //.children('li:first-child'));
 }
+
 
 
 
@@ -764,6 +922,25 @@ var serialTestWrite = function () {
         console.log('sprenderer: error on write: ', err.message)
       }
     });
+  }
+}
+
+
+
+
+
+var controlPortSendStuff = function (textInput) {
+  //console.log(textInput);
+  var t = $(textInput).val();
+  //console.log("controlPortSendStuff: t: " + t);
+  if ( cport ) {
+    cport.write(t);
+    /*$(textInput).text().split('').forEach(function(c) {
+      cport.write()
+    });*/
+  } else {
+    console.log("I'd really like to help you man, but cport is not a thing, so can send stuff through it ...");
+    console.log("I'd really like to help you man ...");
   }
 }
 
@@ -852,11 +1029,200 @@ var serialSendData = function ( commandAndType, returnDataTo) {
 
 
 
+var controlPortSendData = function ( commandAndType, returnDataTo) {
+  if ( cport ) {
+    var cmdarr = [];
+    // Warning: there needs of course to be some kind of limits and sanity
+    // checking structure -- length of commands, etc.
+    // This could be a separate structure that is required with an imported
+    // command set such that validation occurs within this ruleset prior to
+    // allowing execution
+    switch ( commandAndType.type ) {
+
+      case "hexCsvBytes":
+        var cmd = commandAndType.value.replace(/\s/g,"").split(',');
+        var cmdarr = [];
+        cmd.forEach(function(c) {
+          cmdarr.push(parseInt(c));
+        });
+        console.log("controlPortSendData: " + cmdarr);
+        cport.write(cmdarr, function (err) {
+          if ( err ) {
+            console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+          }
+        });
+        break;
+
+      case "hexCsvBytesChained":
+        var delayBwCalls = parseInt(commandAndType.chainedCmdDelayMs);
+        var responseTimeout = parseInt(commandAndType.chainedCmdTimeoutMs);
+        var responseTermChar = commandAndType.chainedCmdCompleteChar;
+        if ( delayBwCalls ) {
+          // Use
+          var totTimeout = 0;
+          var len = commandAndType.value.length;
+          console.log("hexCsvBytesChained: " + len + " commands found ...");
+          commandAndType.value.forEach ( function (catv, index) {
+            var cmd = catv.replace(/\s/g,"").split(',');
+            var cmdarr = [];
+            cmd.forEach(function(c) {
+              cmdarr.push(parseInt(c));
+            });
+            setTimeout( function () {
+              console.log("Firing command " + (index + 1) + " of " + len);
+              console.log(cmdarr);
+              cport.write(cmdarr, function (err) {
+                if ( err ) {
+                  console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+                }
+              });
+            }, totTimeout, index, len, cmdarr);
+            totTimeout += delayBwCalls;
+            console.log("Total timeout: " + totTimeout);
+          });
+        } else
+        if ( !delayBwCalls && ( responseTimeout && responseTermChar ) ) {
+          // Is arguments.callee.name deprecated or not?
+          console.log(arguments.callee.name + ": hexCsvBytesChained with sequenced cmds issued and termination of each stage based on response termination character or response timeout");
+          // See above - parsers requires a new serialport
+          //const parser = port.pipe(new Delimiter({ delimiter: '\n'}));
+          //parser.on('data', console.log);
+        }
+        break;
+        // End case: hexCsvBytesChained
+
+      default:
+        console.log('sprenderer: error on controlPortSendData: type in command with type is not (yet) supported: ' + commandAndType.type);
+    }
+
+
+
+  } else {  // if not port ...
+    console.log ('sprenderer: error on controlPortSendData: port does not yet exist or has not been opened');
+  }
+
+}
+
+
+
+
+
+
+var controlPortSendDataFromTextInput = function ( button, commandAndType) {
+  //alert('got it');
+  //return;
+
+  if ( cport ) {
+    var cmdarr = [];
+    // Warning: there needs of course to be some kind of limits and sanity
+    // checking structure -- length of commands, etc.
+    // This could be a separate structure that is required with an imported
+    // command set such that validation occurs within this ruleset prior to
+    // allowing execution
+    switch ( commandAndType.type ) {
+
+      case "hexCsvBytes":
+        var cmd = commandAndType.value.replace(/\s/g,"").split(',');
+        var cmdarr = [];
+        cmd.forEach(function(c) {
+          cmdarr.push(parseInt(c));
+        });
+        var repl = commandAndType.positionToReplaceWithTextInputBaseZero;
+        if ( isNaN(repl) ) {
+          // TODO : throw
+          alert ("controlPortSendDataFromTextInput: commandAndType.positionToReplaceWithTextInputBaseZero failed parseInt!");
+          return;
+        }
+        // The parent most div id can be found based on the button id
+        // and thus only text input field can thus be found
+        var tiId = $(button).prop("id").replace("button","div");
+        var ti = $("#"+tiId).find("input[type='text']");
+        var val = parseInt( $(ti).val() );
+        if ( isNaN(val) ) {
+          // TODO - throw
+          alert ("controlPortSendDataFromTextInput: textInput:\r\n" + $(ti).val() + "\r\nain't working as parseInt -- Looks like it's not a number that can be parsed to in integer.");
+          // TODO - how to actively reset this so the cleared programmatic value actually becomes visible?
+          // Something simple I'm missing here ...
+          //$(ti).attr('value', '1').trigger("change").trigger("click"); // Still doesn't show in DOM/UI yet
+          //M.updateTextFields(); // Still not
+          //$(ti).removeAttr('value'); // Still not
+          //alert($(ti).val());
+          return;
+        }
+        cmdarr[repl] = val; // replace the command position with the text input value
+        // TODO range validation?
+        console.log("controlPortSendDataFromTextInput: " + cmdarr);
+        cport.write(cmdarr, function (err) {
+          if ( err ) {
+            console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+          }
+        });
+        break;
+
+      case "hexCsvBytesChained":
+        alert("hexCsvBytesChained for controlPortSendDataFromTextInput not yet implemented! returning ...");
+        return;
+
+        var delayBwCalls = parseInt(commandAndType.chainedCmdDelayMs);
+        var responseTimeout = parseInt(commandAndType.chainedCmdTimeoutMs);
+        var responseTermChar = commandAndType.chainedCmdCompleteChar;
+        if ( delayBwCalls ) {
+          // Use
+          var totTimeout = 0;
+          var len = commandAndType.value.length;
+          console.log("hexCsvBytesChained: " + len + " commands found ...");
+          commandAndType.value.forEach ( function (catv, index) {
+            var cmd = catv.replace(/\s/g,"").split(',');
+            var cmdarr = [];
+            cmd.forEach(function(c) {
+              cmdarr.push(parseInt(c));
+            });
+            setTimeout( function () {
+              console.log("Firing command " + (index + 1) + " of " + len);
+              console.log(cmdarr);
+              cport.write(cmdarr, function (err) {
+                if ( err ) {
+                  console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+                }
+              });
+            }, totTimeout, index, len, cmdarr);
+            totTimeout += delayBwCalls;
+            console.log("Total timeout: " + totTimeout);
+          });
+        } else
+        if ( !delayBwCalls && ( responseTimeout && responseTermChar ) ) {
+          // Is arguments.callee.name deprecated or not?
+          console.log(arguments.callee.name + ": hexCsvBytesChained with sequenced cmds issued and termination of each stage based on response termination character or response timeout");
+          // See above - parsers requires a new serialport
+          //const parser = port.pipe(new Delimiter({ delimiter: '\n'}));
+          //parser.on('data', console.log);
+        }
+        break;
+        // End case: hexCsvBytesChained
+
+      default:
+        console.log('sprenderer: error on controlPortSendData: type in command with type is not (yet) supported: ' + commandAndType.type);
+    }
+
+
+
+  } else {  // if not port ...
+    console.log ('sprenderer: error on controlPortSendData: port does not yet exist or has not been opened');
+  }
+
+}
+
+
+
 module.exports = {
   serialOpenByName: serialOpenByName,
   serialClose: serialClose,
+  controlPortClose: controlPortClose,
+  controlPortSendStuff: controlPortSendStuff,
   serialTestWrite: serialTestWrite,
   serialSendData: serialSendData,
+  controlPortSendData: controlPortSendData,
+  controlPortSendDataFromTextInput: controlPortSendDataFromTextInput,
   serialCheckbox: serialCheckbox,
   beginSerialComms: beginSerialComms,
   btnDataPortClick: btnDataPortClick,

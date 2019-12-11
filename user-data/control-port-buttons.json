@@ -1,15 +1,90 @@
 {
+
+
+  "textInputs": [
+
+    {
+      "label": "Set Tx Channel",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x50",
+        "positionToReplaceWithTextInputBaseZero": "10"
+      },
+      "description": "Set Tx (or Pulse) channel.  The value in the text input box should be a 1-byte integer, and it will be passed as parameter 1 in the command."
+    }
+
+  ],
+
+
   "buttons": [
 
     {
-      "title": "Get Firmware Revision",
+      "title": "Set Tx Voltage via DAC Output to 0x00 (zero-est)",
       "command": {
         "type": "hexCsvBytes",
-        "value": "0x53, 0x93, 0x00, 0x00, 0x50"
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x50"
       },
-      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "description": "Set Tx or Pulse voltage via the DAC output to near-est possible zero.",
       "returnDataTo" : "chart"
     },
+
+
+    {
+      "title": "Set Tx Voltage via DAC Output to 0x05 (Med)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x05, 0x00, 0x00, 0x50"
+      },
+      "description": "Set Tx or Pulse voltage via the DAC output to around middle range when using a -200VDC module with source VDD of 3.3VDC rail.",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "Set Rx Channel 1",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x50"
+      },
+      "description": "Set Rx channel to 1 (parameter1 = 0x01 - firmware handles the base 0x00 = Ch 1 part)",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "Set Rx Channel 2",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x50"
+      },
+      "description": "Set Rx channel to 2 (parameter = 0x02 - firmware handles the base 0x00 = Ch 1 part",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "Set Rx Gain to 0 (Min)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x50"
+      },
+      "description": "Set Rx Gain to 0, the minimum",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "Set Rx Gain to 0x0F (Max)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x02, 0x00, 0x0F, 0x00, 0x00, 0x50"
+      },
+      "description": "Set Rx Gain to 0x0F, the maximum",
+      "returnDataTo" : "chart"
+    },
+
+
+
 
 
     {
@@ -249,7 +324,7 @@
       },
       "description": "Read all EEPROM Values",
       "returnDataTo" : "log"
-    },    
+    },
 
 
     {

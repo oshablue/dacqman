@@ -196,6 +196,18 @@
               <button name="controlPortTestWrite" id="controlPortTestWrite" onclick="controlTestWrite()">Test Write</button></span>
           </div>
           <div class="card-action">
+            <!--<p>Test Stuff to Send to Hardware</p>-->
+            <span id="stuffToSendSpan">
+              <div class="input-field">
+                <i class="material-icons prefix">account_circle</i>
+                <input type="text" id="stuffToSend" placeholder="Put (or Type) some stuff here to send" class="validate">
+                <label for="stuffToSend">Stuff to Send</label>
+                <span class="helper-text" data-error="wrong" data-success="right">Helper text, yeah, just type some stuff up there to send</span>
+              </div></span>
+            <span id="sendButtonSpan">
+              <button id="sendButton" onclick="controlPortSendStuff()">Send</button></span>
+          </div>
+          <div class="card-action">
             <p>Custom Control Buttons Loaded From File:</p>
             <div id="controlPortButtonsFromFileDiv"></div>
           </div>
@@ -376,11 +388,17 @@
     function serialClose() {
       sprend.serialClose();
     }
+    function controlPortClose() {
+      sprend.controlPortClose();
+    }
     function serialTestWrite() {
       sprend.serialTestWrite();
     }
     function serialSendData(commandAndType, returnDataTo) {
       sprend.serialSendData(commandAndType, returnDataTo);
+    }
+    function controlPortSendData(commandAndType, returnDataTo) {
+      sprend.controlPortSendData(commandAndType, returnDataTo);
     }
     function beginSerialComms() {
       sprend.beginSerialComms();
@@ -390,6 +408,12 @@
     }
     function btnControlPortClick(button) {
       sprend.btnControlPortClick(button);
+    }
+    function controlPortSendStuff() {
+      sprend.controlPortSendStuff($('#stuffToSend'));
+    }
+    function controlPortSendDataFromTextInput(button, commandAndType) {
+      sprend.controlPortSendDataFromTextInput(button, commandAndType);
     }
     // TODO wrap pass-through functions above and thus DRY ...
 
@@ -429,6 +453,9 @@
       // Check for stuff that needs to execute on page load after population
       serialCheckbox(); // arg not used ... TODO better way to do this of course
 
+      // Temp : testing :
+      $("#activeControlPort").show();
+
     }); // $(document).ready()
 
     function loadButtons() {
@@ -457,6 +484,7 @@
       // Control port
       const cp_path = "./user-data/control-port-buttons.json"
       var buttons = require(cp_path).buttons; // Loads the JSON
+      var textInputs = require(cp_path).textInputs;
       //console.log(JSON.stringify(buttons));
       console.log(buttons.length + " control port buttons found.");
       buttons.forEach( function (b) {
@@ -464,9 +492,38 @@
           .text(b.title)
           .prop('title', b.description)
           .click(function () {
-            serialSendData(b.command, b.returnDataTo);
+            controlPortSendData(b.command, b.returnDataTo);
           });
         $('#controlPortButtonsFromFileDiv').append(newb);
+      });
+
+      textInputs.forEach( function (ti) {
+        var div = $('<div>')
+          .prop('id', "div" + ti.label.replace(/\s/g,''))
+          .addClass("row");
+        var smallDiv = $('<div>')
+          .addClass("col s6 right-align");
+        var smallDiv2 = $('<div>')
+          .addClass("col s6");
+        var span = $("<span>").text(ti.label);
+        var input = $("<input type='text'>")
+          .addClass("input-field")
+          .prop('title', ti.description)
+          .prop('id', "input" + ti.label.replace(/\s/g,''));
+        var button = $("<button>")
+          .text(ti.label)
+          .addClass("btn waves-effect waves-light")
+          .prop('id', "button" + ti.label.replace(/\s/g, ''))
+          .click(function () {
+            controlPortSendDataFromTextInput(this, ti.command);
+          });
+        var label = $("<label>")
+          .attr("for", ti.label.replace(/\s/g,''));
+        $(label).append(input).append(span);
+        var c1 = $(smallDiv).append(button);
+        var c2 = $(smallDiv2).append(label);
+        $(div).append(c1).append(c2);
+        $('#controlPortButtonsFromFileDiv').append(div);
       });
 
     }
