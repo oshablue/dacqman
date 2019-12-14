@@ -142,7 +142,7 @@ Ftdi.find( function(err, devices) {
   devices.forEach ( function(d) {
     var fd = new Ftdi.FtdiDevice(d);
     console.log(fd.deviceSettings.description);
-    console.log(JSON.stringify(fd));
+    //console.log(JSON.stringify(fd));
 
     /*if ( (headers.length - 2) < Object.keys(fd.deviceSettings).length ) {
       console.log("re set headers for ftdi table")
@@ -419,8 +419,14 @@ var devSerialOpenByName = function (name) {
 
 var btnDataPortClick = function(button) {
   if ( $(button).hasClass("green") === false ) {
-    console.log("data port button clicked: but not active - returning");
-    return;
+    //console.log("data port button clicked: but button is not green = active port - so, returning");
+    openDataPortThatIsChecked();
+  } else {
+    if ( dport ) {
+      dport.close();
+    } else {
+      console.log("data port button clicked: button is not green = active port but dport is not anything, so can't do anything to close it - so, returning");
+    }
   }
 }
 
@@ -432,17 +438,20 @@ var btnDataPortClick = function(button) {
 var btnControlPortClick = function(button) {
 
   if ( $(button).hasClass("green") === false ) {
-    console.log("control port button clicked: but not active - returning");
-    return;
-  }
-  if ( $('#activeControlPort').is(":visible") ) {
-    $('#activeControlPort').hide("slow");
-    return;
+    //console.log("control port button clicked: but not active - returning");
+    //return;
+    openControlPortThatIsChecked();
+  } else {
+    if ( $('#activeControlPort').is(":visible") ) {
+      $('#activeControlPort').hide("slow");
+      return;
+    }
+    $('#activeControlPort').show("slow");
   }
   // TODO this is currently a repeat of the functionality in serialSelect in mainWindow.html
-  //var d = document.querySelector("#activeControlPortName");
-  $('#activeControlPort').show("slow");
-  //d.innerHTML = button.name; // TODO update for dual-port devices
+  ////var d = document.querySelector("#activeControlPortName");
+  //$('#activeControlPort').show("slow");
+  ////d.innerHTML = button.name; // TODO update for dual-port devices
 
   // TODO - update the contents of this section to correctly reference the right port,
   // here the cport that is, not the plain legacy vcp port device ...
@@ -455,6 +464,11 @@ var btnControlPortClick = function(button) {
 
 
 
+
+
+
+
+//var datBuf = Buffer.alloc(4096, 63); // allocate 4096 byte buffer, fill with 0x00
 // Below for FTDI D2XX - for the data port (async fifo styling of streaming data)
 var openDataPort = function(portHash) {
   console.log("openDataPort: " + JSON.stringify(portHash));
@@ -506,6 +520,8 @@ var openDataPort = function(portHash) {
 
     $("#btnDataPortStatus").removeClass('green').addClass('blue-grey');
 
+    mainWindowUpdateChartData(null); // should call the cancel on the requestAnimationFrame
+
   });
 
   dport.on('open', function(err) {
@@ -518,6 +534,8 @@ var openDataPort = function(portHash) {
     console.time("timeOpen");
     //time = process.hrtime();  // restart the timer, storing in "time"
 
+    mainWindowUpdateChartData(null); // init the loop for requestAnimationFrame
+
     /*
     //For Freq measurement real world samples over time
     setTimeout( function() {
@@ -526,8 +544,10 @@ var openDataPort = function(portHash) {
     */
 
   });
+
+  //var n = 0;
   dport.on('data', function (data) {
-    console.log ("dport.on data");
+    //console.log ("dport.on data");
 
     // Freq measuring stuff
     /*
@@ -542,6 +562,21 @@ var openDataPort = function(portHash) {
     console.log("buf.length: " + buf.length);
     */
 
+    //if ( ourReadableStreamBuffer.size() < 1000*1024 ) {
+
+    // nope because variable length data reads can happen so waveform walks
+    //n = n > 8 ? 0 : n;
+    //if ( n === 8 ) {
+    // yeah duh that doesn't work ...
+    //if ( dataPushDecimationCounter === decimationValue ) {
+      ourReadableStreamBuffer.put(data);
+    //}
+    //}
+    //n++;
+    //} else {
+    //  console.log("Not putting data into stream")
+    //}
+
     /*if ( buf.length >= 2500 ) {
       console.log("buf.length: " + buf.length);
       mainWindowUpdateChartData(buf.slice(0,2499));
@@ -550,13 +585,16 @@ var openDataPort = function(portHash) {
 
 
     // For slow data, or single snapshot mode
-    if ( data.length > 4000) {
+    /*if ( data.length > 4000) {
       mainWindowUpdateChartData(data);
-    }
+    }*/
 
     /*
     samples += data.length;
     */
+
+    // Let's capture whatever begins and ends within 6 ms
+
 
   });
 
@@ -609,6 +647,8 @@ var openDataPort = function(portHash) {
   //});
 
 }
+
+
 
 
 
@@ -874,15 +914,37 @@ var getSelectedControlPortInfoHash = function() {
 // Dual-port device style port opening
 var beginSerialComms = function(button) {
   // make hash for port ID for data and call that function
-  var dataPortHash = checkboxToPortHash($("[id^=UseForData][type=checkbox]:checked"));
-  openDataPort(dataPortHash);
+  //var dataPortHash = checkboxToPortHash($("[id^=UseForData][type=checkbox]:checked"));
+  //openDataPort(dataPortHash);
+  openDataPortThatIsChecked();
 
   // make hash for control port (serial) ID and call that function
-  var controlPortHash = checkboxToPortHash($("[id^=UseForControl][type=checkbox]:checked"));
-  openControlPort(controlPortHash);
+  //var controlPortHash = checkboxToPortHash($("[id^=UseForControl][type=checkbox]:checked"));
+  //openControlPort(controlPortHash);
+  openControlPortThatIsChecked();
+
 
   // TODO if no errors, then collapse the selection window ...
   $("#serialPortSelectionAccordion").collapsible('close'); //.children('li:first-child'));
+}
+
+
+
+
+
+var openControlPortThatIsChecked = function() {
+  // make hash for control port (serial) ID and call that function
+  var controlPortHash = checkboxToPortHash($("[id^=UseForControl][type=checkbox]:checked"));
+  openControlPort(controlPortHash);
+}
+
+
+
+
+
+var openDataPortThatIsChecked = function() {
+  var dataPortHash = checkboxToPortHash($("[id^=UseForData][type=checkbox]:checked"));
+  openDataPort(dataPortHash);
 }
 
 
@@ -1211,6 +1273,8 @@ var controlPortSendDataFromTextInput = function ( button, commandAndType) {
   }
 
 }
+
+
 
 
 

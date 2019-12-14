@@ -322,15 +322,83 @@
     // See: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/script-src
 
 
+
+
     const electron = require('electron');
     const {ipcRenderer} = electron;
     const ul = document.querySelector('ul');
+
+
+    // https://stackoverflow.com/questions/36980201/how-to-reset-nodejs-stream
+
+    // Create stream object for access by both sprenderer and charting
+    //const dataBuf = Buffer.alloc(100*4096, 0);
+    //const streamBuffers = require('stream-buffers');
+    const rsb = require('./readable_streambuffer.js');
+    const stream = require('stream');
+    // On platform for testing: using standard node stream buffers:
+    // At freq of 10 (ms)
+    // - chunkSize of 2 * 4095 gives steady sync graph, with eventual huge buffer (overrun)
+    // - chunkSize of 3 * 4095 gives walking graph and glitches due to emptiness (underrun)
+    var chartBuf = null;
+    var ourReadableStreamBuffer = null;
+    var resetReadableStream = function() {
+      chartBuf =  Buffer.alloc(4095, 127);
+      ourReadableStreamBuffer = new rsb.ReadableStreamBuffer({
+        frequency: 10,       // in milliseconds // 5 or 7 was ok // 10 less crashy // less than 7ms to be faster than incoming packets of 4096
+        chunkSize: (3*4095), //16380, //(4095)//,     // bytes -- 4096 gives a left-ward walk -- 4095 was generally steady
+        initialSize: (1000 * 1024),    // added these two for size management due to constant overflow
+        //incrementAmount: (10 * 1024)  // zero does nothing - doesn't cap it
+      });
+      ourReadableStreamBuffer.on('readable', function(data) {
+        var chunk;
+        //console.log(ourReadableStreamBuffer.size());
+        if ( ourReadableStreamBuffer.size() > (1000*1024) ) {
+          console.log(ourReadableStreamBuffer.size());
+          //console.log("ALERT: ourReadableStreamBuffer is larger than ...1MB ... dumping data ...");
+          // Do something to dump or pause this
+          //ourReadableStreamBuffer.pause(); // no effect in a readable event listener
+          //console.log("new ourReadableStreamBuffer size: " + ourReadableStreamBuffer.size());
+        }
+        // Could try to:
+        // - Increment the decimation counter here instead and it talks to the sprendered code
+        // or
+        // - Use 'data' event subscription instead and then use pause and resume to allow
+        //   screen plotting to catch up
+        while((chunk = ourReadableStreamBuffer.read()) !== null) {
+          //assert.isTrue(chunk instanceof Buffer);
+          //console.log(chunk.length);
+          //console.log('t');
+          // could implement skipping code here - take every 8th and plot it
+          //n = (n > 8) ? 0 : n;
+          //if ( n === 8 ) {
+
+          // deimation stuff: no dice - not a copy must not be the bottleneck
+          //dataPushDecimationCounter++; // increment only with each chunk
+          //if ( dataPushDecimationCounter > decimationValue ) {
+          //  dataPushDecimationCounter = 0;
+          //}
+          //if ( dataPushDecimationCounter === decimationValue ) {
+          chunk.copy(chartBuf, 0, 0, 4095);
+          //}
+          //}
+          //n++;
+          // nope the n thing still allows the internal buffer to grow ... and slow
+          //console.log(n);
+        }
+      });
+    }
+
+
+
+
 
     // From SP EG
     // You can also require other files to run in this process
     const sprend = require('./sprenderer.js')
     //const chartRend = require('./chartRend.js')
-    const chart = require('./simpleChartRend.js')
+    //const chart = require('./simpleChartRend.js')
+    const chart = require('./bigWfDataChart.js');
 
     // Add item
     ipcRenderer.on('item:add', function(e, item){
@@ -356,8 +424,28 @@
       chart.update(data);
     });
 
+    var animStarted = false;
     function mainWindowUpdateChartData(data) {
-      chart.update(data);
+      //chart.update(data);
+      //return;
+
+      if ( data !== null ) {
+        console.log("ERROR: mainWindowUpdateChartData is not implemented \
+          in this configuration for regular calls.  Currently, chart is expected to use    \
+          requestAnimationFrame and thus just the first call initiates the looped calls.");
+      }
+
+      if ( !animStarted ) {
+        resetReadableStream();   // Or move to data Port event handler for close()?
+        console.log("mainWindowUpdateChartData: animStarted = false, calling renderChart()");
+        chart.renderChart(); // This initiates the loop
+        animStarted = true;
+      } else {
+        // clearReadStream??? or just reset it too? 
+        console.log("mainWindowUpdateChartData: animStarted = true, calling cancelRenderChart()");
+        chart.cancelRenderChart();
+        animStarted = false;
+      }
     }
 
     // Remove item on double-click from main  list
@@ -453,8 +541,9 @@
       // Check for stuff that needs to execute on page load after population
       serialCheckbox(); // arg not used ... TODO better way to do this of course
 
+      // TEMP DEV TWEAKS for EXPOSURE etc
       // Temp : testing :
-      $("#activeControlPort").show();
+      //$("#activeControlPort").show();
 
     }); // $(document).ready()
 
@@ -527,6 +616,9 @@
       });
 
     }
+
+
+
 
   </script>
 
