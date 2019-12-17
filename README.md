@@ -15,6 +15,14 @@ package.json:
 
 Was using serialport ^6.1.0
 
+npm install electron@4.2.12 from original 4.1.4 at the time of starting this
+and so far the ftdi (npm install) build works ok.
+That doesn't stop the Electron Helper malloc pointer being freed was not allocated issue.
+Could it be also related to the Buffer deprecation warning (that we have chased
+  down and opted at this point to keep the versioning we have in order to continue development without having to re-write the FTDI nodejs library)
+
+
+
 
 ## Launching (during Dev)
 

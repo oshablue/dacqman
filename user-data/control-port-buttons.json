@@ -40,6 +40,19 @@
     },
 
 
+
+    {
+      "title": "Set Tx Voltage via DAC Output to 0x0f (Nominal Normal)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x0f, 0x00, 0x00, 0x50"
+      },
+      "description": "Set Tx or Pulse voltage via the DAC output to around designated nominal range when using a -200VDC module with source VDD of 3.3VDC rail.",
+      "returnDataTo" : "chart"
+    },
+
+
+
     {
       "title": "Set Rx Channel 1",
       "command": {

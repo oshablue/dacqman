@@ -14,7 +14,7 @@
   "license": "MIT",
   "dependencies": {
     "data-table": "^2.0.0",
-    "electron": "^4.1.4",
+    "electron": "^4.2.12",
     "ftdi": "file:../viffy-3rd/node-ftdi",
     "serialport": "^6.1.0"
   },
