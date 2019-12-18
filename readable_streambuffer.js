@@ -55,37 +55,51 @@ var ReadableStreamBuffer = module.exports = function(opts) {
 
   var sendData = function() {
 
-    var amount = Math.min(chunkSize, size);
+    // Disregarding condensed code here so my simple brain can watch
+    // and try to debug some memory issues - may just be update-related
+    // and we can't yet update due to dependency incompatibility
+    //var amount = Math.min(chunkSize, size);
     var sendMore = false;
 
     // edit
-    var amountPushed = 0;
+    //var amountPushed = 0;
 
-    if (amount > 0) {
+    //if (amount > 0) {
+    if ( size > 0 ) {
+
       var chunk = null;
 
-      if ( !(amount < chunkSize) ) { // edit // amount is chunkSize
-        chunk = new Buffer.alloc(chunkSize); //(amount); // or chunkSize, they're the same // unsafe is faster but random contents
-        buffer.copy(chunk, 0, 0, chunkSize); //amount); // or ... etc.
 
-        sendMore = that.push(chunk) !== false;
-        allowPush = sendMore;
 
-        // We have pushed the chunk so we don't need it
-        // amount = chunkSize here
-        // So, retain from chunkSize to size - 1
-        // source   target  tgtStart  srcStart  srcEnd
-        buffer.copy(buffer, 0,        amount,   size);
-        size -= amount; // really just subtracting chunkSize
-      } // edit
-      else {
-        //edit
-        // amount < chunkSize
-        // amount = size
-        // retain all of buffer
-        buffer.copy(buffer, 0, 0, size);
-        // don't subract amount, because nothing has been transferred
+      try {
+        if ( size >= chunkSize) { // edit // amount is chunkSize
+          chunk = new Buffer.alloc(chunkSize); //(amount); // or chunkSize, they're the same // unsafe is faster but random contents
+          buffer.copy(chunk, 0, 0, chunkSize); //amount); // or ... etc.
+
+          sendMore = that.push(chunk) !== false;
+          allowPush = sendMore;
+
+          // We have pushed the chunk so we don't need it
+          // amount = chunkSize here
+          // So, retain from chunkSize to size - 1
+          // source   target  tgtStart  srcStart  srcEnd
+          //buffer.copy(buffer, 0,        amount,   size);
+          buffer.copy(buffer, 0, chunkSize, size);
+          size -= chunkSize; //  amount; // really just subtracting chunkSize
+        } // edit
+        else {
+          //edit
+          // amount < chunkSize
+          // amount = size
+          // retain all of buffer
+          buffer.copy(buffer, 0, 0, size);
+          // don't subract amount, because nothing has been transferred
+        }
+      } catch (e) {
+        console.log("Error: readable_streambuffer: " + e);
       }
+
+
       // DONETODO Wait, was this right? Is this where we are losing/gaining a
       // sample originally?
       // Ah, the srcEnd is not inclusive -- thus originally for amount < chunkSize,
@@ -96,7 +110,7 @@ var ReadableStreamBuffer = module.exports = function(opts) {
       // source   target  tgtStart  srcStart  srcEnd
       //buffer.copy(buffer, 0,        amount,   size);
       //size -= amount;
-    }
+    } // if size > 0
 
     if(size === 0 && that.stopped) {
       that.push(null);

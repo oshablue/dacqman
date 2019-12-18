@@ -4,6 +4,8 @@
 
 ## Specific File Notes and Setup Notes
 
+## Dev Setup Notes and Tracking Bugs (as related to) and Package Updates
+
 package.json:
 
 ```bash
@@ -15,11 +17,33 @@ package.json:
 
 Was using serialport ^6.1.0
 
+### Electron
+
+Re:
+- Buffer deprecation warning
+- crash with unallocated pointer being freed
+- building node-ftdi
+
 npm install electron@4.2.12 from original 4.1.4 at the time of starting this
 and so far the ftdi (npm install) build works ok.
 That doesn't stop the Electron Helper malloc pointer being freed was not allocated issue.
 Could it be also related to the Buffer deprecation warning (that we have chased
   down and opted at this point to keep the versioning we have in order to continue development without having to re-write the FTDI nodejs library)
+Trying 5.0.12 with
+npm install electron@5.0.12 (from 4.2.12 prior)
+npm install (crash)
+npm install electron-rebuild@1.8.8 (from 1.8.4 prior)
+npm install (crash on ftdi at least, not something else)
+npm rebuild (crash)
+npm install (crash)
+rollback only electron to 4.2.12 and
+npm rebuild
+npm install
+(the two in chain, or even just the install which runs electron-rebuild) works again, retaining electron-rebuild 1.8.8
+
+It looks like with electron 4 => 5, node-gyp moves from 5 to 6, and therein lies perhaps the breakage on building the ftdi package
+
+
 
 
 

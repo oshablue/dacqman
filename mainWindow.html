@@ -48,8 +48,9 @@
   <!-- Plotting / Charting / Data Visualization
        v3 to keep the refs to d3.scale.linear()
        v5 will start using eg d3.scaleLinear
-       Previously using v3                          -->
-  <script src="https://d3js.org/d3.v4.min.js"></script>
+       Previously using v3        d3.v4.min.js                  -->
+  <!--<script src="https://d3js.org/d3.v4.min.js"></script>-->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.7.0/d3.min.js"></script>
 
   <link rel="stylesheet" href="css/custom.css">
 
@@ -142,6 +143,7 @@
     </div>
 
 
+
     <!-- .......................................... --><!--
     ***********************************************
       CARD - Serial Port Buttons / Controls (Init no display)
@@ -173,6 +175,11 @@
     </div>
 
 
+
+
+
+
+
     <!-- .......................................... --><!--
     ***********************************************
       CARD - Control Port Buttons / Controls (Init no display)
@@ -185,7 +192,6 @@
         </span>
         <br>
         <div class="container-buttons">
-          Available controls:
           <div class="card-action">
             <p>Standard Buttons</p>
             <span id="controlPortOpenBtnSpan">
@@ -196,7 +202,6 @@
               <button name="controlPortTestWrite" id="controlPortTestWrite" onclick="controlTestWrite()">Test Write</button></span>
           </div>
           <div class="card-action">
-            <!--<p>Test Stuff to Send to Hardware</p>-->
             <span id="stuffToSendSpan">
               <div class="input-field">
                 <i class="material-icons prefix">account_circle</i>
@@ -214,6 +219,8 @@
         </div>
       </div>
     </div>
+
+
 
 
 
@@ -239,6 +246,9 @@
       </div>
     </div>
 
+
+
+
     <!-- .......................................... --><!--
     ***********************************************
       CARD - Output console-like
@@ -262,6 +272,10 @@
     </div></div>
 
   </main><!-- main -->
+
+
+
+
 
 
 
@@ -306,6 +320,19 @@
     <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
   <!--
   ******************************************************************************
           SCRIPT
@@ -344,47 +371,57 @@
     var ourReadableStreamBuffer = null;
     var resetReadableStream = function() {
       chartBuf =  Buffer.alloc(4095, 127);
+      // changing below to 20ms (and doubling the chunksize) doesn't stop the
+      // crash malloc errors
       ourReadableStreamBuffer = new rsb.ReadableStreamBuffer({
         frequency: 10,       // in milliseconds // 5 or 7 was ok // 10 less crashy // less than 7ms to be faster than incoming packets of 4096
         chunkSize: (3*4095), //16380, //(4095)//,     // bytes -- 4096 gives a left-ward walk -- 4095 was generally steady
-        initialSize: (1000 * 1024),    // added these two for size management due to constant overflow
+        initialSize: (100 * 1024),    // was 1000 // added these two for size management due to constant overflow
         //incrementAmount: (10 * 1024)  // zero does nothing - doesn't cap it
       });
       ourReadableStreamBuffer.on('readable', function(data) {
-        var chunk;
-        //console.log(ourReadableStreamBuffer.size());
-        if ( ourReadableStreamBuffer.size() > (1000*1024) ) {
-          console.log(ourReadableStreamBuffer.size());
-          //console.log("ALERT: ourReadableStreamBuffer is larger than ...1MB ... dumping data ...");
-          // Do something to dump or pause this
-          //ourReadableStreamBuffer.pause(); // no effect in a readable event listener
-          //console.log("new ourReadableStreamBuffer size: " + ourReadableStreamBuffer.size());
-        }
-        // Could try to:
-        // - Increment the decimation counter here instead and it talks to the sprendered code
-        // or
-        // - Use 'data' event subscription instead and then use pause and resume to allow
-        //   screen plotting to catch up
-        while((chunk = ourReadableStreamBuffer.read()) !== null) {
-          //assert.isTrue(chunk instanceof Buffer);
-          //console.log(chunk.length);
-          //console.log('t');
-          // could implement skipping code here - take every 8th and plot it
-          //n = (n > 8) ? 0 : n;
-          //if ( n === 8 ) {
 
-          // deimation stuff: no dice - not a copy must not be the bottleneck
-          //dataPushDecimationCounter++; // increment only with each chunk
-          //if ( dataPushDecimationCounter > decimationValue ) {
-          //  dataPushDecimationCounter = 0;
-          //}
-          //if ( dataPushDecimationCounter === decimationValue ) {
-          chunk.copy(chartBuf, 0, 0, 4095);
-          //}
-          //}
-          //n++;
-          // nope the n thing still allows the internal buffer to grow ... and slow
-          //console.log(n);
+        try {
+          var chunk;
+          //console.log(ourReadableStreamBuffer.size());
+          if ( ourReadableStreamBuffer.size() > (1000*1024) ) {
+            console.log(ourReadableStreamBuffer.size());
+            //console.log("ALERT: ourReadableStreamBuffer is larger than ...1MB ... dumping data ...");
+            // Do something to dump or pause this
+            //ourReadableStreamBuffer.pause(); // no effect in a readable event listener
+            //console.log("new ourReadableStreamBuffer size: " + ourReadableStreamBuffer.size());
+          }
+          // Could try to:
+          // - Increment the decimation counter here instead and it talks to the sprendered code
+          // or
+          // - Use 'data' event subscription instead and then use pause and resume to allow
+          //   screen plotting to catch up
+          while((chunk = ourReadableStreamBuffer.read()) !== null) {
+            //assert.isTrue(chunk instanceof Buffer);
+            //console.log(chunk.length);
+            //console.log('t');
+            // could implement skipping code here - take every 8th and plot it
+            //n = (n > 8) ? 0 : n;
+            //if ( n === 8 ) {
+
+            // deimation stuff: no dice - not a copy must not be the bottleneck
+            //dataPushDecimationCounter++; // increment only with each chunk
+            //if ( dataPushDecimationCounter > decimationValue ) {
+            //  dataPushDecimationCounter = 0;
+            //}
+            //if ( dataPushDecimationCounter === decimationValue ) {
+            // TODO - add try catches for all memory stuff to catch serial port
+            // (data port) errors that might be creating the malloc errors in these
+            // revisions
+            chunk.copy(chartBuf, 0, 0, 4095);
+            //}
+            //}
+            //n++;
+            // nope the n thing still allows the internal buffer to grow ... and slow
+            //console.log(n);
+          }
+        } catch (e) {
+          console.log("Error in readable event: " + e);
         }
       });
     }
@@ -441,7 +478,7 @@
         chart.renderChart(); // This initiates the loop
         animStarted = true;
       } else {
-        // clearReadStream??? or just reset it too? 
+        // clearReadStream??? or just reset it too?
         console.log("mainWindowUpdateChartData: animStarted = true, calling cancelRenderChart()");
         chart.cancelRenderChart();
         animStarted = false;
@@ -554,8 +591,7 @@
       // Basic test functions and single-port style device buttons (aka DLITE legacy)
       // Can use user data path instead when running live not dev
       const path = "./user-data/buttons-example.json"
-      var buttons = require(path).buttons; // Loads the JSON
-      //console.log(JSON.stringify(buttons));
+      var buttons = require(path).buttons;
       console.log(buttons.length + " buttons found.");
       buttons.forEach( function (b) {
         var newb = $('<button/>')
@@ -568,13 +604,13 @@
         $('#serialButtonsFromFileDiv').append(newb);
       });
 
+
       // Dual-port style functions
       //
       // Control port
       const cp_path = "./user-data/control-port-buttons.json"
-      var buttons = require(cp_path).buttons; // Loads the JSON
+      var buttons = require(cp_path).buttons;
       var textInputs = require(cp_path).textInputs;
-      //console.log(JSON.stringify(buttons));
       console.log(buttons.length + " control port buttons found.");
       buttons.forEach( function (b) {
         var newb = $('<button/>')

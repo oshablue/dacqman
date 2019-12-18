@@ -15,11 +15,11 @@
   "dependencies": {
     "data-table": "^2.0.0",
     "electron": "^4.2.12",
-    "ftdi": "file:../viffy-3rd/node-ftdi",
+    "ftdi": "file:./third-party-custom/node-ftdi",
     "serialport": "^6.1.0"
   },
   "devDependencies": {
     "electron-packager": "^13.1.1",
-    "electron-rebuild": "^1.8.4"
+    "electron-rebuild": "^1.8.8"
   }
 }

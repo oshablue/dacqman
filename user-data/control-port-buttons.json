@@ -11,9 +11,23 @@
         "positionToReplaceWithTextInputBaseZero": "10"
       },
       "description": "Set Tx (or Pulse) channel.  The value in the text input box should be a 1-byte integer, and it will be passed as parameter 1 in the command."
+    },
+
+    {
+      "label": "Set Rx Gain",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x50",
+        "positionToReplaceWithTextInputBaseZero": "10"
+      },
+      "description": "Set Rx gain value.  The value in the text input box should be a 1-byte integer, and it will be passed as parameter 1 in the command."
     }
 
   ],
+
+
+
+
 
 
   "buttons": [
@@ -50,6 +64,37 @@
       "description": "Set Tx or Pulse voltage via the DAC output to around designated nominal range when using a -200VDC module with source VDD of 3.3VDC rail.",
       "returnDataTo" : "chart"
     },
+
+
+
+
+
+
+
+
+    {
+      "title": "Set Tx Channel 1",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x50"
+      },
+      "description": "Set Tx channel to 1",
+      "returnDataTo" : "chart"
+    },
+
+    {
+      "title": "Set Tx Channel 2",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x02, 0x00, 0x02, 0x00, 0x00, 0x50"
+      },
+      "description": "Set Tx channel to 1",
+      "returnDataTo" : "chart"
+    },
+
+
+
+
 
 
 
@@ -103,26 +148,26 @@
 
 
 
-        {
-          "title": "Set PAQ Mode Single",
-          "command": {
-            "type": "hexCsvBytes",
-            "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x50"
-          },
-          "description": "Set PAQ mode to single pulse and acquire",
-          "returnDataTo" : "chart"
+      {
+        "title": "Set PAQ Mode Single and Get a PAQ WF",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x50"
         },
+        "description": "Set PAQ mode to single pulse and acquire",
+        "returnDataTo" : "chart"
+      },
 
 
-        {
-          "title": "Set PAQ Mode Continuous",
-          "command": {
-            "type": "hexCsvBytes",
-            "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x50"
-          },
-          "description": "Set PAQ mode to continuous acquisition",
-          "returnDataTo" : "chart"
+      {
+        "title": "Set PAQ Mode Continuous",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x50"
         },
+        "description": "Set PAQ mode to continuous acquisition",
+        "returnDataTo" : "chart"
+      },
 
 
 
@@ -132,52 +177,59 @@
 
 
     {
-      "title": "Get WF Same Chan Rx Gain 1",
+      "title": "Basic CH 1 Cont PAQ Setup Chain",
       "command": {
         "type": "hexCsvBytesChained",
         "chainedCmdDelayMs" : "1500",
         "chainedCmdTimeoutMs" : "1000",
         "chainedCmdCompleteChar" : "0x0D",
         "value": [
-          "0x53, 0xCA, 0x0A, 0x00, 0x50",
-          "0x53, 0xC5, 0x00, 0x00, 0x50",
-          "0x53, 0xC7, 0x00, 0x00, 0x50",
-          "0x53, 0xC8, 0x01, 0x00, 0x50",
-          "0x53, 0xC9, 0x01, 0x00, 0x50",
-          "0x53, 0xF4, 0x01, 0x00, 0x50",
-          "0x53, 0xC4, 0x00, 0x00, 0x50",
-          "0x53, 0xC3, 0x00, 0x00, 0x50"
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x50",
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x50",
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x50",
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x0f, 0x00, 0x00, 0x50",
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x50"
         ],
         "description-summary" : "Command chain/sequence as implemented in UT software style Send Settings and PAC, without pulse shaping and duration controls.",
         "description-detail" : [
-          "1. Set Rx Delay [~usec]",
-          "2. (TODO - This one takes a while to execute) Set Tx Gain (Pulse Voltage, if implemented on the hardware, typically ignored by the firmware if not implemented on the hardware)",
-          "3. Init Pulse Control Cmd",
-          "4. Tx Chan Select (base 1)",
-          "5. Rx Chan Select (base 1)",
-          "6. Rx Gain [x3dB steps]",
-          "7. Pulse and Acquire Cmd (called with arg1 = 0 to P+Aq from the RAM-stored settings just sent to the device)",
-          "8. Get current DMA waveforms (the P+Aq command is sent with arguments that only cause the capture, not the sending of the resulting WF)"
+          "1. Set Rx Ch 1",
+          "2. Set Tx Ch 1",
+          "3. Set Rx Gain 0x00",
+          "4. Set HIVDC Tx voltage to nominal",
+          "5. Start continuous PAQ"
         ]
       },
       "description": "Pulse and Acquire setting the Tx and Rx channels, and the Tx and Rx gains, oh and Rx delay too",
       "returnDataTo" : "chart"
     },
 
-
-
-
-
-
-
     {
-      "title": "Example Button Title",
+      "title": "Basic CH 2 Cont PAQ Setup Chain",
       "command": {
-        "type": "hexCsvBytes",
-        "value": "0x53, 0x00, 0x01, 0x02, 0x50"
+        "type": "hexCsvBytesChained",
+        "chainedCmdDelayMs" : "1500",
+        "chainedCmdTimeoutMs" : "1000",
+        "chainedCmdCompleteChar" : "0x0D",
+        "value": [
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x50",
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x02, 0x00, 0x02, 0x00, 0x00, 0x50",
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x50",
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x0f, 0x00, 0x00, 0x50",
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x50"
+        ],
+        "description-summary" : "Command chain/sequence as implemented in UT software style Send Settings and PAC, without pulse shaping and duration controls.",
+        "description-detail" : [
+          "1. Set Rx Ch 1",
+          "2. Set Tx Ch 1",
+          "3. Set Rx Gain 0x00",
+          "4. Set HIVDC Tx voltage to nominal",
+          "5. Start continuous PAQ"
+        ]
       },
-      "description": "Goes to the title property of the button, which appears in tooltip text usually",
-      "returnDataTo" : "log"
+      "description": "Pulse and Acquire setting the Tx and Rx channels, and the Tx and Rx gains, oh and Rx delay too",
+      "returnDataTo" : "chart"
     }
+
+
   ]
 }

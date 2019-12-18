@@ -56,11 +56,34 @@ var line = d3.line()
 var dataset = [0,.2,.3,.4,.5,.6,.7,.8,.9]; // d3.range(n).map(function(d) { return {"y": d3.randomUniform(1)() } })
 
 // 1. Add the SVG to the page and employ #2
+/*
 var svg = d3.select('#chart').append("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+    */
+var svg = d3.select('#chart')
+  .append("div")
+  .classed("svg-container", true)
+  .append("svg")
+  // Responsive SVG needs these 2 attributes and no width and height attr.
+ .attr("preserveAspectRatio", "xMinYMin meet")
+ .attr("viewBox", "0 0 900 300")
+ // Class to make it responsive.
+ .classed("svg-content-responsive", true)
+ // Fill with a rectangle for visualization.
+ //.append("rect")
+ //.classed("rect", true)
+ .append("svg")
+ .attr("width", width + margin.left + margin.right)
+ .attr("height", height + margin.top + margin.bottom)
+ .append("g")
+ .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+// Trying instead of above, responsive svg, per:
+// https://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
+
 
 // 3. Call the x axis in a group tag
 svg.append("g")
@@ -114,15 +137,19 @@ var reqId;
 //var chartBuf = Buffer.alloc(4096, 0);
 function renderChart() {
 
-  reqId = requestAnimationFrame(renderChart);
+  try {
 
-  // Get the latest data snapshot
-  svg.selectAll("path.line").remove();
-  svg.append("path")
-    .datum(chartBuf)
-    .attr("class", "line")
-    .attr("d", line);
+    reqId = requestAnimationFrame(renderChart);
 
+    // Get the latest data snapshot
+    svg.selectAll("path.line").remove();
+    svg.append("path")
+      .datum(chartBuf)
+      .attr("class", "line")
+      .attr("d", line);
+  } catch ( e ) {
+    console.log("Error in renderChart: " + e);
+  }
   //console.log('c');
 
 }
