@@ -28,12 +28,13 @@ var chartContainer = document.getElementById('chart');
 // Typically uses window.innerHeight / .innerWidth
 var chartHeight = 300
 var chartWidth = 900
-var margin = {top: 50, right: 50, bottom: 50, left: 50}
+var _margin = 20
+var margin = {top: _margin, right: _margin, bottom: _margin, left: _margin}
   , width = chartWidth - margin.left - margin.right // Use the window's width
   , height = chartHeight - margin.top - margin.bottom; // Use the window's height
 
 // The number of datapoints
-var n = 4096; //5000; //2500; //5000;
+var n = 4095; //4096 //5000; //2500; //5000;
 
 // 5. X scale will use the index of our data
 var xScale = d3.scaleLinear()
@@ -53,7 +54,7 @@ var line = d3.line()
     .curve(d3.curveMonotoneX) // apply smoothing to the line
 
 // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
-var dataset = [0,.2,.3,.4,.5,.6,.7,.8,.9]; // d3.range(n).map(function(d) { return {"y": d3.randomUniform(1)() } })
+var dataset = [0x00,0x01,0x03,0x07,0x0f,0x1f,0x3f,0x7f,0xff]; // d3.range(n).map(function(d) { return {"y": d3.randomUniform(1)() } })
 
 // 1. Add the SVG to the page and employ #2
 /*
@@ -69,17 +70,19 @@ var svg = d3.select('#chart')
   .append("svg")
   // Responsive SVG needs these 2 attributes and no width and height attr.
  .attr("preserveAspectRatio", "xMinYMin meet")
- .attr("viewBox", "0 0 900 300")
+ .attr("viewBox", "0 0 " + chartWidth + " " + chartHeight)
  // Class to make it responsive.
  .classed("svg-content-responsive", true)
  // Fill with a rectangle for visualization.
  //.append("rect")
  //.classed("rect", true)
  .append("svg")
- .attr("width", width + margin.left + margin.right)
- .attr("height", height + margin.top + margin.bottom)
+ .attr("width", chartWidth) //width + margin.left + margin.right)
+ .attr("height", chartHeight) //height + margin.top + margin.bottom)
  .append("g")
- .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+ //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+ //.attr("transform", "translate(" + (margin.left + margin.right) + "," + (margin.bottom + margin.top) + ")");
+ .attr("transform", "translate(" + (margin.left + margin.right) + "," + 0 + ")");
 
 // Trying instead of above, responsive svg, per:
 // https://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
