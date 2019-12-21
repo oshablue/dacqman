@@ -235,11 +235,11 @@
         <div class="card blue-grey darken-1">
           <div class="card-content white-text">
             <span class="card-title">
-              <span class="chart-title">Chart Title</span>
+              <span class="chart-title">Waveform Display</span>
             </span>
             <div id="chart"></div>
             <div class="card-action">
-              <a href="#">Link</a>
+              <a href="#">Double-click chart background to reset zoom</a>
             </div>
           </div>
         </div>
@@ -414,6 +414,15 @@
             // (data port) errors that might be creating the malloc errors in these
             // revisions
             chunk.copy(chartBuf, 0, 0, 4095);
+
+            // Debugging:
+            console.log(chartBuf.slice(0,11)); // checking the SOF section
+            // The 5th bit [4] is the sequence_id - it begins at 1 and wraps after 255
+            // Thus we are only counting 255 WFs maximum (not 256)
+            // Though, need to check that after the RST signal - as this is for
+            // just after power up as for the first WF returning 1 for seq_id
+
+
             //}
             //}
             //n++;

@@ -25,6 +25,8 @@
 var chartContainer = document.getElementById('chart');
 
 
+var zoom = d3.zoom().scaleExtent([1, 100]);
+
 // Typically uses window.innerHeight / .innerWidth
 var chartHeight = 300
 var chartWidth = 900
@@ -54,7 +56,11 @@ var line = d3.line()
     .curve(d3.curveMonotoneX) // apply smoothing to the line
 
 // 8. An array of objects of length N. Each object has key -> value pair, the key being "y" and the value is a random number
-var dataset = [0x00,0x01,0x03,0x07,0x0f,0x1f,0x3f,0x7f,0xff]; // d3.range(n).map(function(d) { return {"y": d3.randomUniform(1)() } })
+var dataset = []; //= [0x00,0x01,0x03,0x07,0x0f,0x1f,0x3f,0x7f,0xff]; // d3.range(n).map(function(d) { return {"y": d3.randomUniform(1)() } })
+var j;
+for ( j = 0; j < 4095; j++ ) {
+  dataset.push(127 * Math.sin(2*3.14159/4095*j*4) + 127);
+}
 
 // 1. Add the SVG to the page and employ #2
 /*
@@ -64,26 +70,41 @@ var svg = d3.select('#chart').append("svg")
   .append("g")
     .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
     */
+/*var zoom = d3.zoom()
+  .x(x)
+  .y(y)
+  .on("zoom", zoomed);*/
+
 var svg = d3.select('#chart')
   .append("div")
   .classed("svg-container", true)
   .append("svg")
+  .call(zoom.on("zoom", zoomed))
+  .on("dblclick.zoom", null)          // cancels double-clicking to zoom
+  .on("dblclick", ourDlbClick)
   // Responsive SVG needs these 2 attributes and no width and height attr.
  .attr("preserveAspectRatio", "xMinYMin meet")
  .attr("viewBox", "0 0 " + chartWidth + " " + chartHeight)
  // Class to make it responsive.
  .classed("svg-content-responsive", true)
- // Fill with a rectangle for visualization.
- //.append("rect")
- //.classed("rect", true)
+ // This, below, works, but does not redraw and lines get thicker etc.
+ //.call(d3.zoom().on("zoom", function () {
+ //svg.attr("transform", d3.event.transform)
+
+ //}))
  .append("svg")
+
  .attr("width", chartWidth) //width + margin.left + margin.right)
  .attr("height", chartHeight) //height + margin.top + margin.bottom)
+ //.call(zoom)
+
  .append("g")
+ .classed("chartBody", true)
  //.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
  //.attr("transform", "translate(" + (margin.left + margin.right) + "," + (margin.bottom + margin.top) + ")");
- .attr("transform", "translate(" + (margin.left + margin.right) + "," + 0 + ")");
+ .attr("transform", "translate(" + (margin.left + margin.right) + "," + 0 + ")")
 
+ ;
 // Trying instead of above, responsive svg, per:
 // https://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
 
@@ -101,7 +122,8 @@ svg.append("g")
 
 // 9. Append the path, bind the data, and call the line generator
 svg.append("path")
-    .data(dataset) // 10. Binds data to the line // was datum()
+    //.data(dataset) // 10. Binds data to the line // was datum()
+    .datum(dataset)
     .attr("class", "line") // Assign a class for styling
     .attr("d", line); // 11. Calls the line generator
 
@@ -115,9 +137,53 @@ svg.append("path")
     .attr("r", 3);*/
 
 
+
+function ourDlbClick() {
+  svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.scale(1).translate(margin.left + margin.right,0));
+
+}
+
+
+function zoomed() {
+  //console.log(d3.event.translate);  // v3
+  //console.log(d3.event.scale);      // v3
+  console.log(d3.event.transform);    // v5
+  var currentTransform = d3.event.transform;
+
+  svg.attr("transform", currentTransform);
+  d3.axisBottom().scale(d3.event.transform.rescaleX(xScale));
+  d3.axisLeft().scale(d3.event.transform.rescaleY(yScale));
+
+
+
+
+
+  /*svg.select(".x.axis").call(xAxis);
+  svg.select(".y.axis").call(yAxis);
+  svg.select(".line")
+      .attr("class", "line")
+      .attr("d", line);*/
+
+      // Works, but just zooms into the svg, thus eg thicker lines,
+      // not good for actual data view zooming
+      //svg.attr("transform", d3.event.transform);
+}
+
+
+
+
+
+
+
+
+
+
+
 // From previous explicit call to update data with provided data set
 // versus using requestAnimationFrame...
 async function update(newdata) {
+  // DEBUG ALERT - aborting this function for now
+  return;
   //svg.selectAll(".dot").remove();
   svg.selectAll("path.line").remove();
   svg.append("path")

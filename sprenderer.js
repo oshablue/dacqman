@@ -548,6 +548,7 @@ var openDataPort = function(portHash) {
   //var n = 0;
   dport.on('data', function (data) {
     //console.log ("dport.on data");
+    //console.log(data);
 
     // Freq measuring stuff
     /*
