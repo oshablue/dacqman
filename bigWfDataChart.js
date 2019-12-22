@@ -35,13 +35,13 @@ var margin = {top: _margin, right: _margin, bottom: _margin, left: _margin}
   , width = chartWidth - margin.left - margin.right // Use the window's width
   , height = chartHeight - margin.top - margin.bottom; // Use the window's height
 
-
+var strokeWidth = 1;
 
 // Please See:
 // https://stackoverflow.com/questions/57007378/d3-zoom-and-drag-with-svg-axes-and-canvas-chart
 // As to why we are specifying all three of these below:
 var zoom = d3.zoom()
-  .scaleExtent([1, 10])
+  .scaleExtent([1, 20])
   // left, top ... right, bottom
   .translateExtent([[0,0],[chartWidth, chartHeight]]) // Unfortunately, this is dependent on window sizing, so would need to grab real-world size data
   .extent([[0,0],[chartWidth, chartHeight]]) // operates totally differently
@@ -68,13 +68,18 @@ var line = d3.line()
     .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
     .y(function(d) { return yScale(d); }) // yScale(d.y); }) // set the y values for the line generator
     .curve(d3.curveMonotoneX) // apply smoothing to the line
+    ;
 
-// TODO - we should add some high freq low amp overlay to test semantic zoom
+// Add some high freq low amp overlay to test semantic zoom
 // over geometric zoom ...
 var dataset = [];
 var j;
+var big;
+var little;
 for ( j = 0; j < 4095; j++ ) {
-  dataset.push(127 * Math.sin(2*3.14159/4095*j*4) + 127);
+  big = 126 * Math.sin(2*3.14159/4095*j*4) + 127;
+  little = 2 * Math.sin(2*3.14159/4095*j*800+2);
+  dataset.push(big + little);
 }
 
 
@@ -122,7 +127,9 @@ svg.append("g")
 svg.append("path")
     .datum(dataset)
     .attr("class", "line")
-    .attr("d", line);
+    .attr("d", line)
+    .style("stroke-width", strokeWidth)
+    ;
 
 
 
@@ -154,9 +161,9 @@ function zoomed() {
   d3.axisBottom().scale(currentTransform.rescaleX(xScale));
   d3.axisLeft().scale(currentTransform.rescaleY(yScale));
 
-  //
-  // TODO - move now from geometric zoom to semantic zoom
-  //
+  svg.selectAll("path.line")
+    .style("stroke-width", strokeWidth / currentTransform.k)
+    ;
 
 }
 

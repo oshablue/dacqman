@@ -54,7 +54,7 @@ path {
 .line {
     fill: none;
     stroke: #ffab00;
-    stroke-width: 1;
+    /*stroke-width: 1;*/
 }
 /* Style the dots by assigning a fill and stroke */
 .dot {
