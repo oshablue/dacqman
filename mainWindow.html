@@ -75,12 +75,18 @@
   -->
 
   <main>
-
+    <!-- TODO yeah, figure out the sicenav application and update when to show
+         as well as the burger icon and why media query overrides are not
+         working  -->
     <nav>
+      <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
       <div class="nav-wrapper">
-        <a href="" class="brand-logo">Viffy</a>
+        <a href="" class="brand-logo center">Viffy</a>
+        <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
       </div>
     </nav>
+    <!-- <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a> -->
+    <!-- I kinda miss bootstrap sometimes ... -->
 
     <ul></ul>
 
@@ -195,8 +201,8 @@
         <br>
         <div class="container-buttons">
           <div class="row">
-            <div class="card-action col s6">
-              <p>Standard Buttons</p>
+            <div class="card-action col s5">
+              <p class="custom-control-section">Standard Buttons</p>
               <span id="controlPortOpenBtnSpan">
                 <button name="controlPortOpenBtn" id="controlPortOpenBtn" onclick="controlPortOpen()">Open</button></span>
               <span id="controlPortCloseBtnSpan">
@@ -205,22 +211,25 @@
                 <button name="controlPortTestWrite" id="controlPortTestWrite" onclick="controlTestWrite()">Test Write</button></span>
             </div>
             <div class="card-action row">
-              <div class="col s6">
-                <span id="stuffToSendSpan">
-                  <div class="input-field">
-                    <i class="material-icons prefix">account_circle</i>
-                    <input type="text" id="stuffToSend" placeholder="Put (or Type) some stuff here to send" class="validate">
-                    <label for="stuffToSend">Stuff to Send</label>
-                    <span class="helper-text" data-error="wrong" data-success="right">Type (a) char(s) to send as ASCII=>0xhh</span>
-                  </div></span>
-                <span id="sendButtonSpan">
-                  <button id="sendButton" onclick="controlPortSendStuff()">Send</button>
-                </span>
+              <div class="col s7">
+                <div class="row">
+                  <div id="sendButtonSpan" class="col s2 right-align">
+                    <button id="sendButton" onclick="controlPortSendStuff()">Send</button>
+                  </div>
+                  <div id="stuffToSendSpan" class="col s10">
+                    <div class="input-field">
+                      <i class="material-icons prefix">account_circle</i>
+                      <input type="text" id="stuffToSend" placeholder="Put (or Type) some stuff here to send" class="validate">
+                      <label for="stuffToSend">Stuff to Send</label>
+                      <span class="helper-text" data-error="wrong" data-success="right">Type (a) char(s) to send as ASCII=>0xhh</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div><!-- row -->
           <div class="card-action">
-            <p>Custom Control Buttons Loaded From File:</p>
+            <p class="custom-control-section">Custom Control Buttons Loaded From File</p>
             <div id="controlPortButtonsFromFileDiv" class="row"></div>
           </div>
         </div>
@@ -299,7 +308,9 @@
   -->
 
   <!--https://materializecss.com/sidenav.html -->
-  <ul id="slide-out" class="sidenav sidenav-fixed">
+
+  <ul id="slide-out" class="sidenav sidenav-close"> <!-- sidenav-fixed"> -->
+
       <li><a href="#!">First Sidebar Link</a></li>
       <li><a href="#!">Second Sidebar Link</a></li>
       <li class="no-padding">
@@ -317,19 +328,23 @@
           </li>
         </ul>
       </li>
+
+      <!--<li><a class="sidenav-close" href="#!">Close Menu</a></li>-->
     </ul>
-    <!--<ul class="right hide-on-med-and-down">
-      <li><a href="#!">First Sidebar Link</a></li>
-      <li><a href="#!">Second Sidebar Link</a></li>
-      <li><a class="dropdown-trigger" href="#!" data-target="dropdown1">Dropdown<i class="material-icons right">arrow_drop_down</i></a></li>
-      <ul id='dropdown1' class='dropdown-content'>
-        <li><a href="#!">First</a></li>
-        <li><a href="#!">Second</a></li>
-        <li><a href="#!">Third</a></li>
-        <li><a href="#!">Fourth</a></li>
-      </ul>
-    </ul>-->
+
     <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -646,6 +661,11 @@
           .attr("id", "divCtrlGrp" + cg.name.replace(/\s/g,''))
           .addClass("control-group col s4")
           ;
+        var groupTitle = $(document.createElement("p"))
+          .text(cg.name)
+          .addClass("control-group")
+          ;
+        d.append(groupTitle);
         console.log(buttons.length + " control port buttons in controlGroup " + cg.name + " found.");
         buttons.forEach( function (b) {
           var newb = $('<button/>')
@@ -660,17 +680,27 @@
       });
       $('#controlPortButtonsFromFileDiv').append(cgRow);
 
+      var textInputControlTitle = $(document.createElement("p"))
+        .text("Custom Control Text Inputs Loaded From File")
+        .addClass("custom-control-section")
+        ;
+      $('#controlPortButtonsFromFileDiv').append(textInputControlTitle);
       var inputCnt = 1;
       var inputRowDiv = $('<div>')
         .prop('id', "divTextInputRow" + inputCnt)
         .addClass("row")
         ;
+      // To make 3 pairs per row, change below from s2 to s3
+      // and change below further: % 4 to % 3 (change the modulus)
       textInputs.forEach( function (ti) {
         var smallDiv = $('<div>')
-          .addClass("col s3 right-align");
+          .addClass("col s2 right-align");
         var smallDiv2 = $('<div>')
-          .addClass("col s1");
-        var span = $("<span>").text(ti.label);
+          .addClass("col s1 left-align");
+        //var wrapTogether = $('<div>')
+        //  .addClass("text-input-pair");
+        //console.log($(ti.label.split(" ")).last());
+        var span = $("<span>").text(ti.label.split(" ").pop()); //ti.label);
         var input = $("<input type='text'>")
           .addClass("input-field")
           .prop('title', ti.description)
@@ -687,10 +717,12 @@
         $(label).append(input).append(span);
         var c1 = $(smallDiv).append(button);
         var c2 = $(smallDiv2).append(label);
+        //$(wrapTogether).append(c1).append(c2);
+        //$(inputRowDiv).append(wrapTogether); // c1).append(c2);
         $(inputRowDiv).append(c1).append(c2);
         // Create the text inputs, grouped by rows of 3
         console.log("inputCnt: " + inputCnt + " textInputs.length: " + textInputs.length );
-        if ( inputCnt % 3 == 0 ) {
+        if ( inputCnt % 4 == 0 ) {
           $('#controlPortButtonsFromFileDiv').append(inputRowDiv);
           inputRowDiv = $('<div>')
             .prop('id', "divTextInputRow" + inputCnt)

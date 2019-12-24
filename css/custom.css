@@ -1,15 +1,18 @@
 header, main, footer {
-  padding-left: 300px;
+  /* uncomment this when using the sidenav-fixed styling that will keep the
+   * sidenav displayed when the window is wide enough
+   */
+  /*padding-left: 300px;*/
 }
 
 
 .container-buttons {
-  padding: 4px;
+  padding: 2px;
   /*border: 1px dotted steelblue;*/
 }
 .container-buttons button {
-  margin: 4px;
-  /*padding: 4px;*/
+  margin: 2px;
+  padding: 0 4px;
 }
 
 pre.pre-scrollable {
@@ -24,10 +27,69 @@ pre {
 }
 
 .control-group {
-  margin: 0;
+  margin-bottom: 1px;
   border: 1px solid rgb(221,221,221);
 }
+/* not implemented right now
+.text-input-pair {
+  margin: 0;
+  border: 1px solid rgb(221,221,221);
+}*/
 
+/* Group items, like controlGroups */
+.control-group.col {
+  padding: 0;
+  margin-bottom: 4px;
+}
+#divCtrlGrp.row {
+  padding-bottom: 2px;
+  border-bottom: 1px solid rgb(200,200,200);
+  margin-bottom: 2px;
+}
+#controlPortButtonsFromFileDiv input[type=text] {
+  margin-bottom: 2px;
+  margin-right: 2rem;
+  height: 2.4rem;
+}
+#controlPortButtonsFromFileDiv .col.s2 {
+  padding-right:0;
+}
+#controlPortButtonsFromFileDiv .col.s1 {
+  padding-left:2px;
+}
+#controlPortButtonsFromFileDiv .row {
+  margin-top: 4px;
+}
+#sendButton {
+  height: 3rem;
+}
+#sendButtonSpan {
+  padding-right: 0;
+}
+p.control-group {
+  background-color: #c7ebe8;
+  font-weight: 300;
+  font-size: 1.2em;
+}
+p.custom-control-section {
+  font-size: 1.3em;
+  font-weight: 500;
+  padding-top: 4px;
+}
+
+
+
+
+
+
+/* This is the default side nav popout/in breakpoint */
+/*@media only screen and (max-width: 992px) {*/
+/*@media only screen and (max-width: 992px) {
+  .sidenav.sidenav-fixed {
+    -webkit-transform: translateX(-105%);
+    transform: translateX(-105%);
+  }
+}*/ /* TODO this doesn't override ... */
 
 
 
@@ -38,6 +100,13 @@ pre {
     padding-left: 2px;
   }
 }
+
+
+
+
+
+
+
 
 
 
@@ -61,6 +130,11 @@ li.active > a.collapsible-header i.sidenav-dd-expand {
 
 
 /* Materializecss overrides */
+
+/* Some general condensing */
+html {
+  line-height: 1.1;
+}
 
 /* Header showing App name and click = reload */
 nav {
@@ -108,10 +182,14 @@ a.collapsible-header {
 
 /* Condense text inputs a bit */
 .input-field .prefix ~ input {
-  height: 2rem;
+  height: 1.5rem;
+  margin-bottom: 1px;
 }
 .input-field {
   margin-bottom: 0;
+}
+.input-field .helper-text {
+  min-height: 8px;
 }
 
 /* General layout condensing */
@@ -119,13 +197,17 @@ a.collapsible-header {
   margin-bottom: 0;
 }
 
-/* Group items, like controlGroups */
-.control-group.col {
-  padding: 0;
-}
-
 
 /* End: Materializecss overrides */
+
+
+
+
+
+
+
+
+
 
 
 
