@@ -21,56 +21,84 @@
         "positionToReplaceWithTextInputBaseZero": "10"
       },
       "description": "Set Rx gain value.  The value in the text input box should be a 1-byte integer, and it will be passed as parameter 1 in the command."
+    },
+
+    {
+      "label": "Set Rx Gain2",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x50",
+        "positionToReplaceWithTextInputBaseZero": "10"
+      },
+      "description": "Set Rx gain value.  The value in the text input box should be a 1-byte integer, and it will be passed as parameter 1 in the command."
+    },
+
+    {
+      "label": "Set Rx Gain3",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x02, 0x00, 0x00, 0x00, 0x00, 0x50",
+        "positionToReplaceWithTextInputBaseZero": "10"
+      },
+      "description": "Set Rx gain value.  The value in the text input box should be a 1-byte integer, and it will be passed as parameter 1 in the command."
     }
+
 
   ],
 
 
 
+"controlGroups" : [
 
 
+  {
+    "name" : "Tx Voltage",
 
-  "buttons": [
+    "buttons": [
 
-    {
-      "title": "Set Tx Voltage via DAC Output to 0x00 (zero-est)",
-      "command": {
-        "type": "hexCsvBytes",
-        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x50"
+      {
+        "title": "Set Tx Voltage via DAC Output to 0x00 (zero-est)",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x50"
+        },
+        "description": "Set Tx or Pulse voltage via the DAC output to near-est possible zero.",
+        "returnDataTo" : "chart"
       },
-      "description": "Set Tx or Pulse voltage via the DAC output to near-est possible zero.",
-      "returnDataTo" : "chart"
-    },
 
 
-    {
-      "title": "Set Tx Voltage via DAC Output to 0x05 (Med)",
-      "command": {
-        "type": "hexCsvBytes",
-        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x05, 0x00, 0x00, 0x50"
+      {
+        "title": "Set Tx Voltage via DAC Output to 0x05 (Med)",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x05, 0x00, 0x00, 0x50"
+        },
+        "description": "Set Tx or Pulse voltage via the DAC output to around middle range when using a -200VDC module with source VDD of 3.3VDC rail.",
+        "returnDataTo" : "chart"
       },
-      "description": "Set Tx or Pulse voltage via the DAC output to around middle range when using a -200VDC module with source VDD of 3.3VDC rail.",
-      "returnDataTo" : "chart"
-    },
 
 
+      {
+        "title": "Set Tx Voltage via DAC Output to 0x0f (Nominal Normal)",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x0f, 0x00, 0x00, 0x50"
+        },
+        "description": "Set Tx or Pulse voltage via the DAC output to around designated nominal range when using a -200VDC module with source VDD of 3.3VDC rail.",
+        "returnDataTo" : "chart"
+      }
 
-    {
-      "title": "Set Tx Voltage via DAC Output to 0x0f (Nominal Normal)",
-      "command": {
-        "type": "hexCsvBytes",
-        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x0f, 0x00, 0x00, 0x50"
-      },
-      "description": "Set Tx or Pulse voltage via the DAC output to around designated nominal range when using a -200VDC module with source VDD of 3.3VDC rail.",
-      "returnDataTo" : "chart"
-    },
-
-
-
+    ]
+  },
 
 
 
 
+{
+
+  "name" : "Tx Channel",
+
+  "buttons" : [
 
     {
       "title": "Set Tx Channel 1",
@@ -90,13 +118,19 @@
       },
       "description": "Set Tx channel to 1",
       "returnDataTo" : "chart"
-    },
+    }
+  ]
+},
 
 
 
 
 
+{
 
+  "name" : "Rx Channel",
+
+  "buttons" : [
 
     {
       "title": "Set Rx Channel 1",
@@ -117,8 +151,20 @@
       },
       "description": "Set Rx channel to 2 (parameter = 0x02 - firmware handles the base 0x00 = Ch 1 part",
       "returnDataTo" : "chart"
-    },
+    }
+  ]
+},
 
+
+
+
+
+
+{
+
+  "name" : "Rx Gain",
+
+  "buttons" : [
 
     {
       "title": "Set Rx Gain to 0 (Min)",
@@ -139,7 +185,9 @@
       },
       "description": "Set Rx Gain to 0x0F, the maximum",
       "returnDataTo" : "chart"
-    },
+    }
+  ]
+},
 
 
 
@@ -147,6 +195,12 @@
 
 
 
+
+{
+
+  "name" : "PAQ Mode",
+
+  "buttons" : [
 
       {
         "title": "Set PAQ Mode Single and Get a PAQ WF",
@@ -178,7 +232,9 @@
         },
         "description": "Set PAQ mode to continuous acquisition while channel-change scanning all channels",
         "returnDataTo" : "chart"
-      },
+      }
+    ]
+  },
 
 
 
@@ -186,6 +242,11 @@
 
 
 
+{
+
+  "name" : "Chained Commands",
+
+  "buttons" : [
 
     {
       "title": "Basic CH 1 Cont PAQ Setup Chain",
@@ -241,6 +302,9 @@
       "returnDataTo" : "chart"
     }
 
-
   ]
+}
+]
+
+
 }

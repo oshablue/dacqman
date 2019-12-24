@@ -21,6 +21,10 @@
 //
 // Excellent d3 zoom how-to type of manual along with svg vs canvas (or mixed)
 // https://www.freecodecamp.org/news/get-ready-to-zoom-and-pan-like-a-pro-after-reading-this-in-depth-tutorial-5d963b0a153e/
+// https://github.com/larsvers/Understanding-Zoom/blob/master/zoom_step_01.html
+//
+// d3 and semantic zoom behavior of the drawn lines:
+// https://www.dashingd3js.com/lessons/d3-zoom-for-svg-lines-and-svg-paths-part-two
 
 
 
@@ -42,15 +46,17 @@ var strokeWidth = 1;
 // As to why we are specifying all three of these below:
 var zoom = d3.zoom()
   .scaleExtent([1, 20])
-  // left, top ... right, bottom
-  .translateExtent([[0,0],[chartWidth, chartHeight]]) // Unfortunately, this is dependent on window sizing, so would need to grab real-world size data
-  .extent([[0,0],[chartWidth, chartHeight]]) // operates totally differently
+  // The pair of the next two together is what allows us the sensible
+  // implementation of zoom and pan extents:
+  //              [[left, top] , [right, bottom]]
+  .translateExtent([[0,0],[chartWidth, chartHeight]])
+  .extent([[0,0],[chartWidth, chartHeight]])
   ;
 
 
 
 // The number of datapoints
-var n = 4095; //4096 //5000; //2500; //5000;
+var n = 4095;
 
 //
 var xScale = d3.scaleLinear()
@@ -148,11 +154,12 @@ function ourDlbClick() {
 }
 
 
+var currentTransform;
 function zoomed() {
   //console.log(d3.event.translate);  // v3
   //console.log(d3.event.scale);      // v3
-  console.log(d3.event.transform);    // v5
-  var currentTransform = d3.event.transform;
+  //console.log(d3.event.transform);    // v5
+  currentTransform = d3.event.transform;
 
   // Because we translate the chart above, we should do:
   currentTransform = currentTransform.translate(margin.left + margin.right,0);
@@ -180,44 +187,46 @@ function zoomed() {
 // From previous explicit call to update data with provided data set
 // versus using requestAnimationFrame...
 async function update(newdata) {
+
   // DEBUG ALERT - aborting this function for now
   return;
-  //svg.selectAll(".dot").remove();
+
   svg.selectAll("path.line").remove();
   svg.append("path")
       .datum(newdata) // 10. Binds data to the line
       .attr("class", "line") // Assign a class for styling
-      .attr("d", line); // 11. Calls the line generator
-  /*
-  svg.selectAll(".dot")
-      .data(newdata)
-      .enter().append("circle") // Uses the enter().append() method
-      .attr("class", "dot") // Assign a class for styling
-      .attr("cx", function(d, i) { return xScale(i) })
-      .attr("cy", function(d) { return yScale(d) }) //.y) })
-      .attr("r", 0.02);
-  */ // Maybe we don't need all that - just the path for fasterness?
+      .attr("d", line)
+      ;
 } // update
 
-// Continuous loop to update and pull data
+
+
+
+
 var reqId;
-//var chartBuf = Buffer.alloc(4096, 0);
+
 function renderChart() {
 
   try {
 
     reqId = requestAnimationFrame(renderChart);
 
+    var thisStrokeWidth = strokeWidth;
+    if ( currentTransform ) {
+      thisStrokeWidth = strokeWidth / currentTransform.k;
+    }
+
     // Get the latest data snapshot
     svg.selectAll("path.line").remove();
     svg.append("path")
       .datum(chartBuf)
       .attr("class", "line")
-      .attr("d", line);
+      .attr("d", line)
+      .style("stroke-width", thisStrokeWidth)
+      ;
   } catch ( e ) {
     console.log("Error in renderChart: " + e);
   }
-  //console.log('c');
 
 }
 
@@ -233,88 +242,3 @@ module.exports = {
   renderChart: renderChart,
   cancelRenderChart: cancelRenderChart,
 };
-
-/*
-var data = [0,1,2,3,4,5];
-
-// Set the dimensions of the canvas / graph
-var margin = {top: 30, right: 20, bottom: 30, left: 50},
-    width = 600 - margin.left - margin.right,
-    height = 270 - margin.top - margin.bottom;
-
-// Parse the date / time
-var parseDate = d3.time.format("%d-%b-%y").parse;
-
-// Set the ranges
-var x = d3.time.scale().range([0, width]);
-var y = d3.scale.linear().range([height, 0]);
-
-// Define the axes
-var xAxis = d3.svg.axis().scale(x)
-    .orient("bottom").ticks(5);
-
-var yAxis = d3.svg.axis().scale(y)
-    .orient("left").ticks(5);
-
-// Define the line
-var valueline = d3.svg.line()
-    .x(function(d,i) { return i; })
-    .y(function(d,i) { return d; });
-
-// Adds the svg canvas
-var svg = d3.select('#chart') //"body")
-    .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-        .attr("transform",
-              "translate(" + margin.left + "," + margin.top + ")")
-    .append("path")
-        .attr("class", "line")
-        .attr("d", valueline(data));
-
-// Add the X axis
-svg.append("g")
-  .attr("class", "x axis")
-  .attr("transform", "translate(0," + height + ")")
-  .call(xAxis);
-
-// Add the Y Axis
-svg.append("g")
-    .attr("class", "y axis")
-    .call(yAxis);
-
-// Scale the range of the data
-x.domain(d3.extent(data, function(d,i) { return i; }));
-y.domain([0, d3.max(data, function(d,i) { return d; })]);
-*/
-
-/*
-// Get the data
-d3.csv("data.csv", function(error, data) {
-    data.forEach(function(d) {
-        d.date = parseDate(d.date);
-        d.close = +d.close;
-    });
-
-    // Scale the range of the data
-    x.domain(d3.extent(data, function(d) { return d.date; }));
-    y.domain([0, d3.max(data, function(d) { return d.close; })]);
-
-    // Add the valueline path.
-    svg.append("path")
-        .attr("class", "line")
-        .attr("d", valueline(data));
-
-    // Add the X Axis
-    svg.append("g")
-        .attr("class", "x axis")
-        .attr("transform", "translate(0," + height + ")")
-        .call(xAxis);
-
-    // Add the Y Axis
-    svg.append("g")
-        .attr("class", "y axis")
-        .call(yAxis);
-
-});*/

@@ -23,24 +23,118 @@ pre {
     font-size: 0.9em;
 }
 
+.control-group {
+  margin: 0;
+  border: 1px solid rgb(221,221,221);
+}
+
+
+
+
+
+
 @media only screen and (max-width : 992px) {
   header, main, footer {
     padding-left: 2px;
   }
 }
 
+
+
+
+
+
+
+
 /* rot dropdown icons */
-li.active a.collapsible-header i.sidenav-dd-expand  {
-    -ms-transform: rotate(180deg); /* IE 9 */
-    -webkit-transform: rotate(180deg); /* Chrome, Safari, Opera */
-    transform: rotate(180deg);
+/* match any nested accordions */
+li.active > a.collapsible-header i.sidenav-dd-expand {
+    -ms-transform: rotate(90deg); /* IE 9 */
+    -webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
+    transform: rotate(90deg);
 }
+
+
+
+
+
+
+
+/* Materializecss overrides */
+
+/* Header showing App name and click = reload */
+nav {
+  line-height: 24px;
+  height: 24px;
+}
+a.brand-logo {
+  font-size: 1rem;
+}
+
+/* Condense the collapsible real estate a bit */
+.collapsible {
+  /* top right bottom left */
+  margin: 0.5rem 0 0.5rem 0;
+}
+a.collapsible-header {
+  /*       vert  horiz         */
+  /*       top   horiz   bott  */
+  padding: 0.3em 1em;
+}
+/* Line up the icons with the text */
+.collapsible-header i {
+  vertical-align: bottom;
+  font-size: 14px !important;
+}
+.collapsible-body {
+  padding: 1rem;
+}
+
+/* Condense the card content a bit */
+.card .card-content {
+  padding: 12px;
+}
+.card .card-content .card-title {
+  line-height: 14px;
+  margin-bottom: 4px;
+}
+.card .card-title {
+  font-size: 14px;
+  font-weight: 200;
+}
+.card .card-action {
+  padding: 4px;
+}
+
+/* Condense text inputs a bit */
+.input-field .prefix ~ input {
+  height: 2rem;
+}
+.input-field {
+  margin-bottom: 0;
+}
+
+/* General layout condensing */
+.row {
+  margin-bottom: 0;
+}
+
+/* Group items, like controlGroups */
+.control-group.col {
+  padding: 0;
+}
+
+
+/* End: Materializecss overrides */
+
+
+
 
 
 /* Chart */
 path {
     stroke: steelblue;
-    stroke-width: 2;
+    /*stroke-width: 2;*/
     fill: none;
 }
 .axis path,
@@ -61,12 +155,8 @@ path {
     fill: #ffab00;
     stroke: #fff;
 }
-#chart {
 
-}
-
-
-
+/* Part of responsive svg handling */
 .svg-container {
   display: inline-block;
   position: relative;
@@ -82,13 +172,5 @@ path {
   top: 0px;
   /*left: 0; */
 }
-
-svg .rect {
-  /*fill: gold;
-  stroke: steelblue;
-  stroke-width: 5px;*/
-}
-
-
 
 /* End: Chart */

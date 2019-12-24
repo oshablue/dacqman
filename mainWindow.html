@@ -77,8 +77,8 @@
   <main>
 
     <nav>
-      <div class="nav-wrapper sm">
-        <a href="" class="brand-logo center sm">Viffy</a>
+      <div class="nav-wrapper">
+        <a href="" class="brand-logo">Viffy</a>
       </div>
     </nav>
 
@@ -88,7 +88,7 @@
     <ul id="serialPortSelectionAccordion" class="collapsible collapsible-accordion">
       <li class="active">
         <a class="collapsible-header">Serial Port Selection
-          <i class="material-icons sidenav-dd-expand">arrow_drop_down</i>
+          <i class="material-icons medium sidenav-dd-expand">play_arrow</i>
         </a>
         <div class="collapsible-body">
 
@@ -104,7 +104,9 @@
 
           <ul class="collapsible collapsible-accordion">
             <li>
-              <a class="collapsible-header">Notes about the port discovery and implementation<i class="material-icons sidenav-dd-expand">arrow_drop_down</i></a>
+              <a class="collapsible-header">Notes about the port discovery and implementation
+                <i class="material-icons medium sidenav-dd-expand">play_arrow</i>
+              </a>
               <div class="collapsible-body">
                 <div id="ports-info">
                   <p>Note: These are serial ports returned by serialport which means that
@@ -138,8 +140,8 @@
 
     <!-- TODO place into card or section, etc.-->
     <div id="active_ports_ui_indicators">
-      <button id="btnDataPortStatus" class="btn-large blue hide" onclick="btnDataPortClick(this)">Data Port</button>
-      <button id="btnControlPortStatus" class="btn-large blue hide" onclick="btnControlPortClick(this)">Control Port</button>
+      <button id="btnDataPortStatus" class="btn-small blue hide" onclick="btnDataPortClick(this)">Data Port</button>
+      <button id="btnControlPortStatus" class="btn-small blue hide" onclick="btnControlPortClick(this)">Control Port</button>
     </div>
 
 
@@ -192,29 +194,34 @@
         </span>
         <br>
         <div class="container-buttons">
-          <div class="card-action">
-            <p>Standard Buttons</p>
-            <span id="controlPortOpenBtnSpan">
-              <button name="controlPortOpenBtn" id="controlPortOpenBtn" onclick="controlPortOpen()">Open</button></span>
-            <span id="controlPortCloseBtnSpan">
-              <button name="controlPortCloseBtn" id="controlPortCloseBtn" onclick="controlPortClose()">Close</button></span>
-            <span id="controlTestWriteSpan">
-              <button name="controlPortTestWrite" id="controlPortTestWrite" onclick="controlTestWrite()">Test Write</button></span>
-          </div>
-          <div class="card-action">
-            <span id="stuffToSendSpan">
-              <div class="input-field">
-                <i class="material-icons prefix">account_circle</i>
-                <input type="text" id="stuffToSend" placeholder="Put (or Type) some stuff here to send" class="validate">
-                <label for="stuffToSend">Stuff to Send</label>
-                <span class="helper-text" data-error="wrong" data-success="right">Helper text, yeah, just type some stuff up there to send</span>
-              </div></span>
-            <span id="sendButtonSpan">
-              <button id="sendButton" onclick="controlPortSendStuff()">Send</button></span>
-          </div>
+          <div class="row">
+            <div class="card-action col s6">
+              <p>Standard Buttons</p>
+              <span id="controlPortOpenBtnSpan">
+                <button name="controlPortOpenBtn" id="controlPortOpenBtn" onclick="controlPortOpen()">Open</button></span>
+              <span id="controlPortCloseBtnSpan">
+                <button name="controlPortCloseBtn" id="controlPortCloseBtn" onclick="controlPortClose()">Close</button></span>
+              <span id="controlTestWriteSpan">
+                <button name="controlPortTestWrite" id="controlPortTestWrite" onclick="controlTestWrite()">Test Write</button></span>
+            </div>
+            <div class="card-action row">
+              <div class="col s6">
+                <span id="stuffToSendSpan">
+                  <div class="input-field">
+                    <i class="material-icons prefix">account_circle</i>
+                    <input type="text" id="stuffToSend" placeholder="Put (or Type) some stuff here to send" class="validate">
+                    <label for="stuffToSend">Stuff to Send</label>
+                    <span class="helper-text" data-error="wrong" data-success="right">Type (a) char(s) to send as ASCII=>0xhh</span>
+                  </div></span>
+                <span id="sendButtonSpan">
+                  <button id="sendButton" onclick="controlPortSendStuff()">Send</button>
+                </span>
+              </div>
+            </div>
+          </div><!-- row -->
           <div class="card-action">
             <p>Custom Control Buttons Loaded From File:</p>
-            <div id="controlPortButtonsFromFileDiv"></div>
+            <div id="controlPortButtonsFromFileDiv" class="row"></div>
           </div>
         </div>
       </div>
@@ -271,9 +278,14 @@
         </div>
     </div></div>
 
+
+
+
+
+
   </main><!-- main -->
 
-
+<!-- end container div ? -->
 
 
 
@@ -618,27 +630,46 @@
       //
       // Control port
       const cp_path = "./user-data/control-port-buttons.json"
-      var buttons = require(cp_path).buttons;
+      // At current development, textInputs is at the top level
+      // while controlGroups have buttons children
+      var controlGroups = require(cp_path).controlGroups;
+      //var buttons = require(cp_path).buttons;
       var textInputs = require(cp_path).textInputs;
-      console.log(buttons.length + " control port buttons found.");
-      buttons.forEach( function (b) {
-        var newb = $('<button/>')
-          .text(b.title)
-          .prop('title', b.description)
-          .click(function () {
-            controlPortSendData(b.command, b.returnDataTo);
-          });
-        $('#controlPortButtonsFromFileDiv').append(newb);
-      });
 
+      var cgRow = $(document.createElement("div"))
+        .attr("id", "divCtrlGrp")
+        .addClass("row")
+        ;
+      controlGroups.forEach( function ( cg ) {
+        var buttons = cg.buttons;
+        var d = $(document.createElement("div"))
+          .attr("id", "divCtrlGrp" + cg.name.replace(/\s/g,''))
+          .addClass("control-group col s4")
+          ;
+        console.log(buttons.length + " control port buttons in controlGroup " + cg.name + " found.");
+        buttons.forEach( function (b) {
+          var newb = $('<button/>')
+            .text(b.title)
+            .prop('title', b.description)
+            .click(function () {
+              controlPortSendData(b.command, b.returnDataTo);
+            });
+          d.append(newb);
+        });
+        cgRow.append(d);
+      });
+      $('#controlPortButtonsFromFileDiv').append(cgRow);
+
+      var inputCnt = 1;
+      var inputRowDiv = $('<div>')
+        .prop('id', "divTextInputRow" + inputCnt)
+        .addClass("row")
+        ;
       textInputs.forEach( function (ti) {
-        var div = $('<div>')
-          .prop('id', "div" + ti.label.replace(/\s/g,''))
-          .addClass("row");
         var smallDiv = $('<div>')
-          .addClass("col s6 right-align");
+          .addClass("col s3 right-align");
         var smallDiv2 = $('<div>')
-          .addClass("col s6");
+          .addClass("col s1");
         var span = $("<span>").text(ti.label);
         var input = $("<input type='text'>")
           .addClass("input-field")
@@ -646,7 +677,7 @@
           .prop('id', "input" + ti.label.replace(/\s/g,''));
         var button = $("<button>")
           .text(ti.label)
-          .addClass("btn waves-effect waves-light")
+          .addClass("btn-small waves-effect waves-light")
           .prop('id', "button" + ti.label.replace(/\s/g, ''))
           .click(function () {
             controlPortSendDataFromTextInput(this, ti.command);
@@ -656,8 +687,19 @@
         $(label).append(input).append(span);
         var c1 = $(smallDiv).append(button);
         var c2 = $(smallDiv2).append(label);
-        $(div).append(c1).append(c2);
-        $('#controlPortButtonsFromFileDiv').append(div);
+        $(inputRowDiv).append(c1).append(c2);
+        // Create the text inputs, grouped by rows of 3
+        console.log("inputCnt: " + inputCnt + " textInputs.length: " + textInputs.length );
+        if ( inputCnt % 3 == 0 ) {
+          $('#controlPortButtonsFromFileDiv').append(inputRowDiv);
+          inputRowDiv = $('<div>')
+            .prop('id', "divTextInputRow" + inputCnt)
+            .addClass("row")
+            ;
+        } else if ( inputCnt == textInputs.length ) {
+          $('#controlPortButtonsFromFileDiv').append(inputRowDiv);
+        }
+        inputCnt++;
       });
 
     }
