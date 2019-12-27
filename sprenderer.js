@@ -1172,6 +1172,9 @@ var controlPortSendData = function ( commandAndType, returnDataTo) {
 
 
 var controlPortSendDataFromTextInput = function ( button, commandAndType) {
+
+  // At this draft, button may be a button control or a p with range child
+
   //alert('got it');
   //return;
 
@@ -1198,9 +1201,19 @@ var controlPortSendDataFromTextInput = function ( button, commandAndType) {
         }
         // The parent most div id can be found based on the button id
         // and thus only text input field can thus be found
-        var tiId = $(button).prop("id").replace("button","div");
-        var ti = $("#"+tiId).find("input[type='text']");
-        var val = parseInt( $(ti).val() );
+        // or we are handed a p object with child range ...
+        var ti;
+        var val;
+
+        ti = $(button).find('input[id^="range"]');
+
+        if ( ti.length > 0 ) {
+          val = parseInt(ti.val());
+        } else {
+          var tiId = $(button).prop("id").replace("button","div");
+          ti = $("#"+tiId).find("input[type='text']");
+          val = parseInt( $(ti).val() );
+        }
         if ( isNaN(val) ) {
           // TODO - throw
           alert ("controlPortSendDataFromTextInput: textInput:\r\n" + $(ti).val() + "\r\nain't working as parseInt -- Looks like it's not a number that can be parsed to in integer.");

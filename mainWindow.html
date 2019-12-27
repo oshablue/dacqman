@@ -603,6 +603,7 @@
       $('.collapsible').collapsible({
         accordion: true
       });
+
       loadButtons();
     //}
       // Just for testing the chart update function
@@ -619,6 +620,27 @@
       //$("#activeControlPort").show();
 
     }); // $(document).ready()
+
+
+
+
+
+    var showCustomControlsAsRangeSliders = function ( boolShowAsSliders ) {
+      if ( boolShowAsSliders ) {
+
+        parseAndShowCustomTextInputsAsRangeSliders();
+
+      } else {
+
+        parseAndShowCustomTextInputsAsButtonsAndTextInputs();
+
+      }
+    }
+
+
+
+
+
 
     function loadButtons() {
 
@@ -641,15 +663,11 @@
       });
 
 
-      // Dual-port style functions
-      //
-      // Control port
       const cp_path = "./user-data/control-port-buttons.json"
       // At current development, textInputs is at the top level
       // while controlGroups have buttons children
       var controlGroups = require(cp_path).controlGroups;
-      //var buttons = require(cp_path).buttons;
-      var textInputs = require(cp_path).textInputs;
+
 
       var cgRow = $(document.createElement("div"))
         .attr("id", "divCtrlGrp")
@@ -680,11 +698,126 @@
       });
       $('#controlPortButtonsFromFileDiv').append(cgRow);
 
+
+      var swChk = $('<input />', { type: 'checkbox' });
+      var swSpLev = $(document.createElement("span"))
+        .addClass("lever");
+      var swLbl = $(document.createElement("label"))
+        .append("Text Inputs")
+        .append(swChk)
+        .append(swSpLev)
+        .append("Range Sliders")
+        ;
+      var switchRangeOrTextInput = $(document.createElement("div"))
+        .addClass("switch")
+        .append(swLbl)
+        ;
       var textInputControlTitle = $(document.createElement("p"))
         .text("Custom Control Text Inputs Loaded From File")
         .addClass("custom-control-section")
+        .append(switchRangeOrTextInput)
         ;
-      $('#controlPortButtonsFromFileDiv').append(textInputControlTitle);
+      $('#controlPortButtonsFromFileDiv')
+        .append(textInputControlTitle)
+        ;
+
+      $(".switch").find("input[type=checkbox]").on("change",function() {
+        var boolShowAsRangeSlider = $(this).prop('checked');
+        showCustomControlsAsRangeSliders(boolShowAsRangeSlider);
+      });
+
+      parseAndShowCustomTextInputsAsButtonsAndTextInputs();
+
+
+    }
+
+
+
+
+
+
+    var loadTextInputs = function () {
+
+      // Dual-port style functions
+      //
+      // Control port
+      const cp_path = "./user-data/control-port-buttons.json"
+      // At current development, textInputs is at the top level
+      // while controlGroups have buttons children
+      //var controlGroups = require(cp_path).controlGroups;
+      //var buttons = require(cp_path).buttons;
+      var textInputs = require(cp_path).textInputs;
+
+      return textInputs;
+
+    }
+
+
+
+
+
+
+
+
+    var parseAndShowCustomTextInputsAsRangeSliders = function() {
+
+      var textInputs = loadTextInputs();
+
+      if ( textInputs.length < 1 ) {
+        return;
+      }
+
+      $("div[id^='divTextInputRow']")
+        .remove()
+        ;
+
+      var inputRowDiv = $('<div>')
+        .prop('id', "divTextInputRow") // + inputCnt)
+        .addClass("row")
+        ;
+
+      var myAddTo = $('#controlPortButtonsFromFileDiv');
+
+      var theRangeForm = $(document.createElement("form"))
+        .attr("action", "#");
+
+      textInputs.forEach( function(ti) {
+        var range = $(document.createElement("p"))
+          .text(ti.label)
+          .addClass("range-field")
+          .append($('<input />', { type: 'range'
+            , class: 'control-range'
+            , id: 'range' + ti.label.replace(/\s/g, '')
+            , min: ti.min, max: ti.max, step: 1
+            , value: ti.default
+          }));
+        $(range).on("change", function() {
+          controlPortSendDataFromTextInput(this, ti.command);
+        });
+        theRangeForm.append(range);
+      });
+
+      inputRowDiv.append(theRangeForm);
+      myAddTo.append(inputRowDiv);
+
+      M.Range.init($('.control-range')); //$('input[type="range"]')); // or this
+
+    }
+
+
+
+    var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function () {
+
+      var textInputs = loadTextInputs();
+
+      if ( textInputs.length < 1 ) {
+        return;
+      }
+
+      $("div[id^='divTextInputRow']")
+        .remove()
+        ;
+
       var inputCnt = 1;
       var inputRowDiv = $('<div>')
         .prop('id', "divTextInputRow" + inputCnt)
@@ -736,6 +869,7 @@
       });
 
     }
+
 
 
 

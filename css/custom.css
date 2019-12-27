@@ -76,6 +76,9 @@ p.custom-control-section {
   font-weight: 500;
   padding-top: 4px;
 }
+p.custom-control-section .switch {
+  padding-left: 20px;
+}
 
 
 
@@ -195,6 +198,11 @@ a.collapsible-header {
 /* General layout condensing */
 .row {
   margin-bottom: 0;
+}
+
+/* Switches */
+.switch {
+  display: inline-block;
 }
 
 
