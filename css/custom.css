@@ -80,8 +80,18 @@ p.custom-control-section .switch {
   padding-left: 20px;
 }
 
+#active_ports_ui_status_indicators .btn-small {
+  height: 24px;
+  line-height: 24px;
+  font-size: 11px;
+  margin-left: 4px;
+}
 
-
+#active_ports_ui_status_indicators {
+  /*padding-bottom: 12px;*/ /* use if have title in the section */
+  /* top right bottom left */
+  padding: 4px 1em 4px 4px;
+}
 
 
 

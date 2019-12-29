@@ -518,7 +518,8 @@ var openDataPort = function(portHash) {
     console.log(`Actual samples per second (sps) - theoretical sps: ${dsps} sps => ${dsps/(4096*128)*100}%`);
     console.log(`Delta samples in the 1 second sample period, excluding port overhead, actual samples - theoretical: ${samples - 4096*128}`);
 
-    $("#btnDataPortStatus").removeClass('green').addClass('blue-grey');
+    $("#btnDataPortStatus").removeClass('green pulse').addClass('blue-grey');
+    $("#btnListeningForData").removeClass('pulse').addClass('disabled');
 
     mainWindowUpdateChartData(null); // should call the cancel on the requestAnimationFrame
 
@@ -529,7 +530,10 @@ var openDataPort = function(portHash) {
     //$("#serialPortGoButton").addClass("lighten-5");
     //$("#serialPortGoButton").removeClass("waves-light");
     $("#serialPortGoButton").addClass("red");
-    $("#btnDataPortStatus").removeClass('hide blue-grey').addClass('green');
+    $("#btnDataPortStatus").removeClass('hide blue-grey').addClass('green pulse');
+    $("#btnListeningForData").removeClass('hide disabled').addClass('pulse');
+    $("#active_ports_ui_status_indicators").removeClass('hide');
+    $("#active_ports_ui_buttons").removeClass('hide');
     console.log('dport.on open');
     console.time("timeOpen");
     //time = process.hrtime();  // restart the timer, storing in "time"

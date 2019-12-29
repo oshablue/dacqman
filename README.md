@@ -1,6 +1,72 @@
 
 # Serial Port XPlat Dev App (aka Viffy right now)
 
+## Wish List / TODO
+
+
+
+- Command sequence implementation / customization:
+  - Data run (length, data amount, timed, etc)
+  - Buffer control for different capture types (single vs streaming)
+  - Optional units changes for the graph
+  - UI numeric feedback for slider / range init and changes
+
+
+- Mobile menu responsive hamburger and functionality
+  - Fix the fooling around with it
+
+
+- Add feature button to silence pulsing - or setTimeout on it
+  - Control or update pulse styling so it doesn't fire the scroll bars
+  - Perhaps turn off when active data happening in the graph
+  - Or just soft glow on
+  - Or just call it buffer 
+
+- Clean up the structure of the code - not quite the pie-in-the-sky that probably would never happen, just a simple review and re-compartmentalize would be helpful
+
+
+- TDD (oo, bad!): Write tests, especially targeting:
+ - OS-dependent deployments and packaging
+  - https://dzone.com/articles/write-automated-tests-for-electron-with-spectron-m
+  - Serial port identification and access
+  - Customization and file availability
+  - File system interaction (for writing data files)
+
+
+- Channel selection control and implementation for viewing a single-channel's waveform during channel scan mode
+
+
+- Record data to file for specified number of captures, or time, or until timeout
+
+
+- Add functional UI indicators:
+  - Buffer cycling status
+  - Buffer overflowing status (and remedy reminder)
+  - File writing progress or capture run progress
+
+
+- Multichannel WF viewer and corresponding buffer mgmt
+
+
+- Config file
+
+
+- Retain user settings and prefs even if just starting with UI
+
+
+- Audible parsing of waveform for HMI type of (H)AI detection
+
+
+
+
+
+
+## Long Term TODO
+
+- CRC implementation
+- B-Scan with customizable A-scan - to - position - in - space UI control
+- A million other things
+
 
 ## Specific File Notes and Setup Notes
 

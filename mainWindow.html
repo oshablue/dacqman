@@ -79,10 +79,10 @@
          as well as the burger icon and why media query overrides are not
          working  -->
     <nav>
-      <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+      <!--<a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>-->
       <div class="nav-wrapper">
         <a href="" class="brand-logo center">Viffy</a>
-        <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>
+        <!--<a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>-->
       </div>
     </nav>
     <!-- <a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a> -->
@@ -145,9 +145,25 @@
 
 
     <!-- TODO place into card or section, etc.-->
-    <div id="active_ports_ui_indicators">
-      <button id="btnDataPortStatus" class="btn-small blue hide" onclick="btnDataPortClick(this)">Data Port</button>
-      <button id="btnControlPortStatus" class="btn-small blue hide" onclick="btnControlPortClick(this)">Control Port</button>
+    <div id="active_ports_ui_indicators" class="row">
+
+      <div id="active_ports_ui_buttons" class="hide col s4">
+        <!--Controls<br>-->
+        <button id="btnDataPortStatus" class="btn-small blue hide" onclick="btnDataPortClick(this)" title="Click to Close/Open Data Streaming Port">
+          Data Port
+        </button>
+        <button id="btnControlPortStatus" class="btn-small blue hide" onclick="btnControlPortClick(this)" title="Click to Expand">
+          Control Port
+        </button>
+      </div>
+
+      <div id="active_ports_ui_status_indicators" class="hide col s8">
+        <!--Status<br>-->
+        <button id="btnListeningForData" class="btn-small blue lighten-4 disabled right">Listening for Data</button>
+        <button id="btnBufferOverflowing" class="btn-small lighten-2 disabled right">Buffer Overflowing</button>
+        <button id="btnSilenceIndicators" class="btn-small blue lighten-4 disabled right">Silence Indicators</button>
+      </div>
+
     </div>
 
 
@@ -413,10 +429,14 @@
           //console.log(ourReadableStreamBuffer.size());
           if ( ourReadableStreamBuffer.size() > (1000*1024) ) {
             console.log(ourReadableStreamBuffer.size());
+            $('#btnBufferOverflowing').removeClass('disabled').addClass('orange pulse');
             //console.log("ALERT: ourReadableStreamBuffer is larger than ...1MB ... dumping data ...");
             // Do something to dump or pause this
             //ourReadableStreamBuffer.pause(); // no effect in a readable event listener
             //console.log("new ourReadableStreamBuffer size: " + ourReadableStreamBuffer.size());
+          } else {
+            // TODO LT this is a lot of overhead to do every time?
+            $('#btnBufferOverflowing').removeClass('orange pulse').addClass('disabled');
           }
           // Could try to:
           // - Increment the decimation counter here instead and it talks to the sprendered code
@@ -443,7 +463,7 @@
             chunk.copy(chartBuf, 0, 0, 4095);
 
             // Debugging:
-            console.log(chartBuf.slice(0,11)); // checking the SOF section
+            //console.log(chartBuf.slice(0,11)); // checking the SOF section
             // The 5th bit [4] is the sequence_id - it begins at 1 and wraps after 255
             // Thus we are only counting 255 WFs maximum (not 256)
             // Though, need to check that after the RST signal - as this is for
@@ -513,11 +533,15 @@
         console.log("mainWindowUpdateChartData: animStarted = false, calling renderChart()");
         chart.renderChart(); // This initiates the loop
         animStarted = true;
+        // Update the UI status indicator showing Graph/Data Listening
+
       } else {
         // clearReadStream??? or just reset it too?
         console.log("mainWindowUpdateChartData: animStarted = true, calling cancelRenderChart()");
         chart.cancelRenderChart();
         animStarted = false;
+        // Update the UI status indicator showing Graph/Data Not Listening
+
       }
     }
 
