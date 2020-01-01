@@ -26,6 +26,10 @@ const Ftdi = require('ftdi');
 const electron = require('electron');
 const {ipcRenderer} = electron;
 
+const { dialog } = require('electron').remote;
+
+const fs = require('fs');
+
 
 var buf = []; // new Uint8Array; //[];
 var nsamp = 4096;
@@ -437,28 +441,22 @@ var btnDataPortClick = function(button) {
 
 var btnControlPortClick = function(button) {
 
-  if ( $(button).hasClass("green") === false ) {
+  // For control port button, instead we just use color as an indicator
+  // and the click only for expansion/hide section
+  // This demo's standard control buttons within the section
+
+  //if ( $(button).hasClass("green") === false ) {
     //console.log("control port button clicked: but not active - returning");
-    //return;
-    openControlPortThatIsChecked();
-  } else {
+    ////return;
+    //openControlPortThatIsChecked();
+  //} else {
     if ( $('#activeControlPort').is(":visible") ) {
       $('#activeControlPort').hide("slow");
       return;
     }
     $('#activeControlPort').show("slow");
-  }
-  // TODO this is currently a repeat of the functionality in serialSelect in mainWindow.html
-  ////var d = document.querySelector("#activeControlPortName");
-  //$('#activeControlPort').show("slow");
-  ////d.innerHTML = button.name; // TODO update for dual-port devices
+  //}
 
-  // TODO - update the contents of this section to correctly reference the right port,
-  // here the cport that is, not the plain legacy vcp port device ...
-
-  // TODO - if click button again while still active, then hide the section
-
-  // TODO - if port closed ... oh, we're ok maybe
 
 }
 
@@ -520,6 +518,7 @@ var openDataPort = function(portHash) {
 
     $("#btnDataPortStatus").removeClass('green pulse').addClass('blue-grey');
     $("#btnListeningForData").removeClass('pulse').addClass('disabled');
+    $("#btnSilenceIndicators").addClass('disabled');
 
     mainWindowUpdateChartData(null); // should call the cancel on the requestAnimationFrame
 
@@ -534,11 +533,21 @@ var openDataPort = function(portHash) {
     $("#btnListeningForData").removeClass('hide disabled').addClass('pulse');
     $("#active_ports_ui_status_indicators").removeClass('hide');
     $("#active_ports_ui_buttons").removeClass('hide');
+    $("#btnSilenceIndicators").removeClass('disabled');
     console.log('dport.on open');
     console.time("timeOpen");
     //time = process.hrtime();  // restart the timer, storing in "time"
 
     mainWindowUpdateChartData(null); // init the loop for requestAnimationFrame
+
+    // Optionally stop the pulsing
+    /*setTimeout( function() {
+      $("#btnListeningForData").removeClass('pulse');
+      $("#btnDataPortStatus").removeClass('pulse');
+      // TODO check if any have pulse, and if not then disable btnSilenceIndicators
+    }, 5000);
+    */
+
 
     /*
     //For Freq measurement real world samples over time
@@ -690,11 +699,12 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
 // Below for FTDI D2XX - for the control port (serial style, but likely still under d2xx/ftdi)
 // ok or now includes VCP implementation as well for control port
 var openControlPort = function(portHash) {
+
   console.log("openControlPort: " + JSON.stringify(portHash));
 
-  console.log("Prior, openControlPort used the FTDI device to open the control port.");
-  console.log("However, there are wrapper/driver errors and this is not reliable.");
-  console.log("Thus, we are now using and require VCP access to the control port.");
+  //console.log("Prior, openControlPort used the FTDI device to open the control port.");
+  //console.log("However, there are wrapper/driver errors and this is not reliable.");
+  //console.log("Thus, we are now using and require VCP access to the control port.");
 
 
 
@@ -735,12 +745,14 @@ var openControlPort = function(portHash) {
     console.log('cport.on close');
     $("#btnControlPortStatus").removeClass("green").addClass('blue-grey');
     $("#controlPortOpenBtn").prop('disabled', false);
+    $("#controlPortCloseBtn").prop('disabled', true);
   });
   cport.on('open', function() {
     console.log('cport.on open');
     $("#btnControlPortStatus").removeClass('hide blue-grey').addClass('green');
     $("#activeControlPortName").text(getSelectedControlPortInfoHash().description);
     $("#controlPortOpenBtn").prop('disabled', true);
+    $("#controlPortCloseBtn").prop('disabled', false);
   });
   cport.on('data', function (data) {
     console.log ("cport.on data");
@@ -869,6 +881,7 @@ var serialClose = function () {
 
 
 var controlPortClose = function() {
+  //console.log("controlPortClose");
   if ( cport ) cport.close ( function (err) {
     console.log ('controlPortClose called');
     if ( err ) {
@@ -882,6 +895,16 @@ var controlPortClose = function() {
 
 
 
+var controlPortOpen = function() {
+  openControlPortThatIsChecked();
+}
+
+
+
+
+
+
+
 var serialCheckbox = function (checkbox) {
   // Check that one data and one control port are selected
   var nDataChecked = $("[id^=UseForData][type=checkbox]:checked").length;
@@ -889,7 +912,7 @@ var serialCheckbox = function (checkbox) {
   if ( nDataChecked === 1 && nControlChecked === 1 ) {
     console.log( "Ok, one data and one control port selected.");
     // Now populate/show/enable the "Go" button to open ports and prep
-    var h = `<button id="serialPortGoButton" class="waves-effect waves-light btn-large" onclick="beginSerialComms(this)"><i class="material-icons left">cloud</i>Begin</button>`;
+    var h = `<button id="serialPortGoButton" class="waves-effect waves-light btn-large" onclick="beginSerialComms(this)"><i class="material-icons left">device_hub</i>Connect to Ports and Begin Listening for Data</button>`;
     $('#ports_go_button').html(h).removeClass('hide'); // `<button id="serialPortGoButton" name="" onclick="beginSerialComms(this)">Begin</button>` );
   } else {
     // TODO - complete the disable code
@@ -1094,16 +1117,69 @@ var serialSendData = function ( commandAndType, returnDataTo) {
 
 
 
+var controlPortSendData = function ( commandAndType, returnDataTo, button) {
 
-
-var controlPortSendData = function ( commandAndType, returnDataTo) {
   if ( cport ) {
+
     var cmdarr = [];
-    // Warning: there needs of course to be some kind of limits and sanity
+
+    // TODO Warning: there needs of course to be some kind of limits and sanity
     // checking structure -- length of commands, etc.
     // This could be a separate structure that is required with an imported
     // command set such that validation occurs within this ruleset prior to
     // allowing execution
+
+    //console.log(button.options);
+    if ( button.options ) {
+      button.options.forEach( function(o) {
+        switch ( o.key ) {
+          case "singleCaptureBuffer":
+            //console.log("button option: singleCaptureBuffer is " + o.value);
+            // TODO this is poor compartmentalized coding - this fcn is in the
+            // mainWindow.html at the moment
+            // Anyway, reset and just use a single chunksize buffer
+            resetReadableStream(1);
+            break;
+
+          case "captureBufferMultiple":
+            resetReadableStream(parseInt(o.value));
+            break;
+
+          case "fileCapture":
+
+            // TODO - work out the ordering here ...
+            // See:
+            // https://electronjs.org/docs/api/dialog
+            //dialog.showOpenDialog({ properties: ['openFile','openDirectory']});
+            // TODO add cancel option for long chained commands like this ...
+            // close the file, send the last command (or don't)
+            // File ext
+            // UI indicators - progress, cancel, etc.
+            //
+            var dres = dialog.showSaveDialog( { // TODO: mainWindow, {
+              options : {
+                title : 'Create your destination captured data file ...',
+                buttonLabel: 'Start Capture'
+              }
+            });
+            if ( !dres ) {
+              console.log("no file selected for capture data destination, returning.");
+              return;
+            } else {
+              console.log("selected " + dres + " for captured data file.")
+              // TODO - this is just for testing - the reset line thing 
+              resetReadableStream(8);
+              writeStream = fs.createWriteStream(dres);
+
+            }
+            break;
+
+          default:
+            console.log("controlPortSendData: Unrecognized button option.");
+        }
+      });
+    }
+
     switch ( commandAndType.type ) {
 
       case "hexCsvBytes":
@@ -1300,6 +1376,7 @@ module.exports = {
   serialOpenByName: serialOpenByName,
   serialClose: serialClose,
   controlPortClose: controlPortClose,
+  controlPortOpen: controlPortOpen,
   controlPortSendStuff: controlPortSendStuff,
   serialTestWrite: serialTestWrite,
   serialSendData: serialSendData,

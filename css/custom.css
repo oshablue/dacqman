@@ -80,6 +80,13 @@ p.custom-control-section .switch {
   padding-left: 20px;
 }
 
+#active_ports_ui_buttons {
+  /* Indent from the left so that the pulse class attribute doesn't
+   * cycle the scroll bars on and off each pulse
+   */
+  padding-left: 40px;
+}
+
 #active_ports_ui_status_indicators .btn-small {
   height: 24px;
   line-height: 24px;
@@ -89,8 +96,11 @@ p.custom-control-section .switch {
 
 #active_ports_ui_status_indicators {
   /*padding-bottom: 12px;*/ /* use if have title in the section */
+  /* As above, pad the right generously so that the pulse class doesn't
+   * cycle the scroll bars contiually on and off 
+   */
   /* top right bottom left */
-  padding: 4px 1em 4px 4px;
+  padding: 4px 40px 4px 4px;
 }
 
 
