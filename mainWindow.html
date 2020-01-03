@@ -81,7 +81,7 @@
     <nav>
       <!--<a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>-->
       <div class="nav-wrapper">
-        <a href="" class="brand-logo center">Viffy</a>
+        <a href="" class="brand-logo center"> (click to reload this App)</a>
         <!--<a href="#" data-target="slide-out" class="sidenav-trigger"><i class="material-icons">menu</i></a>-->
       </div>
     </nav>
@@ -215,45 +215,67 @@
           <span id="activeControlPortName"></span>
         </span>
         <br>
-        <div class="container-buttons">
-          <div class="row">
-            <div class="card-action col s5">
-              <p class="custom-control-section">Standard Buttons and Generic Command Send Tool</p>
-              <!--<span id="controlPortOpenBtnSpan">-->
-                <button name="controlPortOpenBtn" id="controlPortOpenBtn" onclick="controlPortOpen(this)" >
-                  Open
-                </button>
-              <!--</span>-->
-              <!--<span id="controlPortCloseBtnSpan">-->
-                <button name="controlPortCloseBtn" id="controlPortCloseBtn" onclick="controlPortClose(this)" >
-                  Close
-                </button>
-              <!--</span>-->
-              <!--<span id="controlTestWriteSpan">
-                <button name="controlPortTestWrite" id="controlPortTestWrite" onclick="controlTestWrite()">Test Write</button></span>-->
-            </div>
-            <div class="card-action col s7"> <!-- row"> -->
-              <!--<div class="col s7">-->
+        <div id="container-buttons" class="container-buttons">
+
+          <ul class="collapsible collapsible-accordion">
+            <li>
+              <a class="collapsible-header">Standard Buttons and Generic Command Send Tool
+                <i class="material-icons medium sidenav-dd-expand">play_arrow</i>
+              </a>
+              <div class="collapsible-body">
                 <div class="row">
-                  <div id="sendButtonSpan" class="col s2 right-align">
-                    <button id="sendButton" onclick="controlPortSendStuff()">Send</button>
-                  </div>
-                  <div id="stuffToSendSpan" class="col s10">
-                    <div class="input-field">
-                      <i class="material-icons prefix">account_circle</i>
-                      <input type="text" id="stuffToSend" placeholder="Put (or Type) some stuff here to send" class="validate">
-                      <label for="stuffToSend">Stuff to Send</label>
-                      <span class="helper-text" data-error="wrong" data-success="right">Type (a) char(s) to send as ASCII=>0xhh</span>
-                    </div>
-                  </div>
+                  <div class="card-action col s5">
+                    <!--<p class="custom-control-section">Standard Buttons and Generic Command Send Tool</p>-->
+                    <!--<span id="controlPortOpenBtnSpan">-->
+                      <button name="controlPortOpenBtn" id="controlPortOpenBtn" onclick="controlPortOpen(this)" >
+                        Open
+                      </button>
+                    <!--</span>-->
+                    <!--<span id="controlPortCloseBtnSpan">-->
+                      <button name="controlPortCloseBtn" id="controlPortCloseBtn" onclick="controlPortClose(this)" >
+                        Close
+                      </button>
+                    <!--</span>-->
+                    <!--<span id="controlTestWriteSpan">
+                      <button name="controlPortTestWrite" id="controlPortTestWrite" onclick="controlTestWrite()">Test Write</button></span>-->
+                  </div><!-- s5 -->
+                  <div class="card-action col s7"> <!-- row"> -->
+                    <!--<div class="col s7">-->
+                      <div class="row">
+                        <div id="sendButtonSpan" class="col s2 right-align">
+                          <button id="sendButton" onclick="controlPortSendStuff()">Send</button>
+                        </div>
+                        <div id="stuffToSendSpan" class="col s10">
+                          <div class="input-field">
+                            <i class="material-icons prefix">account_circle</i>
+                            <input type="text" id="stuffToSend" placeholder="Put (or Type) some stuff here to send" class="validate">
+                            <label for="stuffToSend">Stuff to Send</label>
+                            <span class="helper-text" data-error="wrong" data-success="right">Type (a) char(s) to send as ASCII=>0xhh</span>
+                          </div>
+                        </div>
+                      </div>
+                    <!--</div>-->
+                  </div><!-- s7 -->
+                </div><!-- row -->
+              </div><!-- collapsible-body -->
+            </li><!-- collapsible li -->
+          </ul><!-- collapsible ul -->
+
+
+          <ul class="collapsible collapsible-accordion">
+            <li class="active">
+              <a class="collapsible-header">Custom Controls Loaded From File
+                <i class="material-icons medium sidenav-dd-expand">play_arrow</i>
+              </a>
+              <div class="collapsible-body">
+                <div class="card-action">
+                  <!--<p class="custom-control-section">Custom Control Buttons Loaded From File</p>-->
+                  <div id="controlPortButtonsFromFileDiv" class="row"></div>
                 </div>
-              <!--</div>-->
-            </div>
-          </div><!-- row -->
-          <div class="card-action">
-            <p class="custom-control-section">Custom Control Buttons Loaded From File</p>
-            <div id="controlPortButtonsFromFileDiv" class="row"></div>
-          </div>
+              </div>
+            </li>
+          </ul>
+
         </div>
       </div>
     </div>
@@ -491,7 +513,7 @@
             // Now using hex encoding, we'll see the size after 2 mins to see if
             // got it all ...
             // 63,194,040 bytes - yeah, all data is there => / 128 / 120 seconds => 4114.2 byte chunks which is about right
-            // Cool. 
+            // Cool.
             // TODO could do a manual file close button, to allow contnuous adding
             // to file?
             if ( writeStream ) {
@@ -669,19 +691,16 @@
     $(document).ready(function(){
     //window.onload = function(){
 
-      $('.sidenav').sidenav();
-      $(".dropdown-trigger").dropdown();
-      $('.collapsible').collapsible({
-        accordion: true
-      });
+
 
       loadButtons();
     //}
       // Just for testing the chart update function
+      /*
       setTimeout(function() {
         var newdat = [0,.01, .02, .03, .04, .05, .06, .07, .08, .09];
         chart.update(newdat);
-      }, 300);
+      }, 300);*/
 
       // Check for stuff that needs to execute on page load after population
       serialCheckbox(); // arg not used ... TODO better way to do this of course
@@ -689,6 +708,16 @@
       // TEMP DEV TWEAKS for EXPOSURE etc
       // Temp : testing :
       //$("#activeControlPort").show();
+
+      // Let's start by showing the text inputs as sliders - seems better for UI demo
+      $(".switch").find("input[type=checkbox]").attr('checked', true);
+      showCustomControlsAsRangeSliders(true);
+
+      $('.sidenav').sidenav();
+      $(".dropdown-trigger").dropdown();
+      $('.collapsible').collapsible({
+        accordion: true
+      });
 
     }); // $(document).ready()
 
@@ -739,6 +768,16 @@
       // while controlGroups have buttons children
       var controlGroups = require(cp_path).controlGroups;
 
+      var collButtonNodes = $($.parseHTML(
+            '<ul class="collapsible collapsible-accordion">'
+          + '  <li class="active">'
+          + '   <a class="collapsible-header">Custom Control Buttons Loaded From File'
+          + '      <i class="material-icons medium sidenav-dd-expand">play_arrow</i>'
+          + '   </a>'
+          + '   <div id="divCustomControlButtons" class="collapsible-body"></div>'
+          + '  </li>'
+          + '</ul>'
+        ));
 
       var cgRow = $(document.createElement("div"))
         .attr("id", "divCtrlGrp")
@@ -767,8 +806,24 @@
         });
         cgRow.append(d);
       });
-      $('#controlPortButtonsFromFileDiv').append(cgRow);
+      $(collButtonNodes).find('.collapsible-body').append(cgRow);
+      $('#controlPortButtonsFromFileDiv').append(collButtonNodes); //(cgRow);
 
+
+
+      // Add text input to range slider switch and header
+      // in collapsible
+
+      var collVariableInputNodes = $($.parseHTML(
+            '<ul class="collapsible collapsible-accordion">'
+          + '  <li class="active">'
+          + '   <a class="collapsible-header">Custom Control Range Sliders/Text inputs Loaded From File'
+          + '      <i class="material-icons medium sidenav-dd-expand">play_arrow</i>'
+          + '   </a>'
+          + '   <div id="divCustomControlVariableInputs" class="collapsible-body"></div>'
+          + '  </li>'
+          + '</ul>'
+        ));
 
       var swChk = $('<input />', { type: 'checkbox' });
       var swSpLev = $(document.createElement("span"))
@@ -788,8 +843,11 @@
         .addClass("custom-control-section")
         .append(switchRangeOrTextInput)
         ;
+
+      $(collVariableInputNodes).find('.collapsible-body').append(textInputControlTitle);
       $('#controlPortButtonsFromFileDiv')
-        .append(textInputControlTitle)
+        //.append(textInputControlTitle)
+        .append(collVariableInputNodes);
         ;
 
       $(".switch").find("input[type=checkbox]").on("change",function() {
@@ -798,7 +856,6 @@
       });
 
       parseAndShowCustomTextInputsAsButtonsAndTextInputs();
-
 
     }
 
@@ -847,7 +904,7 @@
         .addClass("row")
         ;
 
-      var myAddTo = $('#controlPortButtonsFromFileDiv');
+      var myAddTo = $('#divCustomControlVariableInputs'); // $('#controlPortButtonsFromFileDiv');
 
       var theRangeForm = $(document.createElement("form"))
         .attr("action", "#");
@@ -874,6 +931,11 @@
       M.Range.init($('.control-range')); //$('input[type="range"]')); // or this
 
     }
+
+
+
+
+
 
 
 
@@ -928,13 +990,15 @@
         // Create the text inputs, grouped by rows of 3
         console.log("inputCnt: " + inputCnt + " textInputs.length: " + textInputs.length );
         if ( inputCnt % 4 == 0 ) {
-          $('#controlPortButtonsFromFileDiv').append(inputRowDiv);
+          //$('#controlPortButtonsFromFileDiv').append(inputRowDiv);
+          $('#divCustomControlVariableInputs').append(inputRowDiv);
           inputRowDiv = $('<div>')
             .prop('id', "divTextInputRow" + inputCnt)
             .addClass("row")
             ;
         } else if ( inputCnt == textInputs.length ) {
-          $('#controlPortButtonsFromFileDiv').append(inputRowDiv);
+          //$('#controlPortButtonsFromFileDiv').append(inputRowDiv);
+          $('#divCustomControlVariableInputs').append(inputRowDiv);
         }
         inputCnt++;
       });

@@ -60,6 +60,11 @@ pre {
 #controlPortButtonsFromFileDiv .row {
   margin-top: 4px;
 }
+#container-buttons .collapsible-body a.collapsible-header {
+  margin-right: 0;
+  color: #029ae4;
+  text-transform: none;
+}
 #sendButton {
   height: 3rem;
 }
@@ -97,10 +102,14 @@ p.custom-control-section .switch {
 #active_ports_ui_status_indicators {
   /*padding-bottom: 12px;*/ /* use if have title in the section */
   /* As above, pad the right generously so that the pulse class doesn't
-   * cycle the scroll bars contiually on and off 
+   * cycle the scroll bars contiually on and off
    */
   /* top right bottom left */
   padding: 4px 40px 4px 4px;
+}
+
+#divTextInputRow input[type="range"] {
+  margin: 3px 0 10px;
 }
 
 
@@ -177,6 +186,7 @@ a.collapsible-header {
   /*       vert  horiz         */
   /*       top   horiz   bott  */
   padding: 0.3em 1em;
+  text-transform: uppercase;
 }
 /* Line up the icons with the text */
 .collapsible-header i {
@@ -184,7 +194,7 @@ a.collapsible-header {
   font-size: 14px !important;
 }
 .collapsible-body {
-  padding: 1rem;
+  padding: 0.5rem;
 }
 
 /* Condense the card content a bit */

@@ -189,7 +189,7 @@ function zoomed() {
 async function update(newdata) {
 
   // DEBUG ALERT - aborting this function for now
-  return;
+  //return;
 
   svg.selectAll("path.line").remove();
   svg.append("path")
