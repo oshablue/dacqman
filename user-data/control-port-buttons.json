@@ -17,6 +17,19 @@
     },
 
     {
+      "label": "Set Tx Voltage",
+      "min" : 0,
+      "max" : 31,
+      "default" : 0,
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x50",
+        "positionToReplaceWithTextInputBaseZero": "10"
+      },
+      "description": "Set Tx (Pulse) voltage value.  0x00 - 0x1f.  BE CAREFUL.  The value in the text input box should be a 1-byte integer, and it will be passed as parameter 1 in the command."
+    },
+
+    {
       "label": "Set Rx Channel",
       "min" : 1,
       "max" : 8,
@@ -43,16 +56,16 @@
     },
 
     {
-      "label": "Set Tx Voltage",
+      "label": "Set Rx Delay",
       "min" : 0,
-      "max" : 31,
+      "max" : 3,
       "default" : 0,
       "command": {
         "type": "hexCsvBytes",
-        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x50",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x50",
         "positionToReplaceWithTextInputBaseZero": "10"
       },
-      "description": "Set Tx (Pulse) voltage value.  0x00 - 0x1f.  BE CAREFUL.  The value in the text input box should be a 1-byte integer, and it will be passed as parameter 1 in the command."
+      "description": "Set Rx Delay in 30 microseconds.  0x00 - 0x03.  0x00 is about an rx delay, as of this writing, of 2x 80MHz clocks.  For each additional +1, add 30 microseconds.  The maximum value corresponds to a delay of about 90 microseconds."
     }
 
 
