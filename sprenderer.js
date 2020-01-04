@@ -1194,6 +1194,8 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
       });
     }
 
+    var totTimeout = 0;
+
     switch ( commandAndType.type ) {
 
       case "hexCsvBytes":
@@ -1216,7 +1218,7 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
         var responseTermChar = commandAndType.chainedCmdCompleteChar;
         if ( delayBwCalls ) {
           // Use
-          var totTimeout = 0;
+          //var totTimeout = 0;
           var len = commandAndType.value.length;
           console.log("hexCsvBytesChained: " + len + " commands found ...");
           commandAndType.value.forEach ( function (catv, index) {
@@ -1238,6 +1240,8 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
               }
             }, totTimeout, index, len, cmdarr);
             executingTimeoutFcns.push(s);
+            // Could also do progress bar as percentage of steps remaining
+            // or combination of that and time
             totTimeout += delayBwCalls;
             console.log("Total timeout: " + totTimeout);
           });
@@ -1256,13 +1260,68 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
         console.log('sprenderer: error on controlPortSendData: type in command with type is not (yet) supported: ' + commandAndType.type);
     }
 
-
+    // Again, could instead use percentage of completed steps instead
+    launchProgressCountdown(totTimeout);
 
   } else {  // if not port ...
     console.log ('sprenderer: error on controlPortSendData: port does not yet exist or has not been opened');
   }
 
 }
+
+
+// Could also do the progress bar as percentage of items remaining
+// https://stackoverflow.com/questions/24530908/showing-a-time-countdown-progress-bar
+var progressTimeoutId;
+var launchProgressCountdown = function( totMs ) {
+
+  var pbar = $('#theBarItself');
+
+  //pbar.css("width", "");
+
+  progressTimeoutId = progress(totMs/1000, totMs/1000, pbar);
+
+}
+
+
+var progress = function (timeleft, timetotal, element) {
+  console.log("progress: " + timeleft);
+  var timeoutId;
+  var progressBarWidth = Math.round((1.0 - (timeleft / timetotal)) * 100) + "%"; // timeleft * $element.width() / timetotal;
+  console.log("current: " + $(element).css("width"));
+  console.log("progress: " + progressBarWidth);
+  //$(element).animate({ width: progressBarWidth }); //.html(timeleft + " seconds to go");
+  $(element).css("width", progressBarWidth);
+  if(timeleft > 0) {
+      timeoutId = setTimeout(function() {
+          progress(timeleft - 0.5, timetotal, element);
+      }, 500);
+  } else {
+    //$(element).animate({width: "100%"}, 100);
+    $(element).css("width", "100%");
+    setTimeout ( function() {
+      $(element).parent().css("background-color", "green");
+    }, 200);
+    setTimeout( function() {
+      $(element).parent().animate({ backgroundColor: "#acece6"}, 2000);
+    }, 500);
+    setTimeout( function() {
+      //$(element).animate({width: "0%"}, 1000);
+      $(element).css("width", "0%");
+    }, 1000);
+    timeoutId = null;
+  }
+  progressTimeoutId = timeoutId
+  return timeoutId;
+};
+
+//progress(180, 180, $('#progressBar'));
+
+
+
+
+
+
 
 
 
@@ -1276,6 +1335,12 @@ var cancelCustomControlButtonCommand = function() {
       clearTimeout(etf);
       console.log("Clearing timeout execution for #" + index);
     });
+    if ( progressTimeoutId ) {
+      clearTimeout(progressTimeoutId);
+      progressTimeoutId = null;
+      launchProgressCountdown(0);
+    }
+    // if file ...close it
     showControlPortOutput("Cancel done.\r\n");
   } else {
     showControlPortOutput("Nothing to cancel.\r\n");

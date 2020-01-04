@@ -32,6 +32,14 @@
 	  integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
 	  crossorigin="anonymous">
   </script>
+  <!-- UI allows such things as color transitions, though these are available
+       through other routes as well -->
+  <script
+	  src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"
+	  integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU="
+	  crossorigin="anonymous">
+  </script>
+
 
   <!-- Materialize -->
   <!-- Materialize CDNs -->
@@ -826,7 +834,7 @@
       var pbar = $(document.createElement("div"))
         .attr("id", "divProgressBar")
         .addClass("progress")
-        .append($.parseHTML('<div class="determinate" style="width: 2%"></div>'))
+        .append($.parseHTML('<div id="theBarItself" class="determinate" style="width: 0%;"></div>'))
         ;
       d.append(pbar);
 
