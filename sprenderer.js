@@ -758,7 +758,9 @@ var openControlPort = function(portHash) {
     console.log ("cport.on data");
     //console.log(data);
     console.log("Same data parsed as ASCII chars: ");
-    console.log(hexBufToAscii(data));
+    var retD = hexBufToAscii(data);
+    console.log(retD);
+    showControlPortOutput(retD);
   });
   cport.open()
 
@@ -1117,6 +1119,18 @@ var serialSendData = function ( commandAndType, returnDataTo) {
 
 
 
+
+var showControlPortOutput = function ( asciiStuff ) {
+
+  $('#cmdOutput').prepend(asciiStuff); // or prepend()
+  // nogo ... :
+  //$('#cmdOutput').scrollTop($('#cmdOutput').prop("scrollHeight"));
+}
+
+
+
+
+var executingTimeoutFcns = [];
 var controlPortSendData = function ( commandAndType, returnDataTo, button) {
 
   if ( cport ) {
@@ -1167,7 +1181,7 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
               return;
             } else {
               console.log("selected " + dres + " for captured data file.")
-              // TODO - this is just for testing - the reset line thing 
+              // TODO - this is just for testing - the reset line thing
               resetReadableStream(8);
               writeStream = fs.createWriteStream(dres);
 
@@ -1211,7 +1225,7 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
             cmd.forEach(function(c) {
               cmdarr.push(parseInt(c));
             });
-            setTimeout( function () {
+            var s = setTimeout( function () {
               console.log("Firing command " + (index + 1) + " of " + len);
               console.log(cmdarr);
               cport.write(cmdarr, function (err) {
@@ -1219,7 +1233,11 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
                   console.log('sprenderer: error on write within controlPortSendData: ', err.message)
                 }
               });
+              if ( (index + 1) === len ) {
+                executingTimeoutFcns = [];
+              }
             }, totTimeout, index, len, cmdarr);
+            executingTimeoutFcns.push(s);
             totTimeout += delayBwCalls;
             console.log("Total timeout: " + totTimeout);
           });
@@ -1244,6 +1262,24 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
     console.log ('sprenderer: error on controlPortSendData: port does not yet exist or has not been opened');
   }
 
+}
+
+
+
+
+
+var cancelCustomControlButtonCommand = function() {
+  console.log ("cancelCustomControlButtonCommand");
+  console.log(executingTimeoutFcns);
+  if ( executingTimeoutFcns.length > 0 ) {
+    executingTimeoutFcns.forEach( function(etf, index) {
+      clearTimeout(etf);
+      console.log("Clearing timeout execution for #" + index);
+    });
+    showControlPortOutput("Cancel done.\r\n");
+  } else {
+    showControlPortOutput("Nothing to cancel.\r\n");
+  }
 }
 
 
@@ -1386,4 +1422,5 @@ module.exports = {
   beginSerialComms: beginSerialComms,
   btnDataPortClick: btnDataPortClick,
   btnControlPortClick: btnControlPortClick,
+  cancelCustomControlButtonCommand: cancelCustomControlButtonCommand,
 };

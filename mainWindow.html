@@ -669,6 +669,9 @@
       $("#btnDataPortStatus").removeClass('pulse');
       $(button).addClass('disabled');
     }
+    function cancelCustomControlButtonCommand() {
+      sprend.cancelCustomControlButtonCommand();
+    }
     // TODO wrap pass-through functions above and thus DRY ...
 
     // Materialize - sidenav support
@@ -746,6 +749,8 @@
 
       // TODO use meta list for button files to be loaded and for various port-style devices
 
+      // TODO this is kinda rambling, no?
+
       // Basic test functions and single-port style device buttons (aka DLITE legacy)
       // Can use user data path instead when running live not dev
       const path = "./user-data/buttons-example.json"
@@ -806,10 +811,61 @@
         });
         cgRow.append(d);
       });
+
+      // Append now a UI feedback group
+      var d = $(document.createElement("div"))
+        .attr("id", "divCtrlGrpBtnUiFeedback")
+        .addClass("control-group col s4")
+        ;
+      var groupTitle = $(document.createElement("p"))
+        .text("Command Progress")
+        .addClass("control-group")
+        ;
+      d.append(groupTitle);
+
+      var pbar = $(document.createElement("div"))
+        .attr("id", "divProgressBar")
+        .addClass("progress")
+        .append($.parseHTML('<div class="determinate" style="width: 2%"></div>'))
+        ;
+      d.append(pbar);
+
+      var cancelAndOutput = $(document.createElement("div"))
+        .addClass("row")
+        ;
+      var cancelb = $(document.createElement("button"))
+        .addClass("cancel")
+        .click( function() {
+          cancelCustomControlButtonCommand();
+        })
+        .append($.parseHTML('<i class="small material-icons">cancel</i>'))
+        ;
+      var dbtn = $(document.createElement("div"))
+        .addClass("col s2")
+        ;
+      dbtn.append(cancelb);
+      cancelAndOutput.append(dbtn);
+
+      var logTicker = $(document.createElement("div"))
+        .addClass("col s9")
+        .attr("id","divControlActionLog")
+        .append($.parseHTML(''
+            + '<pre class="mini">'
+            +   '<div id="cmdOutput">Cmd replies...\r\n</div>'
+            + '</pre>'
+          ))
+        ;
+
+      cancelAndOutput.append(logTicker);
+      d.append(cancelAndOutput);
+      cgRow.append(d);
+
+
+
       $(collButtonNodes).find('.collapsible-body').append(cgRow);
       $('#controlPortButtonsFromFileDiv').append(collButtonNodes); //(cgRow);
 
-
+      // End of buttons added to control groups added to the div
 
       // Add text input to range slider switch and header
       // in collapsible
