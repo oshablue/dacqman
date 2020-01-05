@@ -450,6 +450,8 @@
     var ourReadableStreamBuffer = null;
     var writeStream = null;
     var currentWriteStreamFilepath = null;
+    var currentBytesCaptured = null;
+    var currentMaxCaptureFileSizeBytes = null;
     var resetReadableStream = function(chunkMultiple) {
       chartBuf =  Buffer.alloc(4095, 127);
       // changing below to 20ms (and doubling the chunksize) doesn't stop the
@@ -526,7 +528,18 @@
             // TODO could do a manual file close button, to allow contnuous adding
             // to file?
             if ( writeStream ) {
-              writeStream.write(chunk, 'hex');
+              if ( currentMaxCaptureFileSizeBytes ) {
+                if ( currentBytesCaptured < currentMaxCaptureFileSizeBytes ) {
+                  //currentBytesCaptured += chunk.length; // since we're calling this a "max" size for now we put this before the write
+                  writeStream.write(chunk, 'hex');
+                  currentBytesCaptured += chunk.length;
+                  // TODO implement exact difference calculation at the edge
+                  // versus just stopping writing after the chunk
+                  // TODO LT could switch the logic to notify user and other
+                  // processes to cancel.
+                  // We're still in system demo rapid drafting mode ...
+                }
+              }
             }
 
             // Debugging:

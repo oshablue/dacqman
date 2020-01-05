@@ -373,6 +373,13 @@
         {
           "key" : "captureBufferMultiple",
           "value" : 8
+        },
+        {
+          "key" : "captureSizeBytes",
+          "value" : {
+            "number" : "62899200",
+            "note" : "62899200 = 128 Hz (16 Hz/chan x 8 chans) * 4095 samples/waveform * 2 minutes (120 seconds)"
+          }
         }
       ]
     }

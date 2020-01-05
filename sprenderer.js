@@ -1147,6 +1147,8 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
 
     //console.log(button.options);
     var cancelThis = false;
+    var doFileCapture = false;
+    var captureSizeBytes = null;
     if ( button.options ) {
       button.options.forEach( function(o) {
         switch ( o.key ) {
@@ -1162,38 +1164,13 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
             resetReadableStream(parseInt(o.value));
             break;
 
-          case "fileCapture":
+          case "captureSizeBytes":
+            captureSizeBytes = parseInt(o.value.number);
+            //console.log(captureSizeBytes);
+            break;
 
-            // TODO - work out the ordering here ...
-            // See:
-            // https://electronjs.org/docs/api/dialog
-            //dialog.showOpenDialog({ properties: ['openFile','openDirectory']});
-            // TODO add cancel option for long chained commands like this ...
-            // close the file, send the last command (or don't)
-            // File ext
-            // UI indicators - progress, cancel, etc.
-            //
-            currentWriteStreamFilepath = dialog.showSaveDialog( { // TODO: mainWindow, {
-              options : {
-                title : 'Create your destination captured data file ...',
-                buttonLabel: 'Start Capture'
-              }
-            });
-            console.log("file picker result: " + dres);
-            if ( !currentWriteStreamFilepath ) {
-              console.log("no file selected for capture data destination, returning.");
-              // return only breaks out of the switch
-              cancelThis = true;
-            } else {
-              console.log("selected " + currentWriteStreamFilepath + " for captured data file.")
-              // TODO - this is just for testing - the reset line thing
-              resetReadableStream(8);
-              // TODO writeStream is defined currently in mainWindow.html
-              writeStream = fs.createWriteStream(currentWriteStreamFilepath);
-              // Set up write and close functions -- the close is based on
-              // setTimeout and totTimeout?  or just the delayBwCalls -- how
-              // to link ...
-            }
+          case "fileCapture":
+            doFileCapture = o.value;
             break;
 
           default:
@@ -1201,6 +1178,39 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
         }
       });
     }
+
+    // Done parsing button options, now run any setups if needed with the
+    // garnered items
+    if ( !cancelThis && doFileCapture ) {
+      // https://electronjs.org/docs/api/dialog
+      currentWriteStreamFilepath = dialog.showSaveDialog( { // TODO: mainWindow, {
+        options : {
+          title : 'Create your destination captured data file ...',
+          buttonLabel: 'Start Capture'
+        }
+      });
+      console.log("file picker result: " + currentWriteStreamFilepath);
+      if ( !currentWriteStreamFilepath ) {
+        console.log("no file selected for capture data destination, returning.");
+        // return only breaks out of the switch, hence our use of cancelThis
+        // from when this block was in the switch section
+        cancelThis = true;
+      } else {
+        console.log("selected " + currentWriteStreamFilepath + " for captured data file.")
+        // TODO - this is just for testing - the reset line thing
+        //resetReadableStream(8);
+        // TODO writeStream is defined currently in mainWindow.html
+        cancelThis = !setupFileCapture(
+          parseInt(commandAndType.chainedCmdDelayMs),
+          // parseInt of null = NaN and if ( Nan ) === if ( false )
+          captureSizeBytes
+        );
+      }
+    }
+
+
+
+    // Now handle the command type and sending the control commands to the device
 
     var totTimeout = 0;
 
@@ -1227,8 +1237,6 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
           var responseTimeout = parseInt(commandAndType.chainedCmdTimeoutMs);
           var responseTermChar = commandAndType.chainedCmdCompleteChar;
           if ( delayBwCalls ) {
-            // Use
-            //totTimeout = 0;
             var len = commandAndType.value.length;
             console.log("hexCsvBytesChained: " + len + " commands found ...");
             commandAndType.value.forEach ( function (catv, index) {
@@ -1245,6 +1253,7 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
                     console.log('sprenderer: error on write within controlPortSendData: ', err.message)
                   }
                 });
+                // If this is the last command, clear the list somehow
                 if ( (index + 1) === len ) {
                   executingTimeoutFcns = [];
                 }
@@ -1252,7 +1261,10 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
               executingTimeoutFcns.push(s);
               // Could also do progress bar as percentage of steps remaining
               // or combination of that and time
-              totTimeout += delayBwCalls;
+              // Don't add a delay after the last call to the total
+              if ( (index + 1) < len ) {
+                totTimeout += delayBwCalls;
+              }
               console.log("Total timeout: " + totTimeout);
             });
           } else
@@ -1280,6 +1292,66 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
   }
 
 }
+
+
+
+
+var fileCaptureTimeoutId = null;
+var setupFileCapture = function ( durationMs, maxFileSizeBytes ) {
+
+  // Do these params need to be here?  The latter ... yes.
+
+  // currentWriteStreamFilepath is global at present
+
+  // https://stackoverflow.com/questions/43293921/cant-catch-exception-from-fs-createwritestream
+
+  var everythingIsFine = true;
+
+  currentMaxCaptureFileSizeBytes = maxFileSizeBytes;
+  currentBytesCaptured = 0;
+
+  // TODO - fix this up with var? with issues, etc.
+  // Testing:
+  resetReadableStream(8);
+
+  writeStream = fs.createWriteStream(currentWriteStreamFilepath);
+  writeStream.on('error', function(err) {
+    console.log("createWriteStream for " + currentWriteStreamFilepath + " error: " + err);
+    closeAndCleanupFileCapture();
+    everythingIsFine = false;
+  })
+  fileCaptureTimeoutId = setTimeout( function() {
+    closeAndCleanupFileCapture();
+  }, durationMs );
+
+  return everythingIsFine;
+
+}
+
+
+var closeAndCleanupFileCapture = function() {
+
+  launchProgressCountdown(0);
+  if ( writeStream ) {
+    writeStream.end();
+    showControlPortOutput('Capture file closed.\r\n');
+  }
+  writeStream = null;
+  currentWriteStreamFilepath = null;
+  if ( fileCaptureTimeoutId ) {
+    clearTimeout(fileCaptureTimeoutId);
+  }
+  fileCaptureTimeoutId = null;
+  currentMaxCaptureFileSizeBytes = null;
+  currentBytesCaptured = null;
+
+}
+
+
+
+
+
+
 
 
 
@@ -1364,6 +1436,7 @@ var cancelCustomControlButtonCommand = function() {
   } else {
     showControlPortOutput("Nothing to cancel.\r\n");
   }
+  closeAndCleanupFileCapture();
 }
 
 
