@@ -449,6 +449,7 @@
     var chartBuf = null;
     var ourReadableStreamBuffer = null;
     var writeStream = null;
+    var currentWriteStreamFilepath = null;
     var resetReadableStream = function(chunkMultiple) {
       chartBuf =  Buffer.alloc(4095, 127);
       // changing below to 20ms (and doubling the chunksize) doesn't stop the

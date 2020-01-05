@@ -1133,6 +1133,8 @@ var showControlPortOutput = function ( asciiStuff ) {
 var executingTimeoutFcns = [];
 var controlPortSendData = function ( commandAndType, returnDataTo, button) {
 
+  console.log("controlPortSendData");
+
   if ( cport ) {
 
     var cmdarr = [];
@@ -1144,6 +1146,7 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
     // allowing execution
 
     //console.log(button.options);
+    var cancelThis = false;
     if ( button.options ) {
       button.options.forEach( function(o) {
         switch ( o.key ) {
@@ -1170,21 +1173,26 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
             // File ext
             // UI indicators - progress, cancel, etc.
             //
-            var dres = dialog.showSaveDialog( { // TODO: mainWindow, {
+            currentWriteStreamFilepath = dialog.showSaveDialog( { // TODO: mainWindow, {
               options : {
                 title : 'Create your destination captured data file ...',
                 buttonLabel: 'Start Capture'
               }
             });
-            if ( !dres ) {
+            console.log("file picker result: " + dres);
+            if ( !currentWriteStreamFilepath ) {
               console.log("no file selected for capture data destination, returning.");
-              return;
+              // return only breaks out of the switch
+              cancelThis = true;
             } else {
-              console.log("selected " + dres + " for captured data file.")
+              console.log("selected " + currentWriteStreamFilepath + " for captured data file.")
               // TODO - this is just for testing - the reset line thing
               resetReadableStream(8);
-              writeStream = fs.createWriteStream(dres);
-
+              // TODO writeStream is defined currently in mainWindow.html
+              writeStream = fs.createWriteStream(currentWriteStreamFilepath);
+              // Set up write and close functions -- the close is based on
+              // setTimeout and totTimeout?  or just the delayBwCalls -- how
+              // to link ...
             }
             break;
 
@@ -1196,69 +1204,73 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
 
     var totTimeout = 0;
 
-    switch ( commandAndType.type ) {
+    if ( !cancelThis ) {
 
-      case "hexCsvBytes":
-        var cmd = commandAndType.value.replace(/\s/g,"").split(',');
-        var cmdarr = [];
-        cmd.forEach(function(c) {
-          cmdarr.push(parseInt(c));
-        });
-        console.log("controlPortSendData: " + cmdarr);
-        cport.write(cmdarr, function (err) {
-          if ( err ) {
-            console.log('sprenderer: error on write within controlPortSendData: ', err.message)
-          }
-        });
-        break;
+      switch ( commandAndType.type ) {
 
-      case "hexCsvBytesChained":
-        var delayBwCalls = parseInt(commandAndType.chainedCmdDelayMs);
-        var responseTimeout = parseInt(commandAndType.chainedCmdTimeoutMs);
-        var responseTermChar = commandAndType.chainedCmdCompleteChar;
-        if ( delayBwCalls ) {
-          // Use
-          //var totTimeout = 0;
-          var len = commandAndType.value.length;
-          console.log("hexCsvBytesChained: " + len + " commands found ...");
-          commandAndType.value.forEach ( function (catv, index) {
-            var cmd = catv.replace(/\s/g,"").split(',');
-            var cmdarr = [];
-            cmd.forEach(function(c) {
-              cmdarr.push(parseInt(c));
-            });
-            var s = setTimeout( function () {
-              console.log("Firing command " + (index + 1) + " of " + len);
-              console.log(cmdarr);
-              cport.write(cmdarr, function (err) {
-                if ( err ) {
-                  console.log('sprenderer: error on write within controlPortSendData: ', err.message)
-                }
-              });
-              if ( (index + 1) === len ) {
-                executingTimeoutFcns = [];
-              }
-            }, totTimeout, index, len, cmdarr);
-            executingTimeoutFcns.push(s);
-            // Could also do progress bar as percentage of steps remaining
-            // or combination of that and time
-            totTimeout += delayBwCalls;
-            console.log("Total timeout: " + totTimeout);
+        case "hexCsvBytes":
+          var cmd = commandAndType.value.replace(/\s/g,"").split(',');
+          var cmdarr = [];
+          cmd.forEach(function(c) {
+            cmdarr.push(parseInt(c));
           });
-        } else
-        if ( !delayBwCalls && ( responseTimeout && responseTermChar ) ) {
-          // Is arguments.callee.name deprecated or not?
-          console.log(arguments.callee.name + ": hexCsvBytesChained with sequenced cmds issued and termination of each stage based on response termination character or response timeout");
-          // See above - parsers requires a new serialport
-          //const parser = port.pipe(new Delimiter({ delimiter: '\n'}));
-          //parser.on('data', console.log);
-        }
-        break;
-        // End case: hexCsvBytesChained
+          console.log("controlPortSendData: " + cmdarr);
+          cport.write(cmdarr, function (err) {
+            if ( err ) {
+              console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+            }
+          });
+          break;
 
-      default:
-        console.log('sprenderer: error on controlPortSendData: type in command with type is not (yet) supported: ' + commandAndType.type);
-    }
+        case "hexCsvBytesChained":
+          var delayBwCalls = parseInt(commandAndType.chainedCmdDelayMs);
+          var responseTimeout = parseInt(commandAndType.chainedCmdTimeoutMs);
+          var responseTermChar = commandAndType.chainedCmdCompleteChar;
+          if ( delayBwCalls ) {
+            // Use
+            //totTimeout = 0;
+            var len = commandAndType.value.length;
+            console.log("hexCsvBytesChained: " + len + " commands found ...");
+            commandAndType.value.forEach ( function (catv, index) {
+              var cmd = catv.replace(/\s/g,"").split(',');
+              var cmdarr = [];
+              cmd.forEach(function(c) {
+                cmdarr.push(parseInt(c));
+              });
+              var s = setTimeout( function () {
+                console.log("Firing command " + (index + 1) + " of " + len);
+                console.log(cmdarr);
+                cport.write(cmdarr, function (err) {
+                  if ( err ) {
+                    console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+                  }
+                });
+                if ( (index + 1) === len ) {
+                  executingTimeoutFcns = [];
+                }
+              }, totTimeout, index, len, cmdarr);
+              executingTimeoutFcns.push(s);
+              // Could also do progress bar as percentage of steps remaining
+              // or combination of that and time
+              totTimeout += delayBwCalls;
+              console.log("Total timeout: " + totTimeout);
+            });
+          } else
+          if ( !delayBwCalls && ( responseTimeout && responseTermChar ) ) {
+            // Is arguments.callee.name deprecated or not?
+            console.log(arguments.callee.name + ": hexCsvBytesChained with sequenced cmds issued and termination of each stage based on response termination character or response timeout");
+            // See above - parsers requires a new serialport
+            //const parser = port.pipe(new Delimiter({ delimiter: '\n'}));
+            //parser.on('data', console.log);
+          }
+          break;
+          // End case: hexCsvBytesChained
+
+        default:
+          console.log('sprenderer: error on controlPortSendData: type in command with type is not (yet) supported: ' + commandAndType.type);
+      }
+
+    } // !cancelThis
 
     // Again, could instead use percentage of completed steps instead
     launchProgressCountdown(totTimeout);
@@ -1270,18 +1282,26 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
 }
 
 
-// Could also do the progress bar as percentage of items remaining
-// https://stackoverflow.com/questions/24530908/showing-a-time-countdown-progress-bar
+
+
+
+
 var progressTimeoutId;
 var launchProgressCountdown = function( totMs ) {
 
-  var pbar = $('#theBarItself');
+  // Could also do the progress bar as percentage of items remaining
+  // https://stackoverflow.com/questions/24530908/showing-a-time-countdown-progress-bar
 
-  //pbar.css("width", "");
+  // vs the parent div class that is progress
+  var pbar = $('#theBarItself');
 
   progressTimeoutId = progress(totMs/1000, totMs/1000, pbar);
 
 }
+
+
+
+
 
 
 var progress = function (timeleft, timetotal, element) {
@@ -1315,7 +1335,6 @@ var progress = function (timeleft, timetotal, element) {
   return timeoutId;
 };
 
-//progress(180, 180, $('#progressBar'));
 
 
 
