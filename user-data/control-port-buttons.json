@@ -176,6 +176,28 @@
       },
       "description": "Set Rx channel to 2 (parameter = 0x02 - firmware handles the base 0x00 = Ch 1 part",
       "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "Set Rx Channel 3",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x01, 0x00, 0x03, 0x00, 0x00, 0x50"
+      },
+      "description": "Set Rx channel to 2 (parameter = 0x02 - firmware handles the base 0x00 = Ch 1 part",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "Set Rx Channel 4",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x03, 0x00, 0x01, 0x00, 0x04, 0x00, 0x00, 0x50"
+      },
+      "description": "Set Rx channel to 2 (parameter = 0x02 - firmware handles the base 0x00 = Ch 1 part",
+      "returnDataTo" : "chart"
     }
   ]
 },
@@ -319,7 +341,7 @@
     },
 
     {
-      "title": "Basic CH 2 Cont PAQ Setup Chain",
+      "title": "Basic CH 2 Cont PAQ Setup Chain Kabam",
       "command": {
         "type": "hexCsvBytesChained",
         "chainedCmdDelayMs" : "1500",

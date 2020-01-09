@@ -1,5 +1,96 @@
 
-# Serial Port XPlat Dev App (aka Viffy right now)
+# DacqMan
+
+DAta ACQuisition and MANager Experimental and Demo Tool, especially for use with
+HDL-0108-RSCPT 8-channel ultrasound hardware by OshaBlue LLC.
+
+
+It was a rapid development app, fairly slapped together, intended for testing
+some prototype hardware.  It has grown a bit into an interesting
+experimental and demo tool.  Yes, it still does leave much to desire in terms of
+clean coding and coding best practice.  That's an important caveat.  
+
+Yet, there are some good demo chunks in there including:
+
+- Streaming data via buffer management
+- Two types of simultaneous USB-serial data interfaces:
+  - virtual com port (VCP) implementation via (old) nodejs serialport and
+  - FTDI via node-ftdi simultaneous
+- Creating custom buttons and functionality that are loaded at runtime from a JSON
+config file, including: buttons for single commands, chained commands with timeouts ranging
+from a sequence of simple commands to file capture, to buffer management, and then commands that are
+loaded from file into either text input fields or range sliders
+- Materializecss integration examples
+- Lots of DOM manipulation for runtime updates
+- Lots of jquery stuff for dynamic UI/UX
+- D3 charting with functional zoom
+
+Much of which comes from excellent information available on the web, and is noted
+as such within the code.
+
+
+## Dependencies, Versions, and Building Applications
+
+The current release uses some older versions of Electron, SerialPort, Node-Ftdi
+and related, due to compatibilities and prioritizing a functional demo/playground
+versus capturing the most recent software.
+
+See package.json.
+
+Development has been with nvm (including the nvm-Windows package, just for the
+  purpose of building the Windows exe) and npm.
+
+
+### Mac OS X
+
+Interdependent (roughly) versions:
+
+Node 12.13.1
+Electron 4.2.12
+Electron-packager 13.1.1
+Electron-rebuild 1.8.8
+Serialport 6.1.0
+Ftdi 1.2.3 (customized src, local with project)
+Readable-streambuffer (customized src, local with project)
+
+The node and electron versions are what they are (the latest major revisions) on
+Mac to allow serialport (no prebuilds found so far) and node-ftdi (with heavy
+modifications) to build.  This is due to such things as the bundled node-gyp
+versions bundled with npm and related build issues.  For example, the customization
+of the node-ftdi package allowed the package to build under these more recent
+major revisions (compared with the alternative), but then hit a point where the
+required revisions to build under even newer versions of key packages (node, electron)
+were so large, that this was left for a later milestone.
+
+This all builds to an App on Mac OS X using:
+
+npm run package-mac (as elaborated into the command line script call in package.json)
+
+See details below and elsewhere.
+
+### Windows
+
+Much the same as above, except to build for windows, cross-compilation wasn't functional
+at these package versions.  
+
+Solution: Fire up the Windows (8 in this case, Pro) virtual machine, install nvm-windows,
+install remaining items, etc.  Key points and required items:
+
+- Here, ended up that using nodejs 10 (latest = 10.18.0) was the required solution, because
+rebuilding seemed not to parallel the experience in Mac.  Was it node-gyp bundle version differences?
+- windows-build-tools
+- install the electron and electron packages by hand
+
+(TODO finish up this section)
+
+
+Probably places where it was just user error, again time being the issue, and
+this at least provided a functional outcome.
+
+
+
+
+
 
 ## Wish List / TODO
 
@@ -20,7 +111,7 @@
   - Control or update pulse styling so it doesn't fire the scroll bars
   - Perhaps turn off when active data happening in the graph
   - Or just soft glow on
-  - Or just call it buffer 
+  - Or just call it buffer
 
 - Clean up the structure of the code - not quite the pie-in-the-sky that probably would never happen, just a simple review and re-compartmentalize would be helpful
 
