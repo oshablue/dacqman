@@ -728,7 +728,17 @@
       }, 300);*/
 
       // Check for stuff that needs to execute on page load after population
-      serialCheckbox(); // arg not used ... TODO better way to do this of course
+      //serialCheckbox(); // arg not used ... TODO better way to do this of course
+
+      // Check for stuff that needs to execute on page load after population
+      // For our win32 VM 8.1 Pro - this timeout lets things load on launch
+      // and then fires the test to see if we can show the proceed button
+      // Without it, the button doesn't show, as not all is loaded in time
+      // Easy to update for other sequential functionality of course.
+      setTimeout( function() {
+        serialCheckbox(); // arg not used ... TODO better way to do this of course
+      }, 2000);
+
 
       // TEMP DEV TWEAKS for EXPOSURE etc
       // Temp : testing :
