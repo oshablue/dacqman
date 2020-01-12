@@ -307,6 +307,32 @@
 
 
 
+  {
+    "name" : "Alt (ADC, Aux, Etc.)",
+
+    "buttons": [
+
+      {
+        "title": "Get ADC Sample",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x05, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x50"
+        },
+        "description": "Get a basic ADC sample from the re-purposed programming pin (after program, pin is re-purposed). Currently RB6 or PGC.  Currently pin 5 in the programming header. 10-bit max of 1023.  Please see cautions and notes regarding implementation in the MCU code.",
+        "returnDataTo" : "log"
+      }
+
+    ]
+  },
+
+
+
+
+
+
+
+
+
 {
 
   "name" : "Chained Commands",

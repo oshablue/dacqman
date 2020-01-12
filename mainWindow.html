@@ -513,7 +513,7 @@
             // TODO - add try catches for all memory stuff to catch serial port
             // (data port) errors that might be creating the malloc errors in these
             // revisions
-            chunk.copy(chartBuf, 0, 0, 4095);
+            chunk.copy(chartBuf, 0, 0, 4096);
 
             // TODO can we just set up a simple pipe instead, since we want all
             // the data going to file? -- see above quick test ... need more on it
