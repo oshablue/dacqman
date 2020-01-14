@@ -5,6 +5,22 @@ header, main, footer {
   /*padding-left: 300px;*/
 }
 
+.flex-container {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: center;
+}
+
+.multipaneChart {
+  /*max-width: 100%;
+  min-width: 30%;
+  margin: 10px;*/
+}
+
+.dataChart-title {
+  color: rgba(240, 240, 240, 0.6);
+  font-size: 2em;
+}
 
 .container-buttons {
   padding: 2px;
