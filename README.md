@@ -94,7 +94,27 @@ this at least provided a functional outcome.
 
 ## Wish List / TODO
 
+### For First Alpha Release
 
+- Option for local libraries (in case no net connectivity - or note about this at least)
+  - Windows symptoms: PLAY_ARROW instead of the play arrow icon
+  - Developer Tools shows no Network connectivity
+
+- Local user copy of the customizable features loaded at run-time, like:
+  - Control port buttons
+  - Buffer params
+
+- Store user settings like:
+  - Window size and dimensions
+  - Custom control and config filepath
+  - Last opened or closed collapsible accordions for select items like charts?
+
+- Known working builds for Mac OS X and Windows
+
+
+
+
+### General Wish List
 
 - Command sequence implementation / customization:
   - Data run (length, data amount, timed, etc)
