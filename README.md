@@ -136,7 +136,7 @@ this at least provided a functional outcome.
 - Clean up the structure of the code - not quite the pie-in-the-sky that probably would never happen, just a simple review and re-compartmentalize would be helpful
 
 
-- TDD (oo, bad!): Write tests, especially targeting:
+- TDD (oo, bad!): Write tests, especially targeting: See below
  - OS-dependent deployments and packaging
   - https://dzone.com/articles/write-automated-tests-for-electron-with-spectron-m
   - Serial port identification and access
@@ -172,11 +172,44 @@ this at least provided a functional outcome.
 
 
 
-## Long Term TODO
+### Long Term TODO
 
 - CRC implementation
 - B-Scan with customizable A-scan - to - position - in - space UI control
 - A million other things
+
+
+## TDD
+
+Beginning TDD using examples at:
+
+https://dzone.com/articles/write-automated-tests-for-electron-with-spectron-m
+http://www.matthiassommer.it/programming/web/integration-e2e-test-electron-mocha-spectron-chai/
+
+thus:
+
+```
+npm install --save-dev spectron
+npm install --save-dev chai
+npm install --save-dev chai-as-promised
+```
+
+and then add the scripts as presented into package.json
+
+
+
+
+
+
+## Dev Reminders
+
+Reloading the window (either the click to reload or command-r etc.) will reload
+any changes to the window code, but not changes to main.js.
+
+
+To reload updates to main.js (ipcMain), restart/relaunch the App, for example,
+using the command line ```npm start``` if necessary.
+
 
 
 ## Specific File Notes and Setup Notes

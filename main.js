@@ -1,6 +1,7 @@
 const electron = require('electron');
 const url = require('url');
 const path = require('path');
+const SettingsStorage = require('./settingsStorage.js');
 
 
 const {app, BrowserWindow, Menu, ipcMain} = electron;
@@ -12,12 +13,31 @@ let mainWindow;
 let addWindow;
 
 
+
+//
+// Settings
+// Again for prefs, settings, config tutorial, thanks to (and please see):
+// https://cameronnokes.com/blog/how-to-store-user-data-in-electron/
+const settingsStorage = new SettingsStorage({
+  settingsFileName: "dacqman-settings",       // .json etc is added by the module
+  defaults: {
+    windowBounds: { width: 800, height: 900 }
+  }
+});
+
+
+
+
+
 // Listenfor the app to be ready
 app.on('ready', function(){
+
+  let { width, height } = settingsStorage.get('windowBounds');
+
   // Create new mainWindow
   mainWindow = new BrowserWindow({
-    width: 800,
-    height: 900,
+    width: width,
+    height: height,
     webPreferences: {
       nodeIntegration: true // Set to false if issues with jQuery, Angular - see Electron FAQ
     }
@@ -28,6 +48,12 @@ app.on('ready', function(){
     protocol: 'file:',
     slashes: true
   }));
+
+  // At one point we used the mainWindow resize event to store window bounds,
+  // but that was too busy - needed to implement either settimeout etc. to handle
+  // continuous drag resize events, or rather, now we just implement it before
+  // window closes - see below and in the mainWindow script
+
   // Quit app when closed
   mainWindow.on('closed', function(){
     app.quit();
@@ -75,6 +101,18 @@ ipcMain.on('port:ondata', function(e, data){
   mainWindow.webContents.send('port:ondata', data);
 });
 
+
+// Settings, Config and Preferences Stuff
+ipcMain.on('prefs:show', function(e, data){
+  // in main.js (ipcMain) the console.log goes to the command line, if launched from terminal by eg npm start
+  console.log("ipcMain received prefs:show ... here is user data path: " + app.getPath('userData'));
+  mainWindow.webContents.send('prefs:show', "ipcMain received prefs:show: " + app.getPath('userData'));
+});
+ipcMain.on('prefs:storeWindowBounds', function(e) {
+  let { width, height } = mainWindow.getBounds();
+  settingsStorage.set('windowBounds', { width, height });
+  console.log("Stored settings for updated window bounds for mainWindow width and height.");
+});
 
 
 

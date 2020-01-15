@@ -1,0 +1,81 @@
+//
+// settingsStorage.js
+//
+
+ //
+// For storing user settings locally
+//
+// Please see, and thanks to the fundamental concept and demo code presented
+// at:
+// https://cameronnokes.com/blog/how-to-store-user-data-in-electron/
+// or his other articles and/or presentations.  There are others as well.
+//
+
+//
+// Needs:
+//
+// 1. Reset-able to nothing / clear it out / delete?
+// 2. User can see the location for manual cleaning out of files (or edit)
+// 3.
+//
+
+//
+// This is the first file / functionality set for which we are using testing Tests
+//
+
+
+
+
+
+
+const electron = require('electron');
+const path = require('path');
+const fs = require('fs');
+
+
+
+class SettingsStorage {
+  constructor(options) {  // can we use defaults here? a la ES6 / 2015?
+
+    // Note for implementation: dependin on main.js or if in mainWindow (probably
+    // the former ...) - maybe ... anyway, here: "||"
+    // Renderer process has to get `app` module via `remote`, whereas the main process can get it directly
+    const userDataPath = (electron.app || electron.remote.app).getPath('userData');
+    console.log("userDataPath is: " + userDataPath);
+
+    this.path = path.join(userDataPath, options.settingsFileName + '.json');
+
+    this.data = parseDataFile(this.path, options.defaults);
+  }
+
+  // This will just return the property on the `data` object
+  get(key) {
+    return this.data[key];
+  }
+
+  // ...and this will set it
+  set(key, val) {
+    this.data[key] = val;
+    // Wait, I thought using the node.js' synchronous APIs was bad form?
+    // We're not writing a server so there's not nearly the same IO demand on the process
+    // Also if we used an async API and our app was quit before the asynchronous write had a chance to complete,
+    // we might lose that data. Note that in a real app, we would try/catch this.
+    // Also - in our nodejs version as implemented at this time for the DacqMan
+    // demo app, Sync may not be available ...
+    fs.writeFileSync(this.path, JSON.stringify(this.data));
+  }
+}
+
+function parseDataFile(filePath, defaults) {
+  // We'll try/catch it in case the file doesn't exist yet, which will be the case on the first application run.
+  // `fs.readFileSync` will return a JSON string which we then parse into a Javascript object
+  try {
+    return JSON.parse(fs.readFileSync(filePath));
+  } catch(error) {
+    // if there was some kind of error, return the passed in defaults instead.
+    return defaults;
+  }
+}
+
+// expose the class
+module.exports = SettingsStorage;

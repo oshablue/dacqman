@@ -414,7 +414,7 @@
 
   <ul id="slide-out" class="sidenav sidenav-close"> <!-- sidenav-fixed"> -->
 
-      <li><a href="#!">First Sidebar Link</a></li>
+      <li><a href="#!" onclick="showUserPrefsData();">User Prefs Data</a></li>
       <li><a href="#!">Second Sidebar Link</a></li>
       <li class="no-padding">
         <ul class="collapsible collapsible-accordion">
@@ -665,6 +665,34 @@
     ipcRenderer.on('port:ondata', function(e, data){
       chart.update(data);
     });
+
+
+
+
+    function showUserPrefsData() {
+      console.log("sending prefs:show from ipcRenderer");
+      ipcRenderer.send('prefs:show');
+    }
+    ipcRenderer.on('prefs:show', function(e, data) {
+      console.log("prefs:show: " + JSON.stringify(data));
+    });
+
+
+    // Prevent Closing when work is running
+    window.onbeforeunload = (e) => {
+      //e.returnValue = false;  // this will *prevent* the closing no matter what value is passed
+
+      //if(confirm('Do you really want to close the application?')) {
+      //  win.destroy();  // this will bypass onbeforeunload and close the app
+      //}
+
+      ipcRenderer.send('prefs:storeWindowBounds');
+
+    };
+
+
+
+
 
     var animStarted = false;
     function mainWindowUpdateChartData(data) {
