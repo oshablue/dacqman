@@ -669,6 +669,11 @@
     });
 
 
+    ipcRenderer.on('log', function(e, data) {
+      console.log("ipc log event: " + data);
+    });
+
+
 
 
     function showUserPrefsData() {

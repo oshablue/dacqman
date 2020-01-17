@@ -111,34 +111,48 @@ ipcMain.on('item:add', function(e, item){
 // For serial port data received:
 ipcMain.on('port:ondata', function(e, data){
   console.log("ipcMain received port:ondata");
+  logToMain("ipcMain received port:ondata")
   mainWindow.webContents.send('port:ondata', data);
 });
+
+// For logging to main window dev tools window
+ipcMain.on('logToMain', function(e, data) {
+  mainWindow.webContents.send('log', data);
+});
+var logToMain = function(data) {
+  mainWindow.webContents.send('log', data);
+}
 
 
 // Settings, Config and Preferences Stuff
 ipcMain.on('prefs:show', function(e, data){
   // in main.js (ipcMain) the console.log goes to the command line, if launched from terminal by eg npm start
   console.log("ipcMain received prefs:show ... here is user data path: " + app.getPath('userData'));
+  logToMain("ipcMain received prefs:show ... here is user data path: " + app.getPath('userData'));
   mainWindow.webContents.send('prefs:show', "ipcMain received prefs:show: " + app.getPath('userData'));
 });
 ipcMain.on('prefs:storeWindowBounds', function(e) {
   let { width, height } = mainWindow.getBounds();
   settingsStorage.set('windowBounds', { width, height });
   console.log("Stored settings for updated window bounds for mainWindow width and height.");
+  logToMain("Stored settings for updated window bounds for mainWindow width and height.")
 });
 ipcMain.on('prefs:getPrefs', (e) => {
   e.returnValue = settingsStorage.getAll();
 });
 ipcMain.on('prefs:reset', (e) => {
-  fs.unlinkSync(settingsStorage.getFilePath());
+  fs.unlinkSync(settingsStorage.getFilePath());   // delete the file
   settingsStorage = null;
   settingsStorage = new SettingsStorage({
     settingsFileName: settingsFileName,       // .json etc is added by the module
     defaults: settingsDefaults
   });
+  settingsStorage.forceSave();                // save now without waiting for a set(key)
+  logToMain("Reset to defaults and saved the prefs/settings.");
 });
 ipcMain.on('prefs:set', (e, args) => {
   console.log("Stored to prefs: " + JSON.stringify(args));
+  logToMain("Stored to prefs: " + JSON.stringify(args))
   settingsStorage.set(args.key, args.value);
 });
 
