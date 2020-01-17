@@ -26,6 +26,7 @@ const Ftdi = require('ftdi');
 const electron = require('electron');
 const {ipcRenderer} = electron;
 
+// TODO I don't think this is right
 const { dialog } = require('electron').remote;
 
 const fs = require('fs');

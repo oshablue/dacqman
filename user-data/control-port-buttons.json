@@ -294,7 +294,7 @@
         "options" : [
           {
             "key" : "captureBufferMultiple",
-            "value" : 33
+            "value" : 49
           }
         ]
       }

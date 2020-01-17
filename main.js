@@ -1,28 +1,41 @@
 const electron = require('electron');
 const url = require('url');
 const path = require('path');
+const fs = require('fs');
+
+
 const SettingsStorage = require('./settingsStorage.js');
 
 
 const {app, BrowserWindow, Menu, ipcMain} = electron;
 
+
 // SET ENV
 process.env.NODE_ENV = 'development';//'production'; // lose the devtools etc.
+
 
 let mainWindow;
 let addWindow;
 
 
 
+
+
 //
-// Settings
+// SETTINGS / PREFERENCES
+//
+const settingsFileName = "dacqman-settings";
+const settingsDefaults = {
+  windowBounds: { width: 800, height: 900 },
+  customCommandsFilePath: './user-data/control-port-buttons.json', // TODO - move to constants?
+  customCommandsFilePathPackaged: './user-data/control-port-buttons.json'
+};
+
 // Again for prefs, settings, config tutorial, thanks to (and please see):
 // https://cameronnokes.com/blog/how-to-store-user-data-in-electron/
-const settingsStorage = new SettingsStorage({
-  settingsFileName: "dacqman-settings",       // .json etc is added by the module
-  defaults: {
-    windowBounds: { width: 800, height: 900 }
-  }
+var settingsStorage = new SettingsStorage({
+  settingsFileName: settingsFileName,       // .json etc is added by the module
+  defaults: settingsDefaults
 });
 
 
@@ -112,6 +125,21 @@ ipcMain.on('prefs:storeWindowBounds', function(e) {
   let { width, height } = mainWindow.getBounds();
   settingsStorage.set('windowBounds', { width, height });
   console.log("Stored settings for updated window bounds for mainWindow width and height.");
+});
+ipcMain.on('prefs:getPrefs', (e) => {
+  e.returnValue = settingsStorage.getAll();
+});
+ipcMain.on('prefs:reset', (e) => {
+  fs.unlinkSync(settingsStorage.getFilePath());
+  settingsStorage = null;
+  settingsStorage = new SettingsStorage({
+    settingsFileName: settingsFileName,       // .json etc is added by the module
+    defaults: settingsDefaults
+  });
+});
+ipcMain.on('prefs:set', (e, args) => {
+  console.log("Stored to prefs: " + JSON.stringify(args));
+  settingsStorage.set(args.key, args.value);
 });
 
 

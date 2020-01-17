@@ -42,8 +42,8 @@ function DataChart({
   this.reqId = null;
   this.chartBuffer = chartBuffer;
 
-  console.log("New bigWfDataChart for id name: " + this.parentElementIdName);
-  console.log(this.chartBuffer.length);
+  //console.log("New bigWfDataChart for id name: " + this.parentElementIdName);
+  //console.log(this.chartBuffer.length);
 
 
   var chartHeight = 300

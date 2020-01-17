@@ -41,19 +41,19 @@ class SettingsStorage {
     // the former ...) - maybe ... anyway, here: "||"
     // Renderer process has to get `app` module via `remote`, whereas the main process can get it directly
     const userDataPath = (electron.app || electron.remote.app).getPath('userData');
-    console.log("userDataPath is: " + userDataPath);
+    console.log("SettingsStorage: userDataPath is: " + userDataPath);
 
     this.path = path.join(userDataPath, options.settingsFileName + '.json');
 
     this.data = parseDataFile(this.path, options.defaults);
   }
 
-  // This will just return the property on the `data` object
+  // Get(ter)
   get(key) {
     return this.data[key];
   }
 
-  // ...and this will set it
+  // Set(ter)
   set(key, val) {
     this.data[key] = val;
     // Wait, I thought using the node.js' synchronous APIs was bad form?
@@ -62,6 +62,22 @@ class SettingsStorage {
     // we might lose that data. Note that in a real app, we would try/catch this.
     // Also - in our nodejs version as implemented at this time for the DacqMan
     // demo app, Sync may not be available ...
+    fs.writeFileSync(this.path, JSON.stringify(this.data));
+  }
+
+
+  // Get filepath
+  getFilePath() {
+    return this.path;
+  }
+
+  // Return all prefs
+  getAll() {
+    return this.data;
+  }
+
+  // Force save eg for re-instantiation
+  forceSave() {
     fs.writeFileSync(this.path, JSON.stringify(this.data));
   }
 }
