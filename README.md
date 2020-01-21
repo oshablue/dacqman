@@ -1,49 +1,132 @@
 
 # DacqMan
 
-DAta ACQuisition and MANager Experimental and Demo Tool, especially for use with
-HDL-0108-RSCPT 8-channel ultrasound hardware by OshaBlue LLC.
+### What is Dacqman for and What is its Status?
 
+Data acquisition and manager, an experimental and demo tool, especially for use with the OshaBlue
+HDL-0108-RSCPT 8-channel ultrasound (UT) hardware R&D (for NDT) platform.
 
-It was a rapid development app, fairly slapped together, intended for testing
+Please note, this is a DevKit sort of rapid sketch.  Nothing clean about it.  The intent is just to show how to use some
+commands with the hardware, and as a hardware Q/A tool.  It is not a finished piece of software.  Much of the commentary
+and notes reflect this being in process.
+
+Pre-pre-alpha type of release at this point.  Exploratory.
+
+Developed primarily on Mac, so not all features have been tested
+on Win.
+
+Under heavy development, exploratory.  Rapidly committed
+updates.
+
+Though perhaps some useful functional blocks in here:
+
+NodeJS, Electron, D3 for live data charting, MaterializeCss (responsive), node-ftdi (variant), node-serialport, (stream) buffer management, DOM manipulation, storing user preferences,
+dynamic/customizable loading of controls from JSON into the runtime for UI/UX
+
+It is a rapid development app, fairly slapped together, intended for testing this or
 some prototype hardware.  It has grown a bit into an interesting
-experimental and demo tool.  Yes, it still does leave much to desire in terms of
+experimental and demo tool.  
+
+Yes, it still does leave much to desire in terms of
 clean coding and coding best practice.  That's an important caveat.  
 
-Yet, there are some good demo chunks in there including:
+Much of which comes from excellent information available on the web, and is noted as such within the code.  Much appreciation for the examples and solutions out there.
 
-- Streaming data via buffer management
-- Two types of simultaneous USB-serial data interfaces:
-  - virtual com port (VCP) implementation via (old) nodejs serialport and
-  - FTDI via node-ftdi simultaneous
-- Creating custom buttons and functionality that are loaded at runtime from a JSON
-config file, including: buttons for single commands, chained commands with timeouts ranging
-from a sequence of simple commands to file capture, to buffer management, and then commands that are
-loaded from file into either text input fields or range sliders
-- Materializecss integration examples
-- Lots of DOM manipulation for runtime updates
-- Lots of jquery stuff for dynamic UI/UX
-- D3 charting with functional zoom
+### Revisions
 
-Much of which comes from excellent information available on the web, and is noted
-as such within the code.
+- **0.0.1** - pre-pre-alpha, first repository exposure at github, the more recent builds have not yet been tested with live hardware due to timing, and will be soon.  The previous builds, still included in the main repo here however did run on the hardware. If that is relevant at all.
+
+
+
+
+
+
+### Screenshots
+
+See Also:
+http://oshablue.com/bsides/ and search for HDL-0108-RSCPT - there will probably be a menu items listing all relevant
+articles.
+
+Screenshot, showing a sample of an 8-channel live view:
+![](assets/README-a0e25645.png)
+
+Screenshot, Windows, listing COM ports:
+![](assets/README-ec4ac79e.png)
+
+Screenshot, Windows, showing buttons and controls loaded from file:
+![](assets/README-8789159b.png)
+
+
+
+
+
+
+
+
+## Running It
+
+### In Development Mode
+
+1. Install the development environment items as noted below.
+(Basically: nvm, node 10.18.0, atom ide)
+2. Install the FTDI D2xx driver (maybe - see below regarding drivers)
+2. `git clone` this repo
+2. `cd <project-directory>`
+3. `npm install`
+4. `npm start`
+
+### Just the Runtime (as built)
+
+1. Download one of the builds from the repo (see `release-builds` or `release-builds-external-win32`)
+2. Install the FTDI D2xx driver (maybe - see below regarding drivers)
+3. Double-click the executable.  If the exe doesn't work, try downloading the whole release directory for that build, and run
+it from within there.
+
+
 
 
 ## Dependencies, Versions, and Building Applications
 
 The current release uses some older versions of Electron, SerialPort, Node-Ftdi
 and related, due to compatibilities and prioritizing a functional demo/playground
-versus capturing the most recent software.
+versus capturing the most recent software, or re-writing some libraries (mostly the node-ftdi) to build under newer
+package combinations.
 
 See package.json.
+
+
+### Drivers - Summary
+
+#### Mac OS X
+
+Install the D2XX drivers as indicated by FTDI for Mac OS X.
+Do not install D2xxHelper and so far, you don't need to unload
+any drivers.  Notes at the end of this Readme regarding this are
+for reference.
+
+#### Windows
+
+No data.  This App worked out of the box.  You mileage may vary.
+Let me know.  I'll test too, coming up ...
+
+
+### Development Environment
 
 Development has been with nvm (including the nvm-Windows package, just for the
   purpose of building the Windows exe) and npm.
 
+Been using Atom IDE.
 
-### Mac OS X
+nvm use 12.x.x (latest) worked for a bit, but cleanest builds (installs) are with nvm use 10.18.0.
+
+
+### Mac OS X - Dev and Package Version Notes
+
+This section is, at the first repository commit, now somewhat outdated.  Please just see package.json.  We are currently just using node 10.18.0, and versions are as noted in package.json.
 
 Interdependent (roughly) versions:
+
+(or please see package.json for current - copied here as well since no comments in JSON)
 
 Node 12.13.1
 Electron 4.2.12
@@ -62,30 +145,62 @@ major revisions (compared with the alternative), but then hit a point where the
 required revisions to build under even newer versions of key packages (node, electron)
 were so large, that this was left for a later milestone.
 
+It is possible that an out-of-the-box stock node-ftdi variant roughly version 1.2.3
+could build with node 10.x.x instead.  This is how the Windows runtime is built and
+  packaged.
+
+### Mac OS X - Building a Runtime App Package
+
 This all builds to an App on Mac OS X using:
 
 npm run package-mac (as elaborated into the command line script call in package.json)
 
 See details below and elsewhere.
 
-### Windows
+
+
+### Windows - Building a Runtime App Package
 
 Much the same as above, except to build for windows, cross-compilation wasn't functional
-at these package versions.  
+at these package versions.  That is, building the Windows target
+from the Mac development environment did not work.
 
 Solution: Fire up the Windows (8 in this case, Pro) virtual machine, install nvm-windows,
 install remaining items, etc.  Key points and required items:
 
-- Here, ended up that using nodejs 10 (latest = 10.18.0) was the required solution, because
-rebuilding seemed not to parallel the experience in Mac.  Was it node-gyp bundle version differences?
-- windows-build-tools
-- install the electron and electron packages by hand
 
-(TODO finish up this section)
+Here, ended up that using nodejs 10 (latest = 10.18.0) was the required solution, because
+rebuilding seemed not to parallel the experience in Mac.  Was it node-gyp bundle version differences?  Quite possibly just user error and inconsistency.
 
 
-Probably places where it was just user error, again time being the issue, and
-this at least provided a functional outcome.
+As of this latest commit, actually using Node 10.18.0 on both and Mac OS X and Windows.  
+Easiest way to build everything, and so far all functionally the same.
+
+
+Install for Packaging:
+- windows-build-tools are needed here, e.g. `npm install -g windows-build-tools`
+- then start installing the dacqman, actually with Node 10 and the current package.json,
+you can simply build with:
+- `npm install` from within the project directory
+
+If you need to start fresh to try to re-install, just remove the node_modules
+directory.  On Windows, due to module nesting in nodejs (and Windows itself),
+you may need an extra tool to delete the directory:
+- `npm install -g rimraf` [as in "rm -fr <dir>" = "rimraf"]
+- You may get a warning when trying to run this nodejs package via:
+- `rimraf <args>`
+- , from within Windows PowerShell, something about scripts not being enabled.
+- `Set-ExecutionPolicy RemoteSigned` allows the script to run and then e.g. to reset
+your installation:
+- `rimraf .\node-modules` should works
+
+
+You may want to tweak the build scripts in package.json, for example to build the win32 exe as a 32-bit application instead of the 64-bit option, as currently selected (x64 arch) - in which case use "ia32" for the arch option.
+
+
+Refs:
+- https://stackoverflow.com/questions/4037939/powershell-says-execution-of-scripts-is-disabled-on-this-system
+- https://superuser.com/questions/78434/how-to-delete-directories-with-path-names-too-long-for-normal-delete
 
 
 
@@ -101,15 +216,15 @@ this at least provided a functional outcome.
   - Developer Tools shows no Network connectivity
 
 - Local user copy of the customizable features loaded at run-time, like:
-  - Control port buttons
+  - Done - Control port buttons
   - Buffer params
 
 - Store user settings like:
-  - Window size and dimensions
-  - Custom control and config filepath
+  - Done - Window size and dimensions
+  - Done - Custom control and config filepath
   - Last opened or closed collapsible accordions for select items like charts?
 
-- Known working builds for Mac OS X and Windows
+- Done - Known working builds for Mac OS X and Windows
 
 
 
@@ -117,23 +232,24 @@ this at least provided a functional outcome.
 ### General Wish List
 
 - Command sequence implementation / customization:
-  - Data run (length, data amount, timed, etc)
-  - Buffer control for different capture types (single vs streaming)
+  - Done - Data run (length, data amount, timed, etc)
+  - Done - Buffer control for different capture types (single vs streaming)
   - Optional units changes for the graph
   - UI numeric feedback for slider / range init and changes
 
 
 - Mobile menu responsive hamburger and functionality
-  - Fix the fooling around with it
+  - Done - Fix the fooling around with it
+  - Done - Now: Settings - with some placeholder prefs functions
 
 
 - Add feature button to silence pulsing - or setTimeout on it
-  - Control or update pulse styling so it doesn't fire the scroll bars
+  - Done - Control or update pulse styling so it doesn't fire the scroll bars
   - Perhaps turn off when active data happening in the graph
   - Or just soft glow on
   - Or just call it buffer
 
-- Clean up the structure of the code - not quite the pie-in-the-sky that probably would never happen, just a simple review and re-compartmentalize would be helpful
+- Clean up the structure of the code - not quite the pie-in-the-sky that probably would never happen, just a simple review and re-compartmentalize would be helpful - definite low-handing fruit here
 
 
 - TDD (oo, bad!): Write tests, especially targeting: See below
@@ -147,35 +263,36 @@ this at least provided a functional outcome.
 - Channel selection control and implementation for viewing a single-channel's waveform during channel scan mode
 
 
-- Record data to file for specified number of captures, or time, or until timeout
+- Record data to file for specified number of captures, or time, or until timeout (ie, multiple options for criterion)
 
 
 - Add functional UI indicators:
-  - Buffer cycling status
-  - Buffer overflowing status (and remedy reminder)
-  - File writing progress or capture run progress
+  - Done - Buffer cycling status
+  - Done - Buffer overflowing status (and remedy reminder)
+  - Done - File writing progress or capture run progress
 
 
-- Multichannel WF viewer and corresponding buffer mgmt
+- Done - Multichannel WF viewer and corresponding buffer mgmt
 
 
 - Config file
 
 
-- Retain user settings and prefs even if just starting with UI
+- Done - Retain user settings and prefs even if just starting with UI
 
 
 - Audible parsing of waveform for HMI type of (H)AI detection
 
 
 
+- Lots more bells and whistles and demo data UI/UX
 
 
 
 ### Long Term TODO
 
 - CRC implementation
-- B-Scan with customizable A-scan - to - position - in - space UI control
+- B-Scan with customizable A-scan - to - position - in - space UI control (UI/UX bin here)
 - A million other things
 
 
@@ -196,7 +313,7 @@ npm install --save-dev chai-as-promised
 
 and then add the scripts as presented into package.json
 
-
+(more coming ...)
 
 
 
@@ -211,8 +328,6 @@ To reload updates to main.js (ipcMain), restart/relaunch the App, for example,
 using the command line ```npm start``` if necessary.
 
 
-
-## Specific File Notes and Setup Notes
 
 ## Dev Setup Notes and Tracking Bugs (as related to) and Package Updates
 
@@ -415,7 +530,9 @@ $ npm rebuild
 $ npm install
 $ npm start
 ```
-Did it.
+Did it.  Now, actually, with our local snapshot and updates, using
+node 10.18.0, it just builds straight away (though many warnings
+  relevant too) with the npm install.
 
 In Summary:
 
@@ -426,16 +543,16 @@ In Summary:
 5. npm start . (works, with the updates in the 3rd party project, here node-ftdi)
 
 Requirements for the above build to work:
-```bash
-package.json: "ftdi": "file:../viffy-3rd/node-ftdi",
-and the electron-rebuild
+
+`package.json: "ftdi": "file:./third-party-custom/node-ftdi"`
+and then `electron-rebuild`
 
 
 
 
 ### Useful command examples:
 
-```bash
+```
 (Unplug device)
 $ sudo kextunload -b com.apple.driver.AppleUSBFTDI
 $ sudo kextunload -b com.FTDI.driver.FTDIUSBSerialDriver
@@ -443,7 +560,7 @@ $ sudo kextcache -system-caches (not sure if required, it comes from an ORS tick
 $ kextstat | grep FTDI
 $ sudo kextload -b com.FTDI.driver.FTDIUSBSerialDriver
 (Replug-in device)
-$ kextstat | grep FTDI # use whenever needed to see what's loaded
+$ kextstat | grep FTDI  (use whenever needed to see what is loaded)
 ```
 
 ### Baud Rate Aliasing in the FTDI VCP Driver

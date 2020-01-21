@@ -891,10 +891,22 @@
     //window.onload = function(){
 
 
+      // Wow - I don't believe this actually works ...
+      // It does ... so far.  Improvements to clean it up?
+      getPrefsPromise()
+        .then(prefs => loadCustomCommandsPromise(prefs))
+        .then( function(customCommandsJson) {
+          loadButtons(customCommandsJson);
+          $(".switch").find("input[type=checkbox]").attr('checked', true);
+          showCustomControlsAsRangeSliders(true, customCommandsJson);
+        })
+        .catch ( e => {
+          console.log("Error loading prefs and customCommandsJson from file: " + e);
+        })
 
 
 
-      loadButtons(customCommandsJson);
+      //loadButtons(customCommandsJson);
 
 
 
@@ -920,8 +932,8 @@
 
 
       // Let's start by showing the text inputs as sliders - seems better for UI demo
-      $(".switch").find("input[type=checkbox]").attr('checked', true);
-      showCustomControlsAsRangeSliders(true, customCommandsJson);
+      //$(".switch").find("input[type=checkbox]").attr('checked', true);
+      //showCustomControlsAsRangeSliders(true, customCommandsJson);
 
       $('.sidenav').sidenav();
       $(".dropdown-trigger").dropdown();
