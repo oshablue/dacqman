@@ -11,7 +11,7 @@ Demo software sketch(es) aka DevKit for the HDL-0108-RSCPT OshaBlue 8-Channel Ra
 
 http://oshablue.com/bsides/
 
-and search for or select: HDL-0108-RSCPT related items 
+and search for or select: HDL-0108-RSCPT related items
 
 ### What is Dacqman for and What is its Status?
 
@@ -95,7 +95,7 @@ samples.
 
 ### Just the Runtime (as built)
 
-1. Download one of the builds from the repo (see `release-builds` or `release-builds-external-win32`)
+1. Download one of the release builds from one of the repo links or a related link (see `release-builds` or `release-builds-external-win32`)
 2. Install the FTDI D2xx driver (maybe - see below regarding drivers)
 3. Double-click the executable.  If the exe doesn't work, try downloading the whole release directory for that build, and run
 it from within there.
