@@ -631,6 +631,14 @@ Some changes, like changing the nodeIntegration setting in the BrowserWindow
 spawn do not show until exiting the application and restarting, aka "npm start"
 
 
+Favorite ref for deleting old release-builds from the git history:
+
+https://stackoverflow.com/questions/10067848/remove-folder-and-its-contents-from-git-githubs-history
+
+`git filter-branch --tree-filter "rm -rf node_modules" --prune-empty HEAD`
+
+`git for-each-ref --format="%(refname)" refs/original/ | xargs -n 1 git update-ref -d`
+
 
 
 ## Security
