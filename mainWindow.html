@@ -834,35 +834,59 @@
     var multiWfBufs = [];
     var curChan = 0;
     var prefs;
+        var customCommandsFilePath;
+        var customCommandsJson;
 
 
 
-
-    // Be careful with sendSync - even though we need it here to guarantee the
-    // return of the prefs for next code, if there is a hang up, reload and quit
-    // stop working and you need for force quit somehow (Ctrl-c command line
-    // or some app force quit menu items somewhere ... apparently)
-    prefs = ipcRenderer.sendSync('prefs:getPrefs') || {};
-    console.log("Prefs: " + JSON.stringify(prefs));
-
-    // What happens if custom file and user deletes it?
-    var customCommandsFilePath = prefs.customCommandsFilePath;
-    var customCommandsJson;
-    fs.stat(customCommandsFilePath || '', function (err, stat) {
-      if ( !err ) {
-        console.log("Loading customCommandsFilePath: " + customCommandsFilePath);
-        customCommandsJson = require(customCommandsFilePath) || '';
-      } else {
-        console.log("Filepath in preferences for customCommandsFilePath, " + customCommandsFilePath + ", does not exist ... defaulting to packaged fallback");
-        try {
-          customCommandsJson = require(prefs.customCommandsFilePathPackaged);
-        } catch (e) {
-          console.log("Problem loading customCommandsFilePathPackaged..." + e);
-          customCommandsJson = JSON.parse("{}");
-          console.log(customCommandsJson);
+        // Be careful with sendSync - even though we need it here to guarantee the
+        // return of the prefs for next code, if there is a hang up, reload and quit
+        // stop working and you need for force quit somehow (Ctrl-c command line
+        // or some app force quit menu items somewhere ... apparently)
+        let getPrefsPromise = () => {
+          return new Promise((resolve, reject) => {
+            prefs = ipcRenderer.sendSync('prefs:getPrefs') || {};
+            console.log("Prefs: " + JSON.stringify(prefs));
+            if ( !prefs ) {
+              reject("getPrefsPromise: failed to get prefs");
+            } else {
+              resolve(prefs);
+            }
+          });
         }
-      }
-    });
+
+
+        let  loadCustomCommandsPromise = (prefs) => {
+
+          // TODO there is probably a problem with the try/catch inside the promise
+          return new Promise((resolve, reject) => {
+
+            // What happens if custom file and user deletes it?
+            customCommandsFilePath = prefs.customCommandsFilePath || '';
+
+            fs.stat(customCommandsFilePath || '', function (err, stat) {
+              if ( !err ) {
+                console.log("Loading customCommandsFilePath: " + customCommandsFilePath);
+                customCommandsJson = require(customCommandsFilePath) || '';
+                resolve(customCommandsJson);
+              } else {
+                console.log("Filepath in preferences for customCommandsFilePath, " + customCommandsFilePath + ", does not exist ... defaulting to packaged fallback");
+                try {
+                  customCommandsJson = require(prefs.customCommandsFilePathPackaged);
+                  resolve(customCommandsJson);
+                } catch (e) {
+                  console.log("Problem loading customCommandsFilePathPackaged..." + e);
+                  customCommandsJson = JSON.parse("{}");
+                  console.log(customCommandsJson);
+                  reject(customCommandsJson);
+                }
+              }
+            });
+          }); // end of new Promise
+
+        }
+
+
 
 
 

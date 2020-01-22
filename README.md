@@ -1,13 +1,15 @@
 
-# DacqMan
+# DacqMan (UT)
 
 ## Intro
 
+Electron App (Experimental) for R&D/Experimental Ultrasound Hardware
+
 ### Description
 
-Demo software sketch(es) aka DevKit for the HDL-0108-RSCPT OshaBlue 8-Channel Rapid Scan Ultrasound Embeddable Hardware Prototype
+Dacqman is demo software sketch(es) aka DevKit for the HDL-0108-RSCPT OshaBlue 8-Channel Rapid Scan Ultrasound Embeddable Hardware Prototype
 
-### Website (additional/related)
+### Website (additional/related info)
 
 http://oshablue.com/bsides/
 
@@ -46,7 +48,7 @@ Much of which comes from excellent information available on the web, and is note
 
 ### Revisions
 
-- **0.0.1** - pre-pre-alpha, first repository exposure at github, the more recent builds have not yet been tested with live hardware due to timing, and will be soon.  The previous builds, still included in the main repo here however did run on the hardware. If that is relevant at all.
+- **0.0.1** - pre-pre-alpha, first repository exposure at github, the more recent builds (really, packaged components for a runtime analog or executable) have not yet been tested with live hardware due to timing, and will be soon.  The previous builds, still included in the main repo here however did run on the hardware. If that is relevant at all.
 
 
 
@@ -93,7 +95,7 @@ samples.
 3. `npm install`
 4. `npm start`
 
-### Just the Runtime (as built)
+### Just the Runtime (as built ... basically packaged components for executable analog, or a real exe, depending on your platform...)
 
 1. Download one of the release builds from one of the repo links or a related link (see `release-builds` or `release-builds-external-win32`)
 2. Install the FTDI D2xx driver (maybe - see below regarding drivers)
