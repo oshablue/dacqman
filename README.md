@@ -3,6 +3,16 @@
 
 ## Intro
 
+### Description
+
+Demo software sketch(es) aka DevKit for the HDL-0108-RSCPT OshaBlue 8-Channel Rapid Scan Ultrasound Embeddable Hardware Prototype
+
+### Website (additional/related)
+
+http://oshablue.com/bsides/
+
+and search for or select: HDL-0108-RSCPT related items 
+
 ### What is Dacqman for and What is its Status?
 
 Data acquisition and manager, an experimental and demo tool, especially for use with the OshaBlue
