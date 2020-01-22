@@ -1,6 +1,8 @@
 
 # DacqMan
 
+## Intro
+
 ### What is Dacqman for and What is its Status?
 
 Data acquisition and manager, an experimental and demo tool, especially for use with the OshaBlue
@@ -58,9 +60,15 @@ Screenshot, Windows, showing buttons and controls loaded from file:
 
 
 
+### License
 
+Please see LICENSE file.  MIT License.
 
+Except where other compatibly licensed or CC code has been included gratefully, and has been acknowledged throughout this source code.
 
+And further, extensive gratitude for the general open source and
+free software community, providing both core tools and solution
+samples.
 
 
 ## Running It
