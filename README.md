@@ -229,6 +229,28 @@ Refs:
 
 ## Wish List / TODO
 
+### Known Limitations for Re-Dev/Mod (Maybe's)
+
+1. Chart Frame Rate / Speed: Using d3 for the data chart/graphs works well for demo, and is a good demo of d3 in general. When
+trying to parse out waveform data frames and then update 8 channels
+however, it could be a little faster to try as a next iteration,
+canvas with d3 perhaps, or canvas alone.  Still keeping with
+script (nodejs / electron) versus compiled code in this particular
+project for a number of good reasons.  So yeah, canvas as a next
+step/mod for dev and check update frequency.  In single channel
+mode however, using d3 is plenty fast.  And by "speed" and "fast"
+just meaning how much the UI update buffer has to be decimated to
+keep pace easily with graph updates and without buffer overflow.  
+There are probably other code mods as well that could clean up
+(make more efficient) the UI updates and buffer processing.
+
+
+1. Add a data frame parser to the UI as a start too.  Currently,
+relying on the error-free data streams.
+
+
+
+
 ### For First Alpha Release
 
 - Option for local libraries (in case no net connectivity - or note about this at least)
