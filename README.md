@@ -89,7 +89,8 @@ samples.
 
 1. Install the development environment items as noted below.
 (Basically: nvm, node 10.18.0, atom ide)
-2. Install the FTDI D2xx driver (maybe - see below regarding drivers)
+2. Install the FTDI D2xx driver (maybe - see below regarding drivers -
+  HIGHLIGHT: don't install the D2xxHelper.kext or D2xxHelper package at all as shown in the FTDI installation video - that component is not needed for our purposes)
 2. `git clone` this repo
 2. `cd <project-directory>`
 3. `npm install`
