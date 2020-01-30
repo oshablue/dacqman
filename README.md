@@ -48,7 +48,13 @@ Much of which comes from excellent information available on the web, and is note
 
 ### Revisions
 
-- **0.0.1** - pre-pre-alpha, first repository exposure at github, the more recent builds (really, packaged components for a runtime analog or executable) have not yet been tested with live hardware due to timing, and will be soon.  The previous builds, still included in the main repo here however did run on the hardware. If that is relevant at all.
+- **0.0.3** - alpha - multi-chart version with fixes tested on hardware for cross
+platform and live dev and packaged, tested on Windows and Mac OS X, npm install works
+with correct node version still, even with a package.json re-structure.  Updates for
+prefs and custom control button sample file copied to local, as well as collapsible
+implementation.  See github Releases tab.  Check commit messages.
+
+- **0.0.1** - pre-pre-alpha, first repository exposure at github, the more recent builds (really, packaged components for a runtime analog or executable) have not yet been tested with live hardware due to timing, and will be soon.  The previous builds, still included in the main repo here however did run on the hardware. If that is relevant at all.  See github Releases tab.  Check commit messages.
 
 
 
@@ -102,6 +108,12 @@ samples.
 2. Install the FTDI D2xx driver (maybe - see below regarding drivers)
 3. Double-click the executable.  If the exe doesn't work, try downloading the whole release directory for that build, and run
 it from within there.
+
+#### Run-Time Notes and Usage
+
+- When copying the custom control buttons to local file, using the "settings" gear
+icon, please add ".json" to the file extension.  It is NOT added or checked for
+at the moment.  You'll get an error on load otherwise.
 
 
 
