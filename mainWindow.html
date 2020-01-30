@@ -923,6 +923,9 @@
           loadButtons(customCommandsJson);
           $(".switch").find("input[type=checkbox]").attr('checked', true);
           showCustomControlsAsRangeSliders(true, customCommandsJson);
+          $('.collapsible').collapsible({
+            accordion: true
+          });
         })
         .catch ( e => {
           console.log("Error loading prefs and customCommandsJson from file: " + e);
@@ -961,9 +964,9 @@
 
       $('.sidenav').sidenav();
       $(".dropdown-trigger").dropdown();
-      $('.collapsible').collapsible({
-        accordion: true
-      });
+      //$('.collapsible').collapsible({
+      //  accordion: true
+      //});
 
     });
 
