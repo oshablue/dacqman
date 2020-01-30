@@ -1375,13 +1375,19 @@
         }
       });
       console.log("file picker result: " + currentWriteStreamFilepath);
+      const app = require('electron').remote.app;
+      var a = app.getAppPath();
+      console.log("getAppPath: " + a);
+      var path = require('path');
+      var srcFilePath = path.join(a, prefs.customCommandsFilePathPackaged);
+      console.log("srcFilePath: " + srcFilePath);
       if ( !currentWriteStreamFilepath ) {
         console.log("no file selected for copy custom control file to ... returning.");
       } else {
         console.log("selected " + currentWriteStreamFilepath + " for copy custom control file to...")
-        cancelThis = fs.copyFile(prefs.customCommandsFilePathPackaged, currentWriteStreamFilepath, (err) => {
+        cancelThis = fs.copyFile(srcFilePath, currentWriteStreamFilepath, (err) => {
           if (err) {
-            console.log("error copying the source file to the destination file, for copy custom command control packaged file to local.");
+            console.log("error copying the source file to the destination file, for copy custom command control packaged file to local. " + err);
           } else {
             console.log('source.txt was copied to destination.txt ... storing path as pref also.');
             ipcRenderer.send('prefs:set', { 'key' : 'customCommandsFilePath', 'value' : currentWriteStreamFilepath});
