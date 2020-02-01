@@ -130,9 +130,14 @@ Ftdi.find( function(err, devices) {
     var d2 = devices[i+1];
     var sn1 = d1["serialNumber"];
     var sn2 = d2["serialNumber"];
+    console.log("FTDI sn1: " + sn1);
+    console.log("FTDI sn2: " + sn2);
     if ( d1["vendorId"] === d2["vendorId"] && d1["productId"] === d2["productId"] ) {
+      console.log("Same device vendorId and productId");
       if ( sn1.substr(0, sn1.length - 2) === sn2.substr(0, sn2.length - 2) ) {
-        if ( sn1.substr(sn1.length - 1, 1) === 'A' && sn2.substr(sn2.length - 2, 1) === 'B' ) {
+        console.log("Same device serial number base");
+        if ( sn1.substr(sn1.length - 1, 1) === 'A' && sn2.substr(sn2.length - 1, 1) === 'B' ) {
+          console.log("Devices have correct A/B sequence for suffixes");
           // DOM isn't ready yet if we place after table generation
           // and then use ID selectors in jquery - there are ways around this
           // for now, this if faster in dev
@@ -1145,6 +1150,43 @@ var controlPortSendData = function ( commandAndType, returnDataTo, button) {
     // This could be a separate structure that is required with an imported
     // command set such that validation occurs within this ruleset prior to
     // allowing execution
+
+    // Switch structure here for more complex possibilities --
+    // if none, could condense quite a bit
+    if ( returnDataTo ) {
+      switch ( returnDataTo ) {
+        case "chart":
+          // Currently, if dport is open, mainWindowUpdateChartData will have
+          // already been called thus setting up the charts or multicharts
+          // for the render loops -- if the chart type has changed we need to cycle
+          // this -- so the assumption is that calling it twice will cancel and
+          // then restart the render loops with the new gReturnDataTo value
+          // Obviously, this can be encapsulated and cleaned up
+          // Quick demo fix ... :
+          if ( gReturnDataTo !== returnDataTo ) {
+            mainWindowUpdateChartData(null);
+            gReturnDataTo = "chart";
+            console.log("Switched gReturnDataTo to chart");
+            mainWindowUpdateChartData(null);
+          }
+          // Placeholder for more complex actions
+          break;
+
+        case "multiChart":
+          // Quick demo fix ... :
+          if ( gReturnDataTo !== returnDataTo ) {
+            mainWindowUpdateChartData(null);
+            gReturnDataTo = "multiChart";
+            console.log("Switched gReturnDataTo to multiChart");
+            mainWindowUpdateChartData(null);
+          }
+          break;
+
+        default:
+          console.log("controlPortSentData: unhandled returnDataTo case: " + returnDataTo);
+          break;
+      }
+    }
 
     //console.log(button.options);
     var cancelThis = false;

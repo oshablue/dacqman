@@ -41,6 +41,7 @@ function DataChart({
   this.parentElementIdName = parentElementIdName;
   this.reqId = null;
   this.chartBuffer = chartBuffer;
+  var doRenderLoops = false;
 
   //console.log("New bigWfDataChart for id name: " + this.parentElementIdName);
   //console.log(this.chartBuffer.length);
@@ -245,14 +246,19 @@ function DataChart({
   //var reqId;
 
   this.RenderChart = function() {
+    console.log("this.RenderChart " + this.parentElementIdName);
+    doRenderLoops = true;
     renderChart();
   }
 
   var renderChart = function() {
 
     try {
-
-      this.reqId = requestAnimationFrame(renderChart);
+      //console.log("doRenderLoops: " + doRenderLoops);
+      if ( doRenderLoops === true ) {
+        reqId = requestAnimationFrame(renderChart);
+        //console.log("reqId for " + parentElementIdName + ": " + reqId);
+      }
 
       var thisStrokeWidth = strokeWidth;
       if ( currentTransform ) {
@@ -278,11 +284,15 @@ function DataChart({
   // DataChart.prototype.CancelRenderChart ...
   // So that we can have private and public style function access
   this.CancelRenderChart = function() {
+    console.log("Chart: " + parentElementIdName + ": cancelRenderChart req.id: " + reqId);
+    doRenderLoops = false;
     cancelRenderChart();
   }
 
   function cancelRenderChart() {
+    //console.log("Chart: " + parentElementIdName + ": cancelRenderChart req.id: " + reqId);
     cancelAnimationFrame(reqId);
+    //console.log("cancelAnimationFrame result: " + r)
   }
 
 

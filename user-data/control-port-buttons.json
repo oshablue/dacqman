@@ -290,7 +290,7 @@
           "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x50"
         },
         "description": "Set PAQ mode to continuous acquisition while channel-change scanning all channels",
-        "returnDataTo" : "chart",
+        "returnDataTo" : "multiChart",
         "options" : [
           {
             "key" : "captureBufferMultiple",
