@@ -42,6 +42,7 @@ function DataChart({
   this.reqId = null;
   this.chartBuffer = chartBuffer;
   var doRenderLoops = false;
+  var freshData = false;
 
   //console.log("New bigWfDataChart for id name: " + this.parentElementIdName);
   //console.log(this.chartBuffer.length);
@@ -260,19 +261,26 @@ function DataChart({
         //console.log("reqId for " + parentElementIdName + ": " + reqId);
       }
 
-      var thisStrokeWidth = strokeWidth;
-      if ( currentTransform ) {
-        thisStrokeWidth = strokeWidth / currentTransform.k;
-      }
+      if ( freshData === true ) {
 
-      // Get the latest data snapshot
-      svg.selectAll("path.line").remove();
-      svg.append("path")
-        .datum(chartBuffer) // if you use this. here, the intended functionality of course breaks due to structure implemented here
-        .attr("class", "line")
-        .attr("d", line)
-        .style("stroke-width", thisStrokeWidth)
-        ;
+        var thisStrokeWidth = strokeWidth;
+        if ( currentTransform ) {
+          thisStrokeWidth = strokeWidth / currentTransform.k;
+        }
+
+        // Get the latest data snapshot
+        svg.selectAll("path.line").remove();
+        svg.append("path")
+          .datum(chartBuffer) // if you use this. here, the intended functionality of course breaks due to structure implemented here
+          .attr("class", "line")
+          .attr("d", line)
+          .style("stroke-width", thisStrokeWidth)
+          ;
+
+          freshData = false;
+          //console.log('freshData = false');
+
+      } // freshData
     } catch ( e ) {
       console.log(this.parentElementIdName + ": Error in renderChart: " + e + " calling cancelRenderChart() ");
       cancelRenderChart();
@@ -298,7 +306,8 @@ function DataChart({
 
   this.UpdateChartBuffer = function(newBuffer) {
     newBuffer.copy(this.chartBuffer, 0, 0, 4096);
-    //console.log("updatechartbuffer: " + this.chartBuffer);
+    freshData = true;
+    //console.log("freshData = true");
   }
 
 
