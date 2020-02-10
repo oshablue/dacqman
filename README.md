@@ -240,6 +240,12 @@ Refs:
 
 
 
+
+
+
+
+
+
 ## Wish List / TODO
 
 ### Known Limitations for Re-Dev/Mod (Maybe's)
@@ -264,7 +270,13 @@ relying on the error-free data streams.
 
 
 
+
+
+
+
 ### For First Alpha Release
+
+- TODO Re-instate data rate testing button/function and test buffer decimation implemenation as well as verify source data speeds
 
 - Option for local libraries (in case no net connectivity - or note about this at least)
   - Windows symptoms: PLAY_ARROW instead of the play arrow icon
@@ -681,3 +693,24 @@ https://stackoverflow.com/questions/10067848/remove-folder-and-its-contents-from
 Do use recommendations at:
 https://github.com/electron/electron/blob/master/docs/tutorial/security.md
 https://stackoverflow.com/questions/51969512/define-csp-http-header-in-electron-app
+
+
+
+
+## Data Buffer Configuration
+
+At the time of this experimental revision and writing.
+
+
+Includes implementation of control-port-buttons.json (custom control port buttons).
+
+
+
+1. `control-port-buttons.json`: use a kvp hash element in the `options` array at the root level hash for each control button entry (see example code).  Key/value pairs so far are:
+  - singleCaptureBuffer [true|false]
+  - captureBufferMultiple [integer]
+2. All data received in the on.data event for the data port gets pushed into the stream buffer.
+3. But, the allocated buffer size is the captureBufferMultiple value, for the chunking of the stream, if that option is set.
+4. The copy to the current charting buffer (either single chart or the multiple waveform chart array) however only copies the first standard buffer size number of bytes (currently 4095 reflecting the hardware's capture control chip implementation).
+5. Thus, for example: captureBufferMultiple = 9 and we are scanning all 8 channels on demo hardware.  Here, all data gets pushed into the stream, and all gets written to file if capturing to file.  However, the chunks divided out for graphing/charting are 9x4095 or 9 buffers long.  And only the first 4095 bytes are actually pulled to get plotted.  Thus, we create a rotation, where each first 4095 byte block gets put into a sequential chart buffer, skipping the next 8 buffers.  This has the effect of decimating the data, to have a sane amount and frequency of data going to the charts, to prevent buffer overflow and have reasonable CPU and RAM consumption.  There are other ways.  This is the way it's done here for now.  For an 8-channel graph, the only options are to skip channels in steps of 8 (so an option value setting of 9, or 17, or just 8xN + 1).  If we're not parsing any SOFs and formally pushing waveforms to the parsed channels from the SOF section of the data, that is.  Just rather, simply, streaming the data, relying on underlying encapsulated data integrity functionality of various components, and decimating/processing at the right ratio to avoid UI loss of data and thus loss of apparent "sync".
+6. So: 128 Hz for waveforms coming in goes now to 128/8 or 128/9 Hz => 14Hz - 16Hz per channel theoretically. Wait ... is that what is really happening?  TODO.  Roughly the concept - in practice and experiment, we need to verify all speeds are what they once were BTW.  TODO.
