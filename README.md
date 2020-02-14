@@ -48,6 +48,9 @@ Much of which comes from excellent information available on the web, and is note
 
 ### Revisions
 
+- **0.0.6** - alpha - adds a demo, not well crafted but functional, of start of frame (SOF) parsing to sync the SOF portion of a waveform data
+packet to the beginning of the plotted data chart - not clean but worthy at least of playing around with a runtime (packaged) "release"
+
 - **0.0.3** - alpha - multi-chart version with fixes tested on hardware for cross
 platform and live dev and packaged, tested on Windows and Mac OS X, npm install works
 with correct node version still, even with a package.json re-structure.  Updates for
