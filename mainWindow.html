@@ -562,6 +562,9 @@
             //n = (n > 8) ? 0 : n;
             //if ( n === 8 ) {
 
+            //console.log("chunk read of length: " + chunk.length);
+            //console.log(chunk);
+
             // deimation stuff: no dice - not a copy must not be the bottleneck
             //dataPushDecimationCounter++; // increment only with each chunk
             //if ( dataPushDecimationCounter > decimationValue ) {
@@ -754,7 +757,7 @@
             multiWfs[i].CancelRenderChart();
           }
         }
-        
+
         // Update the UI status indicator showing Graph/Data Not Listening
 
       }

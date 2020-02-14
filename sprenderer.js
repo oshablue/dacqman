@@ -474,6 +474,8 @@ var btnControlPortClick = function(button) {
 
 //var datBuf = Buffer.alloc(4096, 63); // allocate 4096 byte buffer, fill with 0x00
 // Below for FTDI D2XX - for the data port (async fifo styling of streaming data)
+var sofFound = false;
+var srcIndexStart = 0;
 var openDataPort = function(portHash) {
   console.log("openDataPort: " + JSON.stringify(portHash));
 
@@ -517,10 +519,12 @@ var openDataPort = function(portHash) {
     // => 128 WFs/sec, assuming equally spaced in time gives 7.8125ms capture
     // and transmit the waveform of 4096 (was 2500) samples or whatever length + headers
 
+    /* Needs new implementation:
     console.log(`For 4096 of 8-bit data or samples each for 128 WF/sec is 4096x128 = 524,288 bytes/sec`);
     var dsps = sps - (4096 * 128);
     console.log(`Actual samples per second (sps) - theoretical sps: ${dsps} sps => ${dsps/(4096*128)*100}%`);
     console.log(`Delta samples in the 1 second sample period, excluding port overhead, actual samples - theoretical: ${samples - 4096*128}`);
+    */
 
     $("#btnDataPortStatus").removeClass('green pulse').addClass('blue-grey');
     $("#btnListeningForData").removeClass('pulse').addClass('disabled');
@@ -544,6 +548,8 @@ var openDataPort = function(portHash) {
     console.time("timeOpen");
     //time = process.hrtime();  // restart the timer, storing in "time"
 
+    sofFound = false;
+
     mainWindowUpdateChartData(null); // init the loop for requestAnimationFrame
 
     // Optionally stop the pulsing
@@ -565,10 +571,10 @@ var openDataPort = function(portHash) {
   });
 
   //var n = 0;
-  var sofFound = false;
-  var srcIndexStart = 0;
-  var sof = [0xaa, 0x55, 0xaa, 0x55, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00];
-  var sofSkipMatchByte = [ 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0];
+  //var sofFound = false;
+  //var srcIndexStart = 0;
+  const sof = [0xaa, 0x55, 0xaa, 0x55, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00];
+  const sofSkipMatchByte = [ 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0];
   dport.on('data', function (data) {
     //console.log ("dport.on data");
     //console.log(data);
@@ -589,6 +595,7 @@ var openDataPort = function(portHash) {
     var pushStartIndex = 0;
 
     if ( !sofFound ) {
+
       // Wait for and start dumping data on SOF found
       // SOF goes:
       // initial begin
@@ -603,49 +610,62 @@ var openDataPort = function(portHash) {
       // sof[11] <= 8'h 00;
       // end
 
+      console.log("looking for SOF (sofFound === false)");
+
       buf.push(...data);
-      //var b = [];
-      //var i =0;
+      //console.log(buf);
+
       var sofSize = 12;
       var bufSize = 4095;
-      if ( buf.length > (sofSize -1) && buf.length < (bufSize * 2 + 1 - sofSize) ) {
+      const bufMult = 10;
+
+      if ( buf.length > (sofSize -1) && buf.length < (bufSize * bufMult + 1 - sofSize) ) {
+
         var matchIndex = buf.indexOf(0xAA, srcIndexStart);
         console.log("matchIndex: " + matchIndex + " for srcIndexStart: " + srcIndexStart);
+
         if ( matchIndex > -1 ) {
-          //b = buf.slice(matchIndex, matchIndex + 12); // 0 to 11 = 12 elements
-          // Check sequence
+
           var stillGood = true;
           var i = 0;
           while ( stillGood  && ( i < sofSize ) ) {
-            if ( !sofSkipMatchByte ) {
+            if ( !sofSkipMatchByte[i] ) {
               stillGood = buf[ matchIndex + i ] === sof[ i ];
             }
             i++;
           }
-          // Otherwise or if not full length of SOF
-          // add increment the srcStartIndex
+
           console.log("stillGood: " + stillGood + " for i breaking out of while at: " + i);
           if ( stillGood ) {
             sofFound = true;
+            pushStartIndex = matchIndex; // yes, we'll keep the SOF bytes in the graph output / buffer
+            console.log("pushing starting from: " + pushStartIndex + " to stream buffer from source buffer of size: " + buf.length);
+            var b = new Buffer.from(buf.slice(pushStartIndex));
+            // Yes, we want to "put" a typeof Buffer here - otherwise weird behavior with current versions, perhaps all versions
+            ourReadableStreamBuffer.put(b); //, buf.length));
+            //console.log(buf.slice(pushStartIndex, buf.length));
             buf = [];
             srcIndexStart = 0; //??// already reset on each port open, so not needed?
-            pushStartIndex = matchIndex; // yes, we'll keep the SOF bytes in the graph output / buffer
           } else {
             srcIndexStart += i;
           }
+
+        } else {  // match not found
+          srcIndexStart += buf.length;
         }
-      } else if ( buf.length > (bufSize * 2 - sofSize) ) {
-        console.log(`buf.length > #{bufSize * 2 - sofSize} and not sofFound, so aborting the SOF test and just pushing data to stream regardless.`)
+
+      } else if ( buf.length > (bufSize * bufMult - sofSize) ) {
+        console.log(`buf.length > ${bufSize * bufMult - sofSize} and not sofFound, so aborting the SOF test and just pushing data to stream regardless. buf size: ${buf.length}`);
         sofFound = true;
         buf = [];
+        srcIndexStart = 0;
       }
-      console.log("sofFound lastly in on.data: " + sofFound + " set pushStartIndex: " + pushStartIndex);
-      //ourReadableStreamBuffer.put(data.slice(pushStartIndex))
+      console.log("sofFound: " + sofFound + " set pushStartIndex: " + pushStartIndex);
+
+    } else {  // SOF has already been found
+      ourReadableStreamBuffer.put(data);
     }
 
-    if ( sofFound ) {
-      ourReadableStreamBuffer.put(data.slice(pushStartIndex));
-    }
 
     /*if ( buf.length >= 2500 ) {
       console.log("buf.length: " + buf.length);
