@@ -565,6 +565,10 @@ var openDataPort = function(portHash) {
   });
 
   //var n = 0;
+  var sofFound = false;
+  var srcIndexStart = 0;
+  var sof = [0xaa, 0x55, 0xaa, 0x55, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00];
+  var sofSkipMatchByte = [ 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0];
   dport.on('data', function (data) {
     //console.log ("dport.on data");
     //console.log(data);
@@ -582,20 +586,66 @@ var openDataPort = function(portHash) {
     console.log("buf.length: " + buf.length);
     */
 
-    //if ( ourReadableStreamBuffer.size() < 1000*1024 ) {
+    var pushStartIndex = 0;
 
-    // nope because variable length data reads can happen so waveform walks
-    //n = n > 8 ? 0 : n;
-    //if ( n === 8 ) {
-    // yeah duh that doesn't work ...
-    //if ( dataPushDecimationCounter === decimationValue ) {
-      ourReadableStreamBuffer.put(data);
-    //}
-    //}
-    //n++;
-    //} else {
-    //  console.log("Not putting data into stream")
-    //}
+    if ( !sofFound ) {
+      // Wait for and start dumping data on SOF found
+      // SOF goes:
+      // initial begin
+      // sof[0] <= 8'h aa;
+      // sof[1] <= 8'h 55;
+      // sof[2] <= 8'h aa;
+      // sof[3] <= 8'h 55;
+      //
+      // sof[8] <= 8'h ff;
+      // sof[9] <= 8'h 00;
+      // sof[10] <= 8'h ff;
+      // sof[11] <= 8'h 00;
+      // end
+
+      buf.push(...data);
+      //var b = [];
+      //var i =0;
+      var sofSize = 12;
+      var bufSize = 4095;
+      if ( buf.length > (sofSize -1) && buf.length < (bufSize * 2 + 1 - sofSize) ) {
+        var matchIndex = buf.indexOf(0xAA, srcIndexStart);
+        console.log("matchIndex: " + matchIndex + " for srcIndexStart: " + srcIndexStart);
+        if ( matchIndex > -1 ) {
+          //b = buf.slice(matchIndex, matchIndex + 12); // 0 to 11 = 12 elements
+          // Check sequence
+          var stillGood = true;
+          var i = 0;
+          while ( stillGood  && ( i < sofSize ) ) {
+            if ( !sofSkipMatchByte ) {
+              stillGood = buf[ matchIndex + i ] === sof[ i ];
+            }
+            i++;
+          }
+          // Otherwise or if not full length of SOF
+          // add increment the srcStartIndex
+          console.log("stillGood: " + stillGood + " for i breaking out of while at: " + i);
+          if ( stillGood ) {
+            sofFound = true;
+            buf = [];
+            srcIndexStart = 0; //??// already reset on each port open, so not needed?
+            pushStartIndex = matchIndex; // yes, we'll keep the SOF bytes in the graph output / buffer
+          } else {
+            srcIndexStart += i;
+          }
+        }
+      } else if ( buf.length > (bufSize * 2 - sofSize) ) {
+        console.log(`buf.length > #{bufSize * 2 - sofSize} and not sofFound, so aborting the SOF test and just pushing data to stream regardless.`)
+        sofFound = true;
+        buf = [];
+      }
+      console.log("sofFound lastly in on.data: " + sofFound + " set pushStartIndex: " + pushStartIndex);
+      //ourReadableStreamBuffer.put(data.slice(pushStartIndex))
+    }
+
+    if ( sofFound ) {
+      ourReadableStreamBuffer.put(data.slice(pushStartIndex));
+    }
 
     /*if ( buf.length >= 2500 ) {
       console.log("buf.length: " + buf.length);
@@ -604,19 +654,7 @@ var openDataPort = function(portHash) {
     }*/
 
 
-    // For slow data, or single snapshot mode
-    /*if ( data.length > 4000) {
-      mainWindowUpdateChartData(data);
-    }*/
-
-    /*
-    samples += data.length;
-    */
-
-    // Let's capture whatever begins and ends within 6 ms
-
-
-  });
+  });   // end dport.on('data'...)
 
   // Really for this to work, you need to:
   // Install the D2XX driver package
