@@ -394,7 +394,7 @@
     },
 
     {
-      "title": "Acquire 2-min Channel Scan To File...",
+      "title": "Acquire 2-min Channel Scan To Single File...",
       "command": {
         "type": "hexCsvBytesChained",
         "chainedCmdDelayMs" : "120000",
@@ -411,7 +411,7 @@
           "2. Stop continuous scan and switch back to single/manual acquisition mode."
         ]
       },
-      "description": "Scan all channels continuously for 2 minutes.",
+      "description": "Scan all channels continuously for 2 minutes and stores to single file.",
       "returnDataTo" : "chart",
       "options" : [
         {
@@ -423,17 +423,49 @@
           "value" : 8
         },
         {
-          "key" : "captureSizeNumberOfWaveformsPerFile",
-          "value" : {
-            "number" : 600,
-            "note" : "600 is 150 scans X 4 channels - eg per sample UTR type output file from specific user demo"
-          }
-        },
-        {
           "key" : "captureSizeBytes",
           "value" : {
             "number" : "62899200",
             "note" : "62899200 = 128 Hz (16 Hz/chan x 8 chans) * 4095 samples/waveform * 2 minutes (120 seconds)"
+          }
+        }
+      ]
+    },
+
+    {
+      "title": "Acquire Channel Scans To Split Batch Custom Files...",
+      "command": {
+        "type": "hexCsvBytesChained",
+        "chainedCmdDelayMs" : "120000",
+        "chainedCmdTimeoutMs" : "1000",
+        "chainedCmdCompleteChar" : "",
+        "value": [
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x50",
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x50"
+        ],
+        "description-summary" : "Command chain/sequence to set PAQ to continuous channel scan and stop on cancel click. You will need to set the Tx voltage and Rx gain separately.",
+        "description-detail" : [
+          "0. Please set up Tx and Rx voltage/gain prior.",
+          "1. Start continuous channel scanning.",
+          "???2. Stop continuous scan and switch back to single/manual acquisition mode."
+        ]
+      },
+      "description": "Scan defined channels continuously until stop/cancel and split up into batch files using custom capture options.",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "fileCaptureCustomToDirectory",
+          "value" : "true"
+        },
+        {
+          "key" : "captureBufferMultiple",
+          "value" : 8
+        },
+        {
+          "key" : "captureSizeNumberOfWaveformsPerFile",
+          "value" : {
+            "number" : 600,
+            "note" : "600 is 150 scans X 4 channels - eg per sample UTR type output file from specific user demo"
           }
         }
       ]

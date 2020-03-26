@@ -1251,6 +1251,7 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button)
     //console.log(button.options);
     var cancelThis = false;
     var doFileCapture = false;
+    var doFileCaptureCustomToDirectory = false;
     var captureSizeBytes = null;
     var captureSizeNumberOfWaveformsPerFile = null;
     if ( button.options ) {
@@ -1280,6 +1281,10 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button)
             doFileCapture = o.value;
             break;
 
+          case "fileCaptureCustomToDirectory":
+            doFileCaptureCustomToDirectory = o.value;
+            break;
+
           default:
             console.log("controlPortSendData: Unrecognized button option: " + o.key);
         }
@@ -1288,219 +1293,167 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button)
 
     // Done parsing button options, now run any setups if needed with the
     // garnered items
-    if ( !cancelThis && doFileCapture ) {
+
+    if ( !cancelThis && !doFileCapture && !doFileCaptureCustomToDirectory ) {
+      controlPortSendData_SetupAndSendCommands(commandAndType);
+    }
+
+    if ( !cancelThis && (doFileCapture || doFileCaptureCustomToDirectory) ) {
+
       // https://electronjs.org/docs/api/dialog
-      // For selecting the output directory:
+
+      if ( doFileCapture) {
+        currentWriteStreamFilepath = dialog.showSaveDialog( {
+          //options : {
+            title : 'Create your destination captured data file ...',
+            buttonLabel: 'Start Capture'
+          //}
+        });
+        console.log("file picker result: " + currentWriteStreamFilepath);
+      }
+
       var captureDataFileOutputDirectory;
-      captureDataFileOutputDirectory = dialog.showOpenDialog( {
-        //options : { // yeah don't use this format ...
+      if ( doFileCaptureCustomToDirectory ) {
+        captureDataFileOutputDirectory = dialog.showOpenDialog( {
           title : 'Select and/or create your captured data directory ...',
           buttonLabel: 'Start Capture to this Directory',
           properties: [ 'openDirectory', 'createDirectory']
-        //}
-      });
+        });
+        console.log("file picker result: " + captureDataFileOutputDirectory);
+      }
 
-      // For selecting a single file for output:
-      /*currentWriteStreamFilepath = dialog.showSaveDialog( { // TODO: mainWindow, {
-        options : {
-          title : 'Create your destination captured data file ...',
-          buttonLabel: 'Start Capture'
-        }
-      });*/
-      //console.log("file picker result: " + currentWriteStreamFilepath);
-      console.log("file picker result: " + captureDataFileOutputDirectory);
-      //if ( !currentWriteStreamFilepath ) {
-      if ( !captureDataFileOutputDirectory ) {
-        console.log("no file selected for capture data destination, returning.");
-        // return only breaks out of the switch, hence our use of cancelThis
-        // from when this block was in the switch section
+      if ( !captureDataFileOutputDirectory && !currentWriteStreamFilepath ) {
+        console.log("No file or directory selected for capture data destination, returning.");
+        launchProgressCountdown(0);
         cancelThis = true;
       } else {
-        //console.log("selected " + currentWriteStreamFilepath + " for captured data file.")
-        console.log("selected " + captureDataFileOutputDirectory + " for captured data files.")
-        // TODO - this is just for testing - the reset line thing
-        //resetReadableStream(8);
-        // TODO writeStream is declared currently in mainWindow.html
-        /*cancelThis = !setupFileCapture(
-          parseInt(commandAndType.chainedCmdDelayMs),
-          // parseInt of null = NaN and if ( Nan ) === if ( false )
-          captureSizeBytes
-        );*/
-        // cancelThis = await !setupFileCaptureCustomBatches(
-        await setupFileCaptureCustomBatches(
-          captureDataFileOutputDirectory,
-          captureSizeNumberOfWaveformsPerFile
-        ).then( (res) => {
-          if ( !res ) {
-            console.log("setupFileCaptureCustomBatches returned : " + res + ", so ... returning, ie not proceeding with the command processing");
-          } else {
-            // BEGIN LENGTHY KLUDGE
-            var totTimeout = 0;
-            switch ( commandAndType.type ) {
 
-              case "hexCsvBytes":
-                var cmd = commandAndType.value.replace(/\s/g,"").split(',');
-                var cmdarr = [];
-                cmd.forEach(function(c) {
-                  cmdarr.push(parseInt(c));
-                });
-                console.log("controlPortSendData: " + cmdarr);
-                cport.write(cmdarr, function (err) {
-                  if ( err ) {
-                    console.log('sprenderer: error on write within controlPortSendData: ', err.message)
-                  }
-                });
-                break;
-
-              case "hexCsvBytesChained":
-                var delayBwCalls = parseInt(commandAndType.chainedCmdDelayMs);
-                var responseTimeout = parseInt(commandAndType.chainedCmdTimeoutMs);
-                var responseTermChar = commandAndType.chainedCmdCompleteChar;
-                if ( delayBwCalls ) {
-                  var len = commandAndType.value.length;
-                  console.log("hexCsvBytesChained: " + len + " commands found ...");
-                  commandAndType.value.forEach ( function (catv, index) {
-                    var cmd = catv.replace(/\s/g,"").split(',');
-                    var cmdarr = [];
-                    cmd.forEach(function(c) {
-                      cmdarr.push(parseInt(c));
-                    });
-                    var s = setTimeout( function () {
-                      console.log("Firing command " + (index + 1) + " of " + len);
-                      console.log(cmdarr);
-                      cport.write(cmdarr, function (err) {
-                        if ( err ) {
-                          console.log('sprenderer: error on write within controlPortSendData: ', err.message)
-                        }
-                      });
-                      // If this is the last command, clear the list somehow
-                      if ( (index + 1) === len ) {
-                        executingTimeoutFcns = [];
-                      }
-                    }, totTimeout, index, len, cmdarr);
-                    executingTimeoutFcns.push(s);
-                    // Could also do progress bar as percentage of steps remaining
-                    // or combination of that and time
-                    // Don't add a delay after the last call to the total
-                    if ( (index + 1) < len ) {
-                      totTimeout += delayBwCalls;
-                    }
-                    console.log("Total timeout: " + totTimeout);
-                  });
-                } else
-                if ( !delayBwCalls && ( responseTimeout && responseTermChar ) ) {
-                  // Is arguments.callee.name deprecated or not?
-                  console.log(arguments.callee.name + ": hexCsvBytesChained with sequenced cmds issued and termination of each stage based on response termination character or response timeout");
-                  // See above - parsers requires a new serialport
-                  //const parser = port.pipe(new Delimiter({ delimiter: '\n'}));
-                  //parser.on('data', console.log);
-                }
-                break;
-                // End case: hexCsvBytesChained
-
-              default:
-                console.log('sprenderer: error on controlPortSendData: type in command with type is not (yet) supported: ' + commandAndType.type);
+        if ( doFileCapture ) {
+          await setupFileCapture(
+            parseInt(commandAndType.chainedCmdDelayMs),
+            captureSizeBytes
+          ).then ( (res) => {
+            if ( !res ) {
+              console.log("setupFileCapture returned : " + res + ", so ... returning, ie not proceeding with the command processing");
+              launchProgressCountdown(0);
+            } else {
+              controlPortSendData_SetupAndSendCommands(commandAndType);
             }
-            launchProgressCountdown(totTimeout);
-            return;
-            // END LENGTHY KLUDGE
-          }
-        }).catch( (e) => {
-          console.log("Error proceeding after setupFileCaptureCustomBatches and doing the command processing and sending: " + e);
-          return;
-        });
+          }).catch ( (e) => {
+            console.log("Error proceeding after setupFileCaptureCustomBatches and doing the command processing and sending: " + e);
+            launchProgressCountdown(0);
+          });
+        }
+
+        if ( doFileCaptureCustomToDirectory ) {
+          await setupFileCaptureCustomBatches(
+            captureDataFileOutputDirectory,
+            captureSizeNumberOfWaveformsPerFile
+          ).then( (res) => {
+            if ( !res ) {
+              console.log("setupFileCaptureCustomBatches returned : " + res + ", so ... returning, ie not proceeding with the command processing");
+              launchProgressCountdown(0);
+            } else {
+              controlPortSendData_SetupAndSendCommands(commandAndType);
+            }
+          }).catch( (e) => {
+            console.log("Error proceeding after setupFileCaptureCustomBatches and doing the command processing and sending: " + e);
+            launchProgressCountdown(0);
+          });
+        }
 
       }
     }
-
-
-
-    // Now handle the command type and sending the control commands to the device
-
-    var totTimeout = 0;
-
-    // TODO
-    // kludge these cases ...testing
-    // w/ file capture gets handled sequentially above
-    // oy
-    if ( !cancelThis && !doFileCapture ) {
-
-      switch ( commandAndType.type ) {
-
-        case "hexCsvBytes":
-          var cmd = commandAndType.value.replace(/\s/g,"").split(',');
-          var cmdarr = [];
-          cmd.forEach(function(c) {
-            cmdarr.push(parseInt(c));
-          });
-          console.log("controlPortSendData: " + cmdarr);
-          cport.write(cmdarr, function (err) {
-            if ( err ) {
-              console.log('sprenderer: error on write within controlPortSendData: ', err.message)
-            }
-          });
-          break;
-
-        case "hexCsvBytesChained":
-          var delayBwCalls = parseInt(commandAndType.chainedCmdDelayMs);
-          var responseTimeout = parseInt(commandAndType.chainedCmdTimeoutMs);
-          var responseTermChar = commandAndType.chainedCmdCompleteChar;
-          if ( delayBwCalls ) {
-            var len = commandAndType.value.length;
-            console.log("hexCsvBytesChained: " + len + " commands found ...");
-            commandAndType.value.forEach ( function (catv, index) {
-              var cmd = catv.replace(/\s/g,"").split(',');
-              var cmdarr = [];
-              cmd.forEach(function(c) {
-                cmdarr.push(parseInt(c));
-              });
-              var s = setTimeout( function () {
-                console.log("Firing command " + (index + 1) + " of " + len);
-                console.log(cmdarr);
-                cport.write(cmdarr, function (err) {
-                  if ( err ) {
-                    console.log('sprenderer: error on write within controlPortSendData: ', err.message)
-                  }
-                });
-                // If this is the last command, clear the list somehow
-                if ( (index + 1) === len ) {
-                  executingTimeoutFcns = [];
-                }
-              }, totTimeout, index, len, cmdarr);
-              executingTimeoutFcns.push(s);
-              // Could also do progress bar as percentage of steps remaining
-              // or combination of that and time
-              // Don't add a delay after the last call to the total
-              if ( (index + 1) < len ) {
-                totTimeout += delayBwCalls;
-              }
-              console.log("Total timeout: " + totTimeout);
-            });
-          } else
-          if ( !delayBwCalls && ( responseTimeout && responseTermChar ) ) {
-            // Is arguments.callee.name deprecated or not?
-            console.log(arguments.callee.name + ": hexCsvBytesChained with sequenced cmds issued and termination of each stage based on response termination character or response timeout");
-            // See above - parsers requires a new serialport
-            //const parser = port.pipe(new Delimiter({ delimiter: '\n'}));
-            //parser.on('data', console.log);
-          }
-          break;
-          // End case: hexCsvBytesChained
-
-        default:
-          console.log('sprenderer: error on controlPortSendData: type in command with type is not (yet) supported: ' + commandAndType.type);
-      }
-
-    } // !cancelThis
-
-    // Again, could instead use percentage of completed steps instead
-    launchProgressCountdown(totTimeout);
 
   } else {  // if not port ...
     console.log ('sprenderer: error on controlPortSendData: port does not yet exist or has not been opened');
   }
 
 }
+
+
+
+
+
+
+var controlPortSendData_SetupAndSendCommands = function(commandAndType) {
+
+  // Now handle the command type and sending the control commands to the device
+
+  var totTimeout = 0;
+
+  switch ( commandAndType.type ) {
+
+    case "hexCsvBytes":
+      var cmd = commandAndType.value.replace(/\s/g,"").split(',');
+      var cmdarr = [];
+      cmd.forEach(function(c) {
+        cmdarr.push(parseInt(c));
+      });
+      console.log("controlPortSendData: " + cmdarr);
+      cport.write(cmdarr, function (err) {
+        if ( err ) {
+          console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+        }
+      });
+      break;
+
+    case "hexCsvBytesChained":
+      var delayBwCalls = parseInt(commandAndType.chainedCmdDelayMs);
+      var responseTimeout = parseInt(commandAndType.chainedCmdTimeoutMs);
+      var responseTermChar = commandAndType.chainedCmdCompleteChar;
+      if ( delayBwCalls ) {
+        var len = commandAndType.value.length;
+        console.log("hexCsvBytesChained: " + len + " commands found ...");
+        commandAndType.value.forEach ( function (catv, index) {
+          var cmd = catv.replace(/\s/g,"").split(',');
+          var cmdarr = [];
+          cmd.forEach(function(c) {
+            cmdarr.push(parseInt(c));
+          });
+          var s = setTimeout( function () {
+            console.log("Firing command " + (index + 1) + " of " + len);
+            console.log(cmdarr);
+            cport.write(cmdarr, function (err) {
+              if ( err ) {
+                console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+              }
+            });
+            // If this is the last command, clear the list somehow
+            if ( (index + 1) === len ) {
+              executingTimeoutFcns = [];
+            }
+          }, totTimeout, index, len, cmdarr);
+          executingTimeoutFcns.push(s);
+          // Could also do progress bar as percentage of steps remaining
+          // or combination of that and time
+          // Don't add a delay after the last call to the total
+          if ( (index + 1) < len ) {
+            totTimeout += delayBwCalls;
+          }
+          console.log("Total timeout: " + totTimeout);
+        });
+      } else
+      if ( !delayBwCalls && ( responseTimeout && responseTermChar ) ) {
+        // Is arguments.callee.name deprecated or not?
+        console.log(arguments.callee.name + ": hexCsvBytesChained with sequenced cmds issued and termination of each stage based on response termination character or response timeout");
+        // See above - parsers requires a new serialport
+        //const parser = port.pipe(new Delimiter({ delimiter: '\n'}));
+        //parser.on('data', console.log);
+      }
+      break;
+      // End case: hexCsvBytesChained
+
+    default:
+      console.log('sprenderer: error on controlPortSendData: type in command with type is not (yet) supported: ' + commandAndType.type);
+  }
+
+  // Again, could instead use percentage of completed steps instead
+  launchProgressCountdown(totTimeout);
+
+}
+
+
 
 
 
@@ -1541,9 +1494,7 @@ setupFileCaptureCustomBatches = ( outputDirectory, numberOfWaveformsPerFile ) =>
 
 
 var fileCaptureTimeoutId = null;
-var setupFileCapture = function ( durationMs, maxFileSizeBytes ) {
-
-  // Do these params need to be here?  The latter ... yes.
+var setupFileCapture = ( durationMs, maxFileSizeBytes ) => {
 
   // currentWriteStreamFilepath is global at present
 
@@ -1554,21 +1505,25 @@ var setupFileCapture = function ( durationMs, maxFileSizeBytes ) {
   currentMaxCaptureFileSizeBytes = maxFileSizeBytes;
   currentBytesCaptured = 0;
 
-  // TODO - fix this up with var? with issues, etc.
-  // Testing:
-  resetReadableStream(8);
+  return new Promise ((resolve, reject) => {
 
-  writeStream = fs.createWriteStream(currentWriteStreamFilepath);
-  writeStream.on('error', function(err) {
-    console.log("createWriteStream for " + currentWriteStreamFilepath + " error: " + err);
-    closeAndCleanupFileCapture();
-    everythingIsFine = false;
-  })
-  fileCaptureTimeoutId = setTimeout( function() {
-    closeAndCleanupFileCapture();
-  }, durationMs );
+    // TODO - fix this up with var? with issues, etc.
+    // Testing:
+    resetReadableStream(8);
 
-  return everythingIsFine;
+    writeStream = fs.createWriteStream(currentWriteStreamFilepath);
+    writeStream.on('error', function(err) {
+      console.log("createWriteStream for " + currentWriteStreamFilepath + " error: " + err);
+      closeAndCleanupFileCapture();
+      everythingIsFine = false;
+      reject(everythingIsFine);
+    })
+    fileCaptureTimeoutId = setTimeout( function() {
+      closeAndCleanupFileCapture();
+    }, durationMs );
+    resolve(everythingIsFine);
+
+  });
 
 }
 
