@@ -502,6 +502,7 @@
     var singleChartBuf = Buffer.alloc(4095,127); //null;
     var ourReadableStreamBuffer = null;
     var writeStream = null;
+    var captureDataFileOutputBatch = null;
     var currentWriteStreamFilepath = null;
     var currentBytesCaptured = null;
     var currentMaxCaptureFileSizeBytes = null;
@@ -896,6 +897,8 @@
       }); // end of new Promise
 
     }
+
+
 
 
 

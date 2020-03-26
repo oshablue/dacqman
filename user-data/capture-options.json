@@ -1,5 +1,128 @@
 {
 
+  "headerData" : {
+
+    "runFileTypeId" : {
+      "lengthBytes" : 6,
+      "type" : "charArray",
+      "value" : "RUN_  ",
+      "indexByteStart" : 0,
+      "indexByteStop" : 5
+    },
+
+    "legacyHeaderLengthPlaceholder" : {
+      "lengthBytes" : 2,
+      "type" : "Int16",
+      "value" : 100,
+      "indexByteStart" : 6,
+      "indexByteStop" : 7
+    },
+
+    "runId" : {
+      "lengthBytes" : 2,
+      "type" : "Int16",
+      "value" : 0,
+      "indexByteStart" : 8,
+      "indexByteStop" : 9
+    },
+
+    "tankId" : {
+      "lengthBytes" : 64,
+      "type" : "charArray",
+      "value" : "Blank Tank Id Information Placeholder",
+      "indexByteStart" : 10,
+      "indexByteStop" : 73
+    },
+
+    "timestamp" : {
+      "lengthBytes" : 19,
+      "type" : "charArray",
+      "value" : "dd/mm/yyyy hh:mm:ss",
+      "indexByteStart" : 76,
+      "indexByteStop" : 94,
+      "comment" : "timestamp length is bytes 74:75 while the actual value is bytes 76:94"
+    },
+
+    "transducersNum" : {
+      "lengthBytes" : 2,
+      "type" : "Int16",
+      "value" : 4,
+      "indexByteStart" : 95,
+      "indexByteStop" : 96
+    },
+
+    "sampleRateMHz" : {
+      "lengthBytes" : 2,
+      "type" : "Int16",
+      "value" : 40,
+      "indexByteStart" : 97,
+      "indexByteStop" : 98
+    },
+
+    "runLengthInches" : {
+      "lengthBytes" : 4,
+      "type" : "singleFloat",
+      "value" : 24.0,
+      "indexByteStart" : 99,
+      "indexByteStop" : 102
+    },
+
+    "runSpeedInchesPerSec" : {
+      "lengthBytes" : 4,
+      "type" : "singleFloat",
+      "value" : 4.0,
+      "indexByteStart" : 99,
+      "indexByteStop" : 102
+    },
+
+    "minimumRecordLength" : {
+      "lengthBytes" : 2,
+      "type" : "Int16",
+      "value" : 0,
+      "indexByteStart" : 103,
+      "indexByteStop" : 106
+    },
+
+    "offsetToFirstCaptureWaveformBaseOne" : {
+      "lengthBytes" : 4,
+      "type" : "Int32",
+      "value" : 5860,
+      "indexByteStart" : 109,
+      "indexByteStop" : 112,
+      "comment" : "To get the actual byte position, subtract one from this value. E.g. 0x16e5 is 5861 0000 = 5861 => go to position 5860 for first byte"
+    },
+
+    "lengthOfWaveformRecord" : {
+      "lengthBytes" : 4,
+      "type" : "Int32",
+      "value" : 10026,
+      "indexByteStart" : 113,
+      "indexByteStop" : 116,
+      "comment" : "For example for 4-byte singleFloat values at 2500 samples plus the 26-byte header for each waveform this is 10026 = 2A27 0000 = 0x272A = 10026"
+    },
+
+    "pulseTypeAndAnalyzeMode" : {
+      "lengthBytes" : 2,
+      "type" : "Int16",
+      "value" : 1,
+      "indexByteStart" : 117,
+      "indexByteStop" : 118,
+      "comment" : "0 = legacy swept freq and 1 = simple neg pulse with received echoes waveform incl face interactions"
+    },
+
+
+    "templateEntry" : {
+      "lengthBytes" : 2,
+      "type" : "Int16",
+      "value" : 0,
+      "indexByteStart" : 100,
+      "indexByteStop" : 1000,
+      "comment" : "Sample entry for user sample run file waveform record compilation"
+    }
+
+
+  },
+
 
   "textInputs": [
 
@@ -421,13 +544,6 @@
         {
           "key" : "captureBufferMultiple",
           "value" : 8
-        },
-        {
-          "key" : "captureSizeNumberOfWaveformsPerFile",
-          "value" : {
-            "number" : 600,
-            "note" : "600 is 150 scans X 4 channels - eg per sample UTR type output file from specific user demo"
-          }
         },
         {
           "key" : "captureSizeBytes",

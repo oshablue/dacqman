@@ -28,8 +28,12 @@ const settingsFileName = "dacqman-settings";
 const settingsDefaults = {
   windowBounds: { width: 800, height: 900 },
   customCommandsFilePath: './user-data/control-port-buttons.json', // TODO - move to constants?
-  customCommandsFilePathPackaged: './user-data/control-port-buttons.json'
+  customCommandsFilePathPackaged: './user-data/control-port-buttons.json',
+  customCaptureOptionsFilePath: './user-data/capture-options.json',
+  customCaptureOptionsPathFilePackaged: './user-data/capture-options.json'
 };
+// TODO on load check that at least each key exists - in the case of migrating to
+// new settings version
 
 // Again for prefs, settings, config tutorial, thanks to (and please see):
 // https://cameronnokes.com/blog/how-to-store-user-data-in-electron/
