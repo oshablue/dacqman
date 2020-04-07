@@ -618,6 +618,25 @@
               }
             }
 
+
+
+
+            //
+            //
+            // if ( capture file output set )
+            if ( captureDataFileOutputBatch ) {
+              captureDataFileOutputBatch.ReceiveData(chunk);
+            }
+
+
+
+            //
+            //
+            //
+
+
+
+
             // Debugging:
             //console.log(chartBuf.slice(0,11)); // checking the SOF section
             // The 5th bit [4] is the sequence_id - it begins at 1 and wraps after 255

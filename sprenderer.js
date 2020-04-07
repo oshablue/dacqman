@@ -1249,7 +1249,7 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button)
     }
 
     //console.log(button.options);
-    var cancelThis = false;
+    //var cancelThis = false;
     var doFileCapture = false;
     var doFileCaptureCustomToDirectory = false;
     var captureSizeBytes = null;
@@ -1294,11 +1294,12 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button)
     // Done parsing button options, now run any setups if needed with the
     // garnered items
 
-    if ( !cancelThis && !doFileCapture && !doFileCaptureCustomToDirectory ) {
+    if (!doFileCapture && !doFileCaptureCustomToDirectory ) {
+      console.log("first controlPortSendData_SetupAndSendCommands about to be called");
       controlPortSendData_SetupAndSendCommands(commandAndType);
     }
 
-    if ( !cancelThis && (doFileCapture || doFileCaptureCustomToDirectory) ) {
+    if ( doFileCapture || doFileCaptureCustomToDirectory ) {
 
       // https://electronjs.org/docs/api/dialog
 
@@ -1328,6 +1329,8 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button)
         cancelThis = true;
       } else {
 
+        console.log("Capture to file selected ... setting up ...");
+
         if ( doFileCapture ) {
           await setupFileCapture(
             parseInt(commandAndType.chainedCmdDelayMs),
@@ -1340,27 +1343,32 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button)
               controlPortSendData_SetupAndSendCommands(commandAndType);
             }
           }).catch ( (e) => {
-            console.log("Error proceeding after setupFileCaptureCustomBatches and doing the command processing and sending: " + e);
+            console.log("Error proceeding after setupFileCapture and doing the command processing and sending: " + e);
             launchProgressCountdown(0);
           });
         }
 
         if ( doFileCaptureCustomToDirectory ) {
-          await setupFileCaptureCustomBatches(
+          setupFileCaptureCustomBatches(    // was await - but now this returns a promise
             captureDataFileOutputDirectory,
             captureSizeNumberOfWaveformsPerFile
-          ).then( (res) => {
+          )
+          .then( (res) => {
             if ( !res ) {
-              console.log("setupFileCaptureCustomBatches returned : " + res + ", so ... returning, ie not proceeding with the command processing");
+              console.error("setupFileCaptureCustomBatches returned : " + res + ", so ... returning, ie not proceeding with the command processing");
               launchProgressCountdown(0);
             } else {
+              console.log("about to call controlPortSendData_SetupAndSendCommands");
               controlPortSendData_SetupAndSendCommands(commandAndType);
+              // Not sure - perhaps this should be promised and chained:
+              console.log("controlPortSendData: waveformsPerFile for batch output calculated to: " + captureDataFileOutputBatch.WaveformsPerFile());
             }
-          }).catch( (e) => {
-            console.log("Error proceeding after setupFileCaptureCustomBatches and doing the command processing and sending: " + e);
+          })
+          .catch( (e) => {
+            console.error("Error proceeding after setupFileCaptureCustomBatches and doing the command processing and sending: " + e);
             launchProgressCountdown(0);
           });
-        }
+        } // end: if doFileCaptureCustomToDirectory
 
       }
     }
@@ -1460,30 +1468,26 @@ var controlPortSendData_SetupAndSendCommands = function(commandAndType) {
 
 
 setupFileCaptureCustomBatches = ( outputDirectory, numberOfWaveformsPerFile ) => {
-  var everythingIsFine = true;
+  //var everythingIsFine = true;
   captureDataFileOutputBatch = null;
+
+  captureDataFileOutputBatch = new CaptureDataFileOutput({
+    directory: outputDirectory,
+    numberOfWaveformsPerFile: numberOfWaveformsPerFile
+  });
 
   return new Promise ((resolve, reject) => {
 
-    captureDataFileOutputBatch = new CaptureDataFileOutput({
-      directory: outputDirectory,
-      numberOfWaveformsPerFile: numberOfWaveformsPerFile
-    });
-
     captureDataFileOutputBatch.LoadCaptureOptions()
-    .then( function(resOk) {
-      if ( resOk ) {
-        everythingIsFine = true;
-        resolve(true);
-      } else {
-        everythingIsFine = false;
-        reject(false);
-      }
+    .then(captureDataFileOutputBatch.CheckOutputDirectory)
+    .then( function() {
+      console.log("LoadCaptureOptions and CheckOutputDirectory OK - resolving to true");
+      resolve(true);
     })
     .catch ( e => {
+      console.error("setupFileCaptureCustomBatches error in chain: " + e);
       reject(false);
-    })
-
+    });
 
   });
 
