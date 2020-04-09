@@ -30,7 +30,9 @@ const settingsDefaults = {
   customCommandsFilePath: './user-data/control-port-buttons.json', // TODO - move to constants?
   customCommandsFilePathPackaged: './user-data/control-port-buttons.json',
   customCaptureOptionsFilePath: './user-data/capture-options.json',
-  customCaptureOptionsPathFilePackaged: './user-data/capture-options.json'
+  customCaptureOptionsPathFilePackaged: './user-data/capture-options.json',
+  customTransducerCalibrationFilesDirectory: './user-data/transducer-calibration-files/',
+  customTransducerCalibrationFilesDirectoryPackaged: './user-data/transducer-calibration-files/'
 };
 // TODO on load check that at least each key exists - in the case of migrating to
 // new settings version

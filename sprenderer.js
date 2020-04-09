@@ -31,7 +31,8 @@ const { dialog } = require('electron').remote;
 
 const fs = require('fs');
 
-const CaptureDataFileOutput = require('./capture-data.js');
+//const CaptureDataFileOutput = require('./capture-data.js');
+const { CaptureDataFileOutput : CaptureDataFileOutput } = require('./capture-data.js');
 
 
 var buf = []; // new Uint8Array; //[];
@@ -1479,8 +1480,10 @@ setupFileCaptureCustomBatches = ( outputDirectory, numberOfWaveformsPerFile ) =>
   return new Promise ((resolve, reject) => {
 
     captureDataFileOutputBatch.LoadCaptureOptions()
-    .then(captureDataFileOutputBatch.CheckOutputDirectory)
-    .then( function() {
+    .then( res => {
+      captureDataFileOutputBatch.CheckOutputDirectory();
+    })
+    .then( res => {
       console.log("LoadCaptureOptions and CheckOutputDirectory OK - resolving to true");
       resolve(true);
     })

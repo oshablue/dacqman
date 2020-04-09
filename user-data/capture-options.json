@@ -121,6 +121,21 @@
 
   },
 
+  "transducersInfo" : {
+
+    "header" : {
+      "lengthBytes" : 40
+    },
+
+    "calWaveFiles" : [
+      { "xd1" : "xd1-calwave.csv" },
+      { "xd2" : "xd2-calwave.csv" },
+      { "xd3" : "xd3-calwave.csv" },
+      { "xd4" : "xd4-calwave.csv" }
+    ]
+
+  },
+
   "additionalFileInfo" : {
 
     "readingsPerInch" : {

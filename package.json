@@ -17,9 +17,11 @@
   "author": "OshaBlue LLC / nisch s.",
   "license": "MIT",
   "dependencies": {
+    "csv": "^5.3.2",
     "data-table": "^2.0.0",
     "ftdi": "file:./third-party-custom/node-ftdi",
-    "serialport": "^6.1.0"
+    "serialport": "^6.1.0",
+    "strftime": "^0.10.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
