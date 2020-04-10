@@ -36,6 +36,7 @@ const fs = require('fs');
 const path = require('path');
 const strftime = require('strftime');
 const csv = require('csv');           // some issues with just csv-parse so using the whole csv package
+//const parse = require('csv-parse/lib/parse');
 
 const FN_PREFIX = "run_";
 const FN_SUFFIX = ".UTR";
@@ -95,7 +96,11 @@ const FN_PAD_NZEROES = 4;   // pad values < 999 with leading zeroes up to 4 digi
 
   - https://stackoverflow.com/questions/32657516/how-to-properly-export-an-es6-class-in-node-4
 
+  - Great calculator - various interpretations of binary values:
+    https://www.scadacore.com/tools/programming-calculators/online-hex-converter/
+
   -
+
 
   */
 
@@ -137,6 +142,7 @@ class CaptureDataFileOutput {
     this.waveformsPerFile = 0;
     this.minChannelNum = 0;
     this.maxChannelNum = 0;
+    this.transducerCalibrationWaveformArray = null;
     this.headerByteArray = null;
     this.transducerByteArray = null;
 
@@ -184,38 +190,6 @@ class CaptureDataFileOutput {
 
 
 
-  this.loadCustomTransducerCalibrationFilesPromise = () => {
-
-    // Alas since we are chaining these, and no closures yet as another route,
-    // we just use the parent level items for prefs and the optionsJson
-
-    console.log("loadCustomTransducerCalibrationFilesPromise: ");
-    console.log(this.prefs);
-
-    return new Promise((resolve, reject) => {
-
-      try {
-
-        var dir = prefs.customTransducerCalibrationFilesDirectory;
-        var dirPkgd = prefs.customTransducerCalibrationFilesDirectoryPackaged;
-        if ( dir === dirPkgd ) {
-          console.warn(`warning from capture-data.js: your transducer calibration files directory is still set to the packaged sample files.  If your processing methods depend on transducer calibration files, you should probably customize this directory and place your calibration files within that directory, matching the cal wave file names inside of your customized capture-options.json file in the transducers section.  Will proceed using the packages sample cal files.`);
-          // we can still proceed ...
-        }
-        resolve( this.loadCalWaveFiles( dir, this.customCaptureOptionsJson.transducersInfo.calWaveFiles ) );
-
-      } catch (e) {
-        console.warn(`Warning: Allowing continuation as this may not be critical, however there was an error in capture-data.js: loadCustomTransducerCalibrationFilesPromise: ${e}.`);
-        resolve(false); // continuation allowed, hence resolve used not reject
-      }
-
-    }); // end of new Promise
-
-  } // End of: loadCustomTransducerCalibrationFiles
-
-
-
-
 
 
   // was this. however this arrow notation does the same
@@ -237,8 +211,13 @@ class CaptureDataFileOutput {
           this.customCaptureOptionsJson = customCaptureOptionsJson;
           return customCaptureOptionsJson;
         })
-        .then( res => { this.loadCustomTransducerCalibrationFilesPromise() })  // should always resolve, really
-        .then( () => {
+        .then( res => {
+          // Yes return is required such that this .then returns
+          // a promise and thus the next .then waits on the fulfillment
+          // of this previous promise prior to executing  
+          return this.loadCustomTransducerCalibrationFilesPromise();
+        })  // should always resolve, because it's optional and perhaps legacy compat but no longer used mostly
+        .then( res => {
           if ( this.customCaptureOptionsJson ) {
             this.initializeFileWritingData( this.customCaptureOptionsJson );
             this.readyToCapture = true;
@@ -258,17 +237,6 @@ class CaptureDataFileOutput {
 
 
 
-
-
-
-
-  this.loadCalWaveFiles = ( dir, calWaveFnArrayHash ) => {
-
-    return new Promise ( (resolve, reject ) => {
-      resolve();
-    }); // end of new Promise
-
-  } // End of: loadCalWaveFiles
 
 
 
@@ -497,23 +465,195 @@ class CaptureDataFileOutput {
 
 
 
-  this.loadTransducerCalibrationFiles = (dir, filenamesArrayJson) => {
+  this.loadTransducerCalibrationFiles = (dir, filenamesArrayJson, firstLineToReadFrom) => {
+
+    // Called by a parent that organizes the directory get and check
+    // and the filenames
+    // This file does the actual work
+
+    // https://stackoverflow.com/questions/31413749/node-js-promise-all-and-foreach
+    // https://csv.js.org/parse/recipies/file_interaction/
 
     return new Promise ( (resolve, reject) => {
 
-      try {
+      //try {
 
-        filenamesArrayJson.forEach( function (f) {
-          console.log(path.join(dir, f));
+        // Order filenames by transducer name/number keys
+        // https://stackoverflow.com/questions/5467129/sort-javascript-object-by-key
+        // We order just in case ... though it would appear that order
+        // is properly preserved anyway -- see link and ES6/2015
+        var ordered = {};
+        Object.keys(filenamesArrayJson).sort().forEach(function(key) {
+          ordered[key] = filenamesArrayJson[key];
+        });
+        var calFps = []
+        for ( var key in ordered ) {
+          calFps.push(path.join(dir, ordered[key]));
+        };
+
+        var actions = calFps.map( (fp) => {
+          // yes return is needed to populate the results array
+          return this.putTransducerCalibrationWaveformIntoArray(fp, firstLineToReadFrom);
+        });
+
+        var results = Promise.all(actions);
+
+        results.then(data => {
+          console.log(data);
+          resolve(results); // resolve?
+        });
+
+
+        //resolve(results);
+
+        /*var i = 0;
+        calFps.forEach( function ( fp ) {
+          var content = null;
+          i = i + 1;
+          var recs = [];
+          try {
+            console.log("Trying to open transducer calibration file: " + fp);
+            content = fs.readFileSync(fp);
+            //console.log(content);
+            var records = csv.parse(content, {
+              columns: false,
+              from_line: firstLineToReadFrom
+            }, function ( err, data ) {
+              data.forEach(function (rec) {
+                recs.push(parseFloat(rec[0])); // these will be Array(1)
+              });
+              recs = [].concat.apply([], recs);
+              console.log(recs);
+              console.log(`Parsed cal file ${fp} with data length of ${recs.length} points`);
+              //this.transducerCalibrationWaveformArray[`xd${i}`] = recs;
+
+              console.log(this.transducerCalibrationWaveformArray);
+            });*/
+
+            // Instead of firstLineToReadFrom we could use the on_record option w/ callback
+            // and use "[DATA]" record to init starting to store the waveform points
+
+
+      /*    } catch (e) {
+            console.warn("(Allowing continuation) capture-data.js: loadTransducerCalibrationFiles: error: " + e + " opening (or trying to open) transducer calibration file " + fp);
+            //resolve(false);
+          }
         });
 
       } catch (e) {
-        console.warn("capture-data.js: loadTransducerCalibrationFiles: warning/error: " + e);
+        console.warn("Allowing continuation, however, capture-data.js: loadTransducerCalibrationFiles: warning/error: " + e);
+        resolve(false);
       }
+      */
 
     }); // end of new Promise
 
   } // End of: loadTransducerCalibrationFiles
+
+
+
+  this.putTransducerCalibrationWaveformIntoArray = (fp, firstLineToReadFrom) => {
+
+    return new Promise( ( resolve, reject ) => {
+
+      var recs = [];
+      var content = null;
+      try {
+        content = fs.readFileSync(fp);
+      } catch (e) {
+        console.warn(`putTransducerCalibrationWaveformIntoArray: fileReadSync error: ${e} - resolving false.`);
+        resolve(false);
+      }
+
+      if ( content ) {
+
+        var options = {
+          columns: false,
+          from_line: firstLineToReadFrom
+        };
+
+        csvParseAsync( content, options )
+          .then( recs => {
+            if ( recs ) {
+              resolve(recs);
+            } else {
+              resolve(false);
+            }
+          })
+          .catch( (e) => {
+            console.log("error: " + e);
+            resolve(false);
+          });
+
+      }
+
+    }); // end of new Promise
+
+  } // End of: putTransducerCalibrationWaveformIntoArray
+
+
+  // https://stackoverflow.com/questions/22519784/how-do-i-convert-an-existing-callback-api-to-promises
+  function csvParseAsync(content, options) {
+
+    return new Promise( function ( resolve, reject ) {
+
+      csv.parse(content, options, function ( err, data ) {
+        if ( err ) {
+          console.log("csvParseAsync: error: " + err);
+          resolve(false);
+        } else {
+          var recs = [];
+          data.forEach(function (rec) {
+            recs.push(parseFloat(rec[0])); // these will be Array(1)
+          });
+          recs = [].concat.apply([], recs);
+          resolve(recs);
+        }
+      })
+
+    });
+
+  }
+
+
+
+
+  this.loadCustomTransducerCalibrationFilesPromise = () => {
+
+    // Alas since we are chaining these, and no closures yet as another route,
+    // we just use the parent level items for prefs and the optionsJson
+
+    console.log("loadCustomTransducerCalibrationFilesPromise: ");
+    //console.log(this.prefs);
+
+    return new Promise((resolve, reject) => {
+
+      //try {
+
+        var dir = prefs.customTransducerCalibrationFilesDirectory;
+        var dirPkgd = prefs.customTransducerCalibrationFilesDirectoryPackaged;
+        if ( dir === dirPkgd ) {
+          // This is a really long warning and info message:
+          console.warn(`warning from capture-data.js: your transducer calibration files directory is still set to the packaged sample files.  If your processing methods depend on transducer calibration files, you should probably customize this directory and place your calibration files within that directory, matching the cal wave file names inside of your customized capture-options.json file in the transducers section.  Will proceed using the packages sample cal files.`);
+          // we can still proceed ...
+        }
+        this.loadTransducerCalibrationFiles(
+          dir,
+          this.customCaptureOptionsJson.transducersInfo.calWaveFiles,
+          parseInt(this.customCaptureOptionsJson.transducersInfo.calWaveFilesOptions.firstLineToReadFrom)
+        ).then( res => {
+          resolve(res);
+        })
+
+      /*} catch (e) {
+        console.warn(`Warning: Allowing continuation as this may not be critical, however there was an error in capture-data.js: loadCustomTransducerCalibrationFilesPromise: ${e}.`);
+        resolve(false); // continuation allowed, hence resolve used not reject
+      }*/
+
+    }); // end of new Promise
+
+  } // End of: loadCustomTransducerCalibrationFilesPromise
+
 
 
 

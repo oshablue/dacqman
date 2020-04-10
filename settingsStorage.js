@@ -85,12 +85,43 @@ class SettingsStorage {
 function parseDataFile(filePath, defaults) {
   // We'll try/catch it in case the file doesn't exist yet, which will be the case on the first application run.
   // `fs.readFileSync` will return a JSON string which we then parse into a Javascript object
+
   try {
-    return JSON.parse(fs.readFileSync(filePath));
+
+    var j = JSON.parse(fs.readFileSync(filePath));
+    console.log("Current settings from file: ");
+    console.log(j);
+
+    // Now verify that each default key exists or insert as needed if not yet existing
+    // This is to help migration without having to reset all to defaults
+    var pjdefs = JSON.parse(JSON.stringify(defaults));
+
+    for ( var defkey in pjdefs ) {
+      //console.log(defkey);
+      //console.log(pjdefs[defkey]);
+      //console.log(j[defkey]);
+      if ( !j[defkey] ) {
+        console.log("No key found in settings for: " + defkey + " ... inserting default");
+        j[defkey] = pjdefs[defkey];
+      }
+    }
+
+    console.log("After checking/updating settings: ");
+    console.log(j);
+
+    return j;
+
   } catch(error) {
+
     // if there was some kind of error, return the passed in defaults instead.
+    console.log("settingsStorage.js: error: " + error + " returning default settings");
     return defaults;
+
   }
+
+
+
+
 }
 
 // expose the class
