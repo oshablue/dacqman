@@ -148,11 +148,11 @@ class CaptureDataFileOutput {
 
     this.activeFilePath = null;
     this.activeWriteStream = null;
+    this.duplicateFileNamingMidFix = null;              // MidFix = after the prefix, indicating a series number, but before the file sequence number
     this.captureWriteStream = null;
 
     this.inDataBuffer = Buffer.alloc(4095 * 8, 0); // max waveform returned from hardware X 8, init with 0
 
-  //} // end of constructor
 
   // https://stackoverflow.com/questions/11707698/how-to-know-which-javascript-version-in-my-nodejs
   // https://node.green/
@@ -163,16 +163,12 @@ class CaptureDataFileOutput {
   } catch(err) {
     console.log("ES6 not supported :(")
   }
-
   try {
     var k = new HashMap();
     console.log("ES100 supported!!")
   } catch(err) {
     console.log("ES100 not supported :(")
   }*/
-
-
-
 
 
   // still inside constructor
@@ -212,11 +208,18 @@ class CaptureDataFileOutput {
           return customCaptureOptionsJson;
         })
         .then( res => {
-          // Yes return is required such that this .then returns
+          // Yes return is required such that .then returns
           // a promise and thus the next .then waits on the fulfillment
-          // of this previous promise prior to executing  
-          return this.loadCustomTransducerCalibrationFilesPromise();
+          // of this previous promise prior to executing
+          var res = this.loadCustomTransducerCalibrationFilesPromise();
+          return res;
         })  // should always resolve, because it's optional and perhaps legacy compat but no longer used mostly
+        .then( arr => {
+          this.transducerCalibrationWaveformArray = arr;
+          console.log("capture-data.js: stored loadCustomTransducerCalibrationFilesPromise result into transducerCalibrationWaveformArray: ");
+          console.log(arr);
+          return arr;
+        })
         .then( res => {
           if ( this.customCaptureOptionsJson ) {
             this.initializeFileWritingData( this.customCaptureOptionsJson );
@@ -282,6 +285,8 @@ class CaptureDataFileOutput {
     });
 
   } // End of: checkOutputDirectory
+
+
 
 
 
@@ -427,6 +432,8 @@ class CaptureDataFileOutput {
 
 
 
+
+
   this.initializeFileWritingTransducerData = ( optionsJson ) => {
 
     var headerSize = parseInt(optionsJson.additionalFileInfo.offsetToFirstTransducerRecord.value);
@@ -476,8 +483,6 @@ class CaptureDataFileOutput {
 
     return new Promise ( (resolve, reject) => {
 
-      //try {
-
         // Order filenames by transducer name/number keys
         // https://stackoverflow.com/questions/5467129/sort-javascript-object-by-key
         // We order just in case ... though it would appear that order
@@ -499,56 +504,18 @@ class CaptureDataFileOutput {
         var results = Promise.all(actions);
 
         results.then(data => {
-          console.log(data);
+          //console.log(data);
           resolve(results); // resolve?
         });
-
-
-        //resolve(results);
-
-        /*var i = 0;
-        calFps.forEach( function ( fp ) {
-          var content = null;
-          i = i + 1;
-          var recs = [];
-          try {
-            console.log("Trying to open transducer calibration file: " + fp);
-            content = fs.readFileSync(fp);
-            //console.log(content);
-            var records = csv.parse(content, {
-              columns: false,
-              from_line: firstLineToReadFrom
-            }, function ( err, data ) {
-              data.forEach(function (rec) {
-                recs.push(parseFloat(rec[0])); // these will be Array(1)
-              });
-              recs = [].concat.apply([], recs);
-              console.log(recs);
-              console.log(`Parsed cal file ${fp} with data length of ${recs.length} points`);
-              //this.transducerCalibrationWaveformArray[`xd${i}`] = recs;
-
-              console.log(this.transducerCalibrationWaveformArray);
-            });*/
-
-            // Instead of firstLineToReadFrom we could use the on_record option w/ callback
-            // and use "[DATA]" record to init starting to store the waveform points
-
-
-      /*    } catch (e) {
-            console.warn("(Allowing continuation) capture-data.js: loadTransducerCalibrationFiles: error: " + e + " opening (or trying to open) transducer calibration file " + fp);
-            //resolve(false);
-          }
-        });
-
-      } catch (e) {
-        console.warn("Allowing continuation, however, capture-data.js: loadTransducerCalibrationFiles: warning/error: " + e);
-        resolve(false);
-      }
-      */
 
     }); // end of new Promise
 
   } // End of: loadTransducerCalibrationFiles
+
+
+
+
+
 
 
 
@@ -592,6 +559,14 @@ class CaptureDataFileOutput {
   } // End of: putTransducerCalibrationWaveformIntoArray
 
 
+
+
+
+
+
+
+
+
   // https://stackoverflow.com/questions/22519784/how-do-i-convert-an-existing-callback-api-to-promises
   function csvParseAsync(content, options) {
 
@@ -613,7 +588,15 @@ class CaptureDataFileOutput {
 
     });
 
-  }
+  } // end of csvParseAsync
+
+
+
+
+
+
+
+
 
 
 
@@ -694,6 +677,9 @@ class CaptureDataFileOutput {
 
 
 
+
+
+
   this.int32JsonValIntoHeaderArray = ( val, posn ) => {
 
     // https://stackoverflow.com/questions/7744611/pass-variables-by-reference-in-javascript
@@ -756,6 +742,8 @@ class CaptureDataFileOutput {
 
 
 
+
+
   this.createCaptureWriteStreamFilePath = () => {
 
     // padStart is included in ECMAScript 2017
@@ -770,19 +758,51 @@ class CaptureDataFileOutput {
 
 
 
+
+
   this.startNewFile = () => {
+
+    // We don't want to overwrite data
+    // so ... here the file write flag is presented with "x" appended, as in,
+    // don't overwrite if exists
+    // And the error event is added.
+    // We need also to check that the file does not exist and then
+    // create/write -- or if it does, use the appropriate midFix addition
+    // in the filepath creation routine
 
     // Create filename and open the path
     this.fileCounter = this.fileCounter + 1;      // start from 1, init'd at 0
     this.createCaptureWriteStreamFilePath();
 
     // Initialize file write stream
-    this.captureWriteStream = fs.createWriteStream(this.activeFilePath);
-    this.captureWriteStream.setDefaultEncoding('hex');
+    try {
 
-    // Write header data to file
-    console.log("startNewFile: headerByteArray length: " + this.headerByteArray.length);
-    this.captureWriteStream.write(this.headerByteArray);
+      console.log("about to createWriteStream: " + this.activeFilePath);
+      this.captureWriteStream = fs.createWriteStream(
+        this.activeFilePath,
+        {
+          flags: 'wx'   // open for write but do not overwrite
+        }
+      );
+      this.captureWriteStream.setDefaultEncoding('hex');
+      this.captureWriteStream.on('error', function(e) {
+        console.error("capture-data.js: captureWriteStream error event: " + e);
+        this.readyToCapture = false;
+      });
+
+      // Write header data to file
+      console.log("startNewFile: headerByteArray length: " + this.headerByteArray.length);
+      this.captureWriteStream.write(this.headerByteArray);
+
+    } catch (e) {
+      // write is async, so this will not immediately fire
+      // so the exception happens somewhere else
+      console.error("capture-data.js: startNewFile: there was an error opening a capture file for output: " + e);
+      this.readyToCapture = false;
+      return;
+
+    }
+
 
   } // End of: startNewFile
 

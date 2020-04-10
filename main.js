@@ -133,7 +133,6 @@ var logToMain = function(data) {
 // Settings, Config and Preferences Stuff
 ipcMain.on('prefs:show', function(e, data){
   // in main.js (ipcMain) the console.log goes to the command line, if launched from terminal by eg npm start
-  fillInMissingDefaultPrefs();
   console.log("ipcMain received prefs:show ... here is user data path: " + app.getPath('userData'));
   logToMain("ipcMain received prefs:show ... here is user data path: " + app.getPath('userData'));
   mainWindow.webContents.send('prefs:show', "ipcMain received prefs:show: " + app.getPath('userData'));
@@ -145,7 +144,6 @@ ipcMain.on('prefs:storeWindowBounds', function(e) {
   logToMain("Stored settings for updated window bounds for mainWindow width and height.")
 });
 ipcMain.on('prefs:getPrefs', (e) => {
-  fillInMissingDefaultPrefs();
   e.returnValue = settingsStorage.getAll();
 });
 ipcMain.on('prefs:reset', (e) => {

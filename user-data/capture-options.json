@@ -150,7 +150,13 @@
     "offsetToFirstTransducerRecord" : {
       "value" : 1024,
       "comment" : "Another constant that basically indicates the length of the header prior to transducer data and then signal waveforms."
+    },
+
+    "duplicateFileNaming" : {
+      "prefixSuffix" : "_SER",
+      "digits" : 4
     }
+
 
   }
 

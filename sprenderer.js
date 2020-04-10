@@ -1538,6 +1538,8 @@ var setupFileCapture = ( durationMs, maxFileSizeBytes ) => {
 var closeAndCleanupFileCapture = function() {
 
   launchProgressCountdown(0);
+
+  // For basic standard file capture demo:
   if ( writeStream ) {
     writeStream.end();
     showControlPortOutput('Capture file closed.\r\n');
@@ -1550,6 +1552,13 @@ var closeAndCleanupFileCapture = function() {
   fileCaptureTimeoutId = null;
   currentMaxCaptureFileSizeBytes = null;
   currentBytesCaptured = null;
+
+  // For custom user batch file capture
+  captureDataFileOutputBatch = null;
+
+
+  // TODO -- what about including as a callback any sort of closing commands
+  // to terminate streaming data from the hardware, etc.?
 
 }
 
