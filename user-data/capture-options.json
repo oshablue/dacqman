@@ -142,6 +142,12 @@
 
   "additionalFileInfo" : {
 
+    "fileNaming" : {
+      "prefix" : "run_",
+      "extensionWithDot" : ".UTR",
+      "padZeroesInSequenceNum" : 4
+    },
+
     "readingsPerInch" : {
       "value" : 6.25,
       "comment" : "This value is used as a constant and may or may not, likely not, reflect reality.  It is imlemented in customer code simply to calculate the number of scans per waveform.  For example a run length of 24 multiplied by the constant here gives 150 scans per file."
@@ -153,8 +159,10 @@
     },
 
     "duplicateFileNaming" : {
-      "prefixSuffix" : "_SER",
-      "digits" : 4
+      "midFixPrefix" : "SER",
+      "numDigits" : 4,
+      "midFixSuffix" : "_",
+      "comment" : "By default/nominal/legacy: filename begins already with run_ so there is already an underscore before the midfix"
     }
 
 

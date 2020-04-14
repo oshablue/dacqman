@@ -38,9 +38,10 @@ const strftime = require('strftime');
 const csv = require('csv');           // some issues with just csv-parse so using the whole csv package
 //const parse = require('csv-parse/lib/parse');
 
-const FN_PREFIX = "run_";
-const FN_SUFFIX = ".UTR";
-const FN_PAD_NZEROES = 4;   // pad values < 999 with leading zeroes up to 4 digits - value should expand digits as necessary
+// These now come from the additionalFileInfo in the capture-options.json
+//const FN_PREFIX = "run_";
+//const FN_SUFFIX = ".UTR";
+//const FN_PAD_NZEROES = 4;   // pad values < 999 with leading zeroes up to 4 digits - value should expand digits as necessary
 
 
 /*
@@ -99,10 +100,13 @@ const FN_PAD_NZEROES = 4;   // pad values < 999 with leading zeroes up to 4 digi
   - Great calculator - various interpretations of binary values:
     https://www.scadacore.com/tools/programming-calculators/online-hex-converter/
 
-  -
+  - https://stackoverflow.com/questions/17217736/while-loop-with-promises
+
+  - https://stackoverflow.com/questions/45348955/using-await-within-a-promise
 
 
   */
+
 
 // NodeJs 12.nnnnnnn etc.
 // Yes ES6 supported
@@ -114,6 +118,8 @@ function CaptureDataFileOutput({
   numberOfWaveformsPerFile = 600,   // 600 / 4 XDs = 150 scans
 } = {}) {
 */
+
+
 
 // ES6
 class CaptureDataFileOutput {
@@ -138,6 +144,7 @@ class CaptureDataFileOutput {
     this.readyToCapture = false;
 
     this.fileCounter = 0;
+    this.currentSeriesIndex = null;
     this.waveformCounter = 0;
     this.waveformsPerFile = 0;
     this.minChannelNum = 0;
@@ -146,9 +153,17 @@ class CaptureDataFileOutput {
     this.headerByteArray = null;
     this.transducerByteArray = null;
 
+    this.fileCapturePrefix = null;
+    this.fileCaptureExtWithDot = null;
+    this.fileCaptureSeqNumDigits = null;
+    this.fileCaptureMidFixPrefix = null;
+    this.fileCaptureMidFixSeqNumDigits = null;
+    this.fileCaptureMidFixSuffix = null;
+
     this.activeFilePath = null;
     this.activeWriteStream = null;
     this.duplicateFileNamingMidFix = null;              // MidFix = after the prefix, indicating a series number, but before the file sequence number
+    this.duplicateMidFixSeriesNum = 0;
     this.captureWriteStream = null;
 
     this.inDataBuffer = Buffer.alloc(4095 * 8, 0); // max waveform returned from hardware X 8, init with 0
@@ -208,6 +223,10 @@ class CaptureDataFileOutput {
           return customCaptureOptionsJson;
         })
         .then( res => {
+          this.loadStuffFromCaptureOptionsJsonIntoInstance();
+          return res;
+        })
+        .then( res => {
           // Yes return is required such that .then returns
           // a promise and thus the next .then waits on the fulfillment
           // of this previous promise prior to executing
@@ -238,6 +257,34 @@ class CaptureDataFileOutput {
 
   } // End of: LoadCaptureOptions
 
+
+
+
+
+
+
+
+  this.loadStuffFromCaptureOptionsJsonIntoInstance = () => {
+
+    return new Promise ( (resolve, reject ) => {
+
+      var json = this.customCaptureOptionsJson.additionalFileInfo.fileNaming;
+
+      this.fileCapturePrefix = json.prefix;
+      this.fileCaptureExtWithDot = json.extensionWithDot;
+      this.fileCaptureSeqNumDigits = parseInt(json.padZeroesInSequenceNum);
+
+      json = this.customCaptureOptionsJson.additionalFileInfo.duplicateFileNaming;
+
+      this.fileCaptureMidFixPrefix = json.midFixPrefix;
+      this.fileCaptureMidFixSeqNumDigits = json.numDigits;
+      this.fileCaptureMidFixSuffix = json.midFixSuffix;
+
+      resolve(true);
+
+    }); // end of new Promise
+
+  } // End of: loadStuffFromCaptureOptionsJsonIntoInstance
 
 
 
@@ -744,12 +791,240 @@ class CaptureDataFileOutput {
 
 
 
+
+
+  this.getCurrentMidFix = () => {
+
+    var json = this.customCaptureOptionsJson.additionalFileInfo.duplicateFileNaming;
+
+    if ( this.currentSeriesIndex < 1 ) {
+
+      return '';
+
+    } else {
+
+      var defMfxPrefix = json.midFixPrefix || '';
+      var defMfxSuffix = json.midFixSuffix || '';
+      var d = json.numDigits || '';
+
+      var mfx = defMfxPrefix
+        + this.currentSeriesIndex.toString().padStart(d, '0')
+        + defMfxSuffix;
+
+      console.log("capture-data.js: getCurrentMidFix: " + mfx);
+
+      return mfx;
+
+    }
+
+  } // End of: getCurrentMidFix
+
+
+
+
+
+
+
+
+
+
+  this.getCurrentSuffix = () => {
+
+    var n = this.fileCounter.toString()
+      .padStart(parseInt(this.fileCaptureSeqNumDigits), '0')
+      + this.fileCaptureExtWithDot;
+
+    return n;
+
+  } // End of: getCurrentSuffix
+
+
+
+
+
+
+
+
+
+  this.filenameMidFixFix = ( directory, filenameThatExistsAlready ) => {
+
+    return new Promise( (resolve, reject) => {
+
+      var fn = null;
+      var fp = null;
+
+      // Check that a series has not already been set > 0
+      // If it has been and we are here then we do NOT increment the series number
+      // rather we go to the last resort
+      if ( this.currentSeriesIndex > 0 ) {
+
+        console.error("capture-data.js: filenameMidFixFix: warning: "
+          + "the file: " + filenameThatExistsAlready + " has been determined "
+          + "to exist already, but the series index has already been set for the "
+          + "midFix implementation to " + this.currentSeriesIndex.toString() + "."
+          + "To prevent data overwrite this should normally never happen, unless "
+          + "there is something buggy happening or files are getting moved around "
+          + "manually during capture."
+          + "This can be prevented by creating a fresh directory for capture each run series "
+          + "among other precautions."
+        );
+
+        // Even adding subsequent suffixes ... no go.
+        // This really shouldn't happen, due to the codeflow.
+        // So we just throw hands up in the air
+
+        this.SendUiError("Big problem: Couldn't create a write file for the capture output. "
+          + "That means that your data is not getting stored!!!");
+
+        resolve(false);
+
+      } else {
+
+        try {
+
+          // Find the last ordered series number, if any, that exists in the directory
+          // https://stackoverflow.com/questions/21319602/find-file-with-wild-card-matching
+          var files = fs.readdirSync(directory)
+            .filter(fn => fn.endsWith(this.fileCaptureExtWithDot))
+            .filter(fn => fn.includes(this.fileCaptureMidFixPrefix));
+
+          console.log("filenameMidFixFix: files found: filtered for: " + this.fileCaptureMidFixPrefix);
+          console.log(files);
+
+          if ( files.length < 1 ) {
+
+            // if none, set to padded 1 -- also set this.seqNum to this value of 1
+            this.currentSeriesIndex = 1;
+
+          } else {
+
+            // if some, sort and then take the last/highest and then add 1 and then set
+            // this seqnum to that next value
+            //https://stackoverflow.com/questions/15804496/node-js-string-array-sort-is-not-working
+            files.sort((obj1, obj2) => {
+              return obj1.localeCompare(obj2);
+            });
+
+            console.log("filenameMidFixFix: files found: filtered for: " + this.fileCaptureMidFixPrefix);
+            console.log(files);
+
+            // Extract the series number
+            var start = this.fileCapturePrefix.length + this.fileCaptureMidFixPrefix.length;  // base 1, so we get the next index
+            var numStr = files[files.length - 1].substring(start).match(/[0-9]+/);
+            var n = parseInt(numStr);
+            console.log(`Last number of series in midfixes in directory is: ${n}`);
+            // Set this instance's series index number - as above (already noted)
+            this.currentSeriesIndex = n + 1;
+
+          } // end of handling case of more than 0 series files found
+
+          // Use the getMidFix fcn to grab the assembled midFix from the stored values
+          var mfx = this.getCurrentMidFix();
+
+          // add a fcn to assemble the whole fn? (not fp)
+          // If we are in this function we start with a whole new file counter
+          // fileCounter increment is handled elsewhere in startNewFile
+          fn = this.fileCapturePrefix.toString() + mfx + this.getCurrentSuffix();
+          console.log(`created new series filename: ${fn}`);
+
+          // assemble the whole fp or create and use a fcn to do so
+          fp = path.join(directory, fn);
+
+          // resolve the new file path generated
+          resolve(fp);
+
+        } catch ( e ) {
+
+          console.error("This is a fairly big problem: "
+            + "error during creating a next series filename to store data: "
+            + e
+          );
+          this.SendUiError("Big problem: Couldn't create a series/midFix filename to store data! That is BAD!");
+          resolve(false);
+
+        } // end of catch
+
+      } // end of currentSeriesIndex not yet set to more than 0
+
+    }); // end of new Promise
+
+  } // End of: filenameMidFixFix
+
+
+
+
+
+
+
+
   this.createCaptureWriteStreamFilePath = () => {
 
     // padStart is included in ECMAScript 2017
     // for very high file counter values, >9999, this should just expand
-    var currentCaptureWriteStreamFileName = FN_PREFIX + '' + this.fileCounter.toString().padStart(FN_PAD_NZEROES, '0') + FN_SUFFIX;
-    this.activeFilePath = path.join(directory.toString(), currentCaptureWriteStreamFileName);
+
+    var fp = null;
+    var testFn = null;
+    var currentMfx = this.getCurrentMidFix();
+
+    return new Promise ( (resolve, reject) => {
+
+      var testFn = this.fileCapturePrefix + ''
+        + currentMfx
+        + this.getCurrentSuffix();
+        //    .padStart(this.fileCaptureSeqNumDigits, '0')
+        //    + this.fileCaptureExtWithDot;
+
+      console.log("capture-data.js: createCaptureWriteStreamFilePath: new file filename: " +
+        testFn);
+
+      fp = path.join(this.directory.toString(), testFn);
+
+      fileExists(fp)        // returns true/false regarding whether file exists - plain
+        .then( res => {
+          if ( res ) {
+            // TODO we need to warn if series number has already been set
+            // and yet now a file with the same name exists anyway
+            // such that on the remaining filename generation function tree
+            // something will be appended to the filename to get a fresh file
+            // but the series exactness format will be corrupted then.
+            // TODOBIGLT: Perhaps we need a file gen and overall summary report
+            // as json etc. to keep as log(s)
+
+            // Use MidFix to create filename
+            console.log("Since capture file exists, creating filenames with MidFix inserted, so that we don't overwrite any data.");
+            this.filenameMidFixFix( this.directory.toString(), testFn )
+              .then( res => {
+                if ( res ) {
+                  // The filepath
+                  this.activeFilePath = res;
+                  resolve(true);
+                } else {
+                  // False - this is a big problem - capture output is not getting stored.
+                  console.error("capture-data.js: createCaptureWriteStreamFilePath: error: "
+                    + "Not able to create a write stream! Your data is not getting captured!");
+
+                  resolve(false);
+
+                  throw new Error("capture-data.js: Yep, we are throwing another ERROR because "
+                    + "it is bad if we can't create a write file to store your data!");
+                }
+              })
+              .catch( e => {
+                console.warn("capture-data.js: createCaptureWriteStreamFilePath: filenameMidFixFix.then: error: " + e);
+                resolve(false);
+              });
+          } else {
+            // use basic filename
+            this.activeFilePath = fp;
+          }
+          resolve(true); // we just assume here that the situation was handled at this level
+        })
+        .catch( e => {
+          console.warn("createCaptureWriteStreamFilePath: error: " + e);
+          resolve(false);
+        });
+
+    }); // end of new Promise
 
   } // End of: createCaptureWriteStreamFilePath
 
@@ -770,38 +1045,46 @@ class CaptureDataFileOutput {
     // create/write -- or if it does, use the appropriate midFix addition
     // in the filepath creation routine
 
-    // Create filename and open the path
-    this.fileCounter = this.fileCounter + 1;      // start from 1, init'd at 0
-    this.createCaptureWriteStreamFilePath();
+    return new Promise ( (resolve, reject) => {
 
-    // Initialize file write stream
-    try {
+      // Create filename and open the path
+      this.fileCounter = this.fileCounter + 1;      // start from 1, init'd at 0
+      this.createCaptureWriteStreamFilePath()
+        .then( res => {
 
-      console.log("about to createWriteStream: " + this.activeFilePath);
-      this.captureWriteStream = fs.createWriteStream(
-        this.activeFilePath,
-        {
-          flags: 'wx'   // open for write but do not overwrite
-        }
-      );
-      this.captureWriteStream.setDefaultEncoding('hex');
-      this.captureWriteStream.on('error', function(e) {
-        console.error("capture-data.js: captureWriteStream error event: " + e);
-        this.readyToCapture = false;
-      });
+          // Initialize file write stream
+          try {
 
-      // Write header data to file
-      console.log("startNewFile: headerByteArray length: " + this.headerByteArray.length);
-      this.captureWriteStream.write(this.headerByteArray);
+            console.log("about to createWriteStream: " + this.activeFilePath);
+            this.captureWriteStream = fs.createWriteStream(
+              this.activeFilePath,
+              {
+                flags: 'wx'   // open for write but do not overwrite
+              }
+            );
+            this.captureWriteStream.setDefaultEncoding('hex');
+            this.captureWriteStream.on('error', function(e) {
+              console.error("capture-data.js: captureWriteStream error event: " + e);
+              this.readyToCapture = false;
+            });
 
-    } catch (e) {
-      // write is async, so this will not immediately fire
-      // so the exception happens somewhere else
-      console.error("capture-data.js: startNewFile: there was an error opening a capture file for output: " + e);
-      this.readyToCapture = false;
-      return;
+            // Write header data to file
+            console.log("startNewFile: headerByteArray length: " + this.headerByteArray.length);
+            this.captureWriteStream.write(this.headerByteArray);
 
-    }
+            resolve(true);
+
+          } catch (e) {
+            // write is async, so this will not immediately fire
+            // so the exception happens somewhere else
+            console.error("capture-data.js: startNewFile: there was an error opening a capture file for output: " + e);
+            this.readyToCapture = false;
+            resolve(false);
+
+          }
+        }) // end of then( )
+
+      }); // end of new Promise
 
 
   } // End of: startNewFile
@@ -844,13 +1127,23 @@ class CaptureDataFileOutput {
     }
 
     if ( this.fileCounter < 1 || this.waveformCounter > this.waveformsPerFile ) {
-      this.startNewFile();
+      this.startNewFile()
+        .then ( res => {
+          if ( res ) {
+            this.writeDataToFile(newData);
+          } else {
+            console.warn("capture-data.js: ReceiveData: starting new file didn't work: can't write to anything." + res);
+          }
+        })
+        .catch ( e => {
+          console.warn("capture-data.js: ReceiveData: error: " + e);
+        })
+    } else {
+      this.writeDataToFile(newData);
+      // TODO track whether things have init'd ok and we can actually write, like above?
     }
 
-    // Skip buffer rotation and accumulation, let the stream object do that ...
-    //inDataBuffer = new Buffer.concat([inDataBuffer, newData]);
 
-    this.writeDataToFile(newData);
 
   } // End of: ReceiveData
 
@@ -858,6 +1151,29 @@ class CaptureDataFileOutput {
 
 
 
+
+
+  this.SendUiError = ( errorMsg ) => {
+
+    // Alternately, we could also just store UI
+    // errors in this instance and allow UI to poll and grab
+
+    ipcRenderer.send('error:uierror', "capture-data.js: error to UI: " + errorMsg);
+
+  } // End of: SendUiError
+
+
+
+
+
+
+  this.SendUiWarn = ( warnMsg ) => {
+
+    // See note for SendUiError too
+
+    ipcRenderer.send('error:uiwarn', "capture-data.js: warning to UI: " + warnMsg);
+
+  } // End of: SendUiWarn
 
 
 
@@ -926,6 +1242,34 @@ class CaptureDataFileOutput {
     }); // end of new Promise
 
   } // End of: loadCustomCaptureOptionsPromise
+
+
+
+
+
+
+
+  let fileExists = (path) => {
+
+    return new Promise( (resolve, reject) => {
+
+      fs.stat(path || '', function (err, stat) {
+        if ( !err ) {
+          // File exists
+          console.log("Looking for existing file path: " + path + " ... it exists!");
+          resolve(true);
+        } else {
+          // File does not exist
+          // If no file exists, we get here with a file doesn't exist error
+          console.warn("capture-data.js: fileExists: Error on fs.stat: " + err);
+          resolve(false);
+        }
+      });
+
+    }); // end of new Promise
+
+  } // End of: fileExists
+
 
 
 

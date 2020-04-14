@@ -130,7 +130,19 @@ var logToMain = function(data) {
 }
 
 
+
+
+
+
+
+
+
+//
+//
 // Settings, Config and Preferences Stuff
+//
+//
+//
 ipcMain.on('prefs:show', function(e, data){
   // in main.js (ipcMain) the console.log goes to the command line, if launched from terminal by eg npm start
   console.log("ipcMain received prefs:show ... here is user data path: " + app.getPath('userData'));
@@ -161,6 +173,28 @@ ipcMain.on('prefs:set', (e, args) => {
   logToMain("Stored to prefs: " + JSON.stringify(args))
   settingsStorage.set(args.key, args.value);
 });
+
+
+
+
+
+
+
+
+//
+//
+// Errors and Warnings from Modules that need to get UI attention
+//
+//
+//
+ipcMain.on('error:uierror', ( ev, data ) => {
+  console.error("ipcMain got uierror: " + ev.data);
+});
+ipcMain.on('error:uiwarn', ( ev, data ) => {
+  console.warn("ipcMain got uiwarn: " + ev.data);
+});
+
+
 
 
 
