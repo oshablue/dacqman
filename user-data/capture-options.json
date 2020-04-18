@@ -40,7 +40,7 @@
       "value" : "dd/mm/yyyy hh:mm:ss",
       "indexByteStart" : 76,
       "indexByteStop" : 94,
-      "comment" : "timestamp length is bytes 74:75 while the actual value is bytes 76:94"
+      "comment" : "timestamp length is bytes 74:75 while the actual value is bytes 76:94. The actual length really is determined and implemented just from the timestamp format in the additional file info section of this capture options file."
     },
 
     "transducersNum" : {
@@ -136,6 +136,23 @@
       "xd2" : "xd2-calwave.csv",
       "xd3" : "xd3-calwave.csv",
       "xd4" : "xd4-calwave.csv"
+    },
+
+    "calWaveFilesInfo" : {
+      "sampleFrequencyHz" : 35000000,
+      "sampleFrequencyHzComment" : "Please see readme. It seems there are multiple varying naming conventions and implementations of this in the legacy code and file formats.  It is normally imported from the waveform csv file.  However, some files show the frequency in Hz while others store the value as a number of seconds, as in, 4e-08 = 40 ns = 25 MHz.  Thus, we are just using the capture options file here to define a value more clearly."
+    },
+
+    "serialNumbers" : {
+      "xd1" : "SN0001",
+      "xd2" : "SN0002",
+      "xd3" : "SN0003",
+      "xd4" : "SN0004"
+    },
+
+    "serialNumbersInfo" : {
+      "comment" : "16 characters allowed per legacy file convention matching",
+      "lengthBytes" : 16
     }
 
   },
@@ -158,12 +175,26 @@
       "comment" : "Another constant that basically indicates the length of the header prior to transducer data and then signal waveforms."
     },
 
+    "waveformRecordHeader" : {
+      "baseHeaderLen" : 26,
+      "baseHeaderLenComment" : "For waveform records the base header length is this amount and then follow the bytes of data",
+      "legacyArrayDescriptorRank" : 1,
+      "legacyLowerBoundIndex" : 1
+    },
+
+    "captureFileOutputBytesPerWaveformSample" : {
+      "lengthBytes" : 4,
+      "comment" : "Legacy compat uses waveform samples converted to 4-byte single/floats"
+    },
+
     "duplicateFileNaming" : {
       "midFixPrefix" : "SER",
       "numDigits" : 4,
       "midFixSuffix" : "_",
       "comment" : "By default/nominal/legacy: filename begins already with run_ so there is already an underscore before the midfix"
-    }
+    },
+
+    "timestampFormat" : "%d/%m/%Y %H:%M:%S"
 
 
   }

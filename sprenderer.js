@@ -1474,7 +1474,10 @@ setupFileCaptureCustomBatches = ( outputDirectory, numberOfWaveformsPerFile ) =>
 
   captureDataFileOutputBatch = new CaptureDataFileOutput({
     directory: outputDirectory,
-    numberOfWaveformsPerFile: numberOfWaveformsPerFile
+    numberOfWaveformsPerFile: numberOfWaveformsPerFile,
+    numberOfSamplesPerWaveform : defaultHardwareWaveformLengthSamples,  // Same as below
+    numberOfBytesPerSample: defaultHardwareWaveformBytesPerSample,       // From mainWindow
+    waveformSampleFrequencyHz: defaultHardwareWaveformSampleFrequencyHz   // Same as comment above
   });
 
   return new Promise ((resolve, reject) => {

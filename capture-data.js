@@ -128,14 +128,33 @@ class CaptureDataFileOutput {
 
     // default param values
     directory = '',
-    numberOfWaveformsPerFile = 600
-
+    numberOfWaveformsPerFile = 600,
+    numberOfSamplesPerWaveform = 4095,      // Default HDL-0108-nnnnn WF return length at the time of writing this
+    numberOfBytesPerSample = 1,             // Same comment as above
+    waveformSampleFrequencyHz = 40000000    // Default HDL-0108/4-nnnnn WF is 40MHz
   } = {}) {
 
     // constructor body
 
     this.directory = directory;
     this.numberOfWaveformsPerFile = numberOfWaveformsPerFile;
+
+
+    // Hardware-specific - could be moved to a parent / separate level
+    // hardware configuration module
+    //
+    // This is interesting:
+    // Specifically for our current hardware and methodology,
+    // One byte is one sample
+    // Output bytes however may be different if values are scaled
+    // and then converted into a custom legacy output file
+    // format which might actually be a 4-byte float value per each sample
+    // Even legacy legacy very early standard format was I believe only 12-bit
+    this.numberOfBytesPerSample = numberOfBytesPerSample;
+    this.numberOfSamplesPerWaveform = numberOfSamplesPerWaveform;
+    this.waveformSampleFrequencyHz = waveformSampleFrequencyHz;
+    // Can add data for scaling samples to real values
+    // End of hardware-specific
 
     console.log("CaptureDataFileOutput instantiated with output directory: " + this.directory + " and file splits at " + this.numberOfWaveformsPerFile + " waveforms.");
 
@@ -147,11 +166,14 @@ class CaptureDataFileOutput {
     this.currentSeriesIndex = null;
     this.waveformCounter = 0;
     this.waveformsPerFile = 0;
+    this.scanCounter = 0;
     this.minChannelNum = 0;
     this.maxChannelNum = 0;
+
     this.transducerCalibrationWaveformArray = null;
+    this.transducerHeaderByteArray = null;
     this.headerByteArray = null;
-    this.transducerByteArray = null;
+    this.waveformRecordHeaderByteArrayTemplate = null;
 
     this.fileCapturePrefix = null;
     this.fileCaptureExtWithDot = null;
@@ -160,13 +182,37 @@ class CaptureDataFileOutput {
     this.fileCaptureMidFixSeqNumDigits = null;
     this.fileCaptureMidFixSuffix = null;
 
+    this.captureFileOutputBytesPerWaveformSample = null;
+    this.timestampFormat = null;
+
     this.activeFilePath = null;
     this.activeWriteStream = null;
     this.duplicateFileNamingMidFix = null;              // MidFix = after the prefix, indicating a series number, but before the file sequence number
     this.duplicateMidFixSeriesNum = 0;
     this.captureWriteStream = null;
 
+    // We'll reuse the initialized write file header byte array
+    // but we need to update just a few things at each new file creation
+    // subsequent to the first batch waveform file creation
+    // In the transducer header section, nothing will change
+    // In the waveform record headers
+    // The channel number will change in the waveform record headers either
+    this.bytePosnRunId = null;
+    this.bytePosnTimestamp = null;
+    this.bytePosnWaveformRecordScanNumber = null;
+    this.bytePosnWaveformRecordChannelNumber = null;
+
     this.inDataBuffer = Buffer.alloc(4095 * 8, 0); // max waveform returned from hardware X 8, init with 0
+
+
+    // TODO BIG FOR RELEASE
+    // (1)  move the third-party custom user code and
+    //      file structure data to a git ignored folder
+    //      and remove from the git tree
+    // (2) We really need to note about issues and non-benefits of using the
+    //     legacy file output format
+
+
 
 
   // https://stackoverflow.com/questions/11707698/how-to-know-which-javascript-version-in-my-nodejs
@@ -241,7 +287,7 @@ class CaptureDataFileOutput {
         })
         .then( res => {
           if ( this.customCaptureOptionsJson ) {
-            this.initializeFileWritingData( this.customCaptureOptionsJson );
+            this.initializeFileWritingData( this.customCaptureOptionsJson ); // includes building the calibration waveform headers and records
             this.readyToCapture = true;
             console.log("capture-data.js: readyToCapture: " + this.readyToCapture);
             resolve(true);
@@ -279,6 +325,12 @@ class CaptureDataFileOutput {
       this.fileCaptureMidFixPrefix = json.midFixPrefix;
       this.fileCaptureMidFixSeqNumDigits = json.numDigits;
       this.fileCaptureMidFixSuffix = json.midFixSuffix;
+
+      json = this.customCaptureOptionsJson.additionalFileInfo;
+
+      this.captureFileOutputBytesPerWaveformSample = parseInt(json.captureFileOutputBytesPerWaveformSample.lengthBytes);
+
+      this.timestampFormat = json.timestampFormat;
 
       resolve(true);
 
@@ -328,10 +380,130 @@ class CaptureDataFileOutput {
         reject(false);
       };
 
-
-    });
+    }); // end of new Promise
 
   } // End of: checkOutputDirectory
+
+
+
+
+
+
+
+
+  this.initializeFileWritingWaveformRecordHeader = ( optionsJson ) => {
+
+      return new Promise ( (resolve, reject) => {
+
+        try {
+
+          this.waveformRecordHeaderByteArrayTemplate = Buffer.alloc(
+            parseInt(optionsJson.additionalFileInfo.waveformRecordHeader.baseHeaderLen)
+          );
+
+          console.log(`initializeFileWritingWaveformRecordHeader...`);
+
+          let posn = 0;
+          let json = optionsJson.additionalFileInfo.waveformRecordHeader;
+
+          // Total record size including wf in bytes
+          // Int32
+          let wfrl = this.getCurrentCaptureOutputFileWaveformRecordLengthBytes();
+          console.log(wfrl);
+          this.int32JsonValToByteArray(wfrl).copy(
+            this.waveformRecordHeaderByteArrayTemplate, posn
+          );
+          posn = posn + 4;
+
+          // Waveform number
+          // Int16
+          // REPLACED for each waveform write to file
+          // Looking at sample file, this value increments (and thus it's name
+          // changed to "ScanNumber") only after transducer's waveform is packaged
+          // Thus each set of transducer channels has the same scan number
+          // Legacy-named WaveformNumber ...
+          // TODO - code to update this each scan (or repeat of channel cycle)
+          this.bytePosnWaveformRecordScanNumber = posn;
+          console.log(posn);
+          this.int16JsonValToByteArray(this.waveformCounter).copy(
+            this.waveformRecordHeaderByteArrayTemplate, posn
+          );
+          posn = posn + 2;
+
+          // Transducer number - yes, base 1
+          // Int16
+          // REPLACED with each waveform
+          this.bytePosnWaveformRecordChannelNumber = posn; // TODO fix from posn counter in fleshed out fcn here
+          // TODO - code to update this each waveform
+          console.log(posn);
+          this.int16JsonValToByteArray(this.minChannelNum).copy(
+            this.waveformRecordHeaderByteArrayTemplate, posn
+          );
+          posn = posn + 2;
+
+
+          // Number of waveform points (not bytes)
+          // Int32 - was nominally 2500 default, now we use our default or passed in value
+          console.log(posn);
+          this.int32JsonValToByteArray(this.numberOfSamplesPerWaveform).copy(
+            this.waveformRecordHeaderByteArrayTemplate, posn
+          );
+          posn = posn + 4;
+
+
+          // Timbase (we use our updated method on this just like for cal files)
+          // Float32 (4-Byte) in seconds (eg from sample file at 25MHz was 77CC 2B33 => 4e-08 = 40 ns)
+          // from capt options
+          // This is hardware dependent also, so it should be part of the hardware
+          // options set in the instance
+          console.log(posn);
+          this.float32JsonValToByteArray(this.waveformSampleFrequencyHz).copy(
+            this.waveformRecordHeaderByteArrayTemplate, posn
+          );
+          posn = posn + 4;
+
+
+          // Array descriptor rank: first dimension - legacy - always 1?
+          // Int16
+          this.int16JsonValToByteArray(parseInt(json.legacyArrayDescriptorRank)).copy(
+            this.waveformRecordHeaderByteArrayTemplate, posn
+          )
+          console.log(posn);
+          posn = posn + 2;
+
+          // Size of first array - is this 2500? legacy - yes eg 2500
+          // Just another duplication of data - notably:
+          // This is also number of points
+          // Int32
+          console.log(posn);
+          this.int32JsonValToByteArray(this.numberOfSamplesPerWaveform).copy(
+            this.waveformRecordHeaderByteArrayTemplate, posn
+          );
+          posn = posn + 4;
+
+          // Lower bound index of this array length previously indicated - legacy - is this always 1?
+          // Int32
+          console.log(posn);
+          this.int32JsonValToByteArray(parseInt(json.legacyLowerBoundIndex)).copy(
+            this.waveformRecordHeaderByteArrayTemplate, posn
+          );
+          posn = posn + 4;
+
+          console.log(`waveform record header length as last posn value ${posn}`);
+
+          // End header
+          // Note: In a complete record, the wf data would be next
+
+          resolve(true);
+
+        } catch ( e ) {
+          console.warn(`Error in initializeFileWritingWaveformRecordHeader: ${e}`);
+          resolve(false);
+        };
+
+      }); // end of new Promise
+
+  } // End of: initializeFileWritingWaveformRecordHeader
 
 
 
@@ -343,132 +515,177 @@ class CaptureDataFileOutput {
   // we should probably rework this to a promise ... for sequential build before indicate a successful construction and load event
   this.initializeFileWritingData = ( optionsJson ) => {
 
+
     try {
 
-      // Put in its own error catch block?
-      this.initializeFileWritingTransducerData( optionsJson );
+      this.initializeFileWritingWaveformRecordHeader( optionsJson )
+        .then( res => {
+          // initializeFileWritingTransducerData
+          // returns a promise and should be chained as subsequent calls
+          // do depend on its successful completion
+          this.initializeFileWritingTransducerData( optionsJson )
+          return;
+        })
+        .then( res => {
 
-      this.waveformsPerFile = parseInt(optionsJson.headerData.transducersNum.value)
-                       * parseFloat(optionsJson.additionalFileInfo.readingsPerInch.value)
-                       * parseFloat(optionsJson.headerData.runLengthInches.value);
-      console.log("waveformsPerFile calculated from options to be: " + this.waveformsPerFile);
+          // Now the main file header initialization
 
-      this.minChannelNum = 1;
-      this.maxChannelNum = parseInt(optionsJson.headerData.transducersNum.value);
+          // Could add if (res) here if we want to proceed IFF
+          // the previous fcn call returns true
 
-      var headerSize = parseInt(optionsJson.additionalFileInfo.offsetToFirstTransducerRecord.value);
-      console.log("offsetToFirstTransducerRecord.value: " + headerSize);
-      this.headerByteArray = Buffer.alloc(headerSize); // Buffer is also Uint8Array - https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarrays
+          this.waveformsPerFile = parseInt(optionsJson.headerData.transducersNum.value)
+                           * parseFloat(optionsJson.additionalFileInfo.readingsPerInch.value)
+                           * parseFloat(optionsJson.headerData.runLengthInches.value);
+          console.log("waveformsPerFile calculated from options to be: " + this.waveformsPerFile);
 
+          var headerSize = parseInt(optionsJson.additionalFileInfo.offsetToFirstTransducerRecord.value);
+          console.log("offsetToFirstTransducerRecord.value: " + headerSize);
+          this.headerByteArray = Buffer.alloc(headerSize); // Buffer is also Uint8Array - https://nodejs.org/api/buffer.html#buffer_buffers_and_typedarrays
 
-      var i16a;
-      var x;
-      var posn = 0;   // or we can reference the indexByteStart and indexByteStop from the options
-      var len;
+          var i16a;
+          var x;
+          var posn = 0;   // or we can reference the indexByteStart and indexByteStop from the options
+          var len;
 
-      // TODO rather than each entry, we could just run through all and use the
-      // type and indexByteStart/Stop fields to properly place all the header data
+          // TODO rather than each entry, we could just run through all and use the
+          // type and indexByteStart/Stop fields to properly place all the header data
 
-      // Skip finding the length, and just use the constant chars
-      // because that is how it is actually implemented in customer software
-      x = Buffer.from(optionsJson.headerData.runFileTypeId.value);
-      x.copy(this.headerByteArray, posn);
-      posn = posn + parseInt(optionsJson.headerData.runFileTypeId.lengthBytes); // or could length of x
+          // Skip finding the length, and just use the constant chars
+          // because that is how it is actually implemented in customer software
+          x = Buffer.from(optionsJson.headerData.runFileTypeId.value);
+          x.copy(this.headerByteArray, posn);
+          posn = posn + parseInt(optionsJson.headerData.runFileTypeId.lengthBytes); // or could length of x
 
-      posn = this.int16JsonValIntoHeaderArray(
-        optionsJson.headerData.legacyHeaderLengthPlaceholder.value,
-        posn
-      );
+          posn = this.int16JsonValIntoHeaderArray(
+            optionsJson.headerData.legacyHeaderLengthPlaceholder.value,
+            posn
+          );
 
-      // TODO UPDATE IN HEADER on each file creation
-      posn = this.int16JsonValIntoHeaderArray(
-        optionsJson.headerData.runId.value,
-        posn
-      );
+          // RunId
+          // TODO UPDATE IN HEADER on each file creation
+          this.bytePosnRunId = posn;
+          posn = this.int16JsonValIntoHeaderArray(
+            optionsJson.headerData.runId.value,
+            posn
+          );
 
-      // TODO - get the actual Tank ID at construction or init
-      len = parseInt(optionsJson.headerData.tankId.lengthBytes);
-      x = Buffer.from(
-        optionsJson.headerData.tankId.value.toString()
-          .substr(0, len).padEnd(len, ' ') // pad with space char
-      );
-      x.copy(this.headerByteArray, posn);
-      posn = posn + x.length;
+          // TODO - get the actual Tank ID at construction or init
+          // We'll use a json object passed in for extra stuff like
+          // this
+          // Tank Id Information
+          len = parseInt(optionsJson.headerData.tankId.lengthBytes);
+          x = Buffer.from(
+            optionsJson.headerData.tankId.value.toString()
+              .substr(0, len).padEnd(len, ' ') // pad with space char
+          );
+          x.copy(this.headerByteArray, posn);
+          posn = posn + x.length;
 
-      // datetimestamp length write
-      posn = this.int16JsonValIntoHeaderArray(
-        optionsJson.headerData.timestamp.lengthBytes,
-        posn
-      );
+          // datetimestamp length write
+          // Length of datatimestamp
+          posn = this.int16JsonValIntoHeaderArray(
+            optionsJson.headerData.timestamp.lengthBytes,
+            posn
+          );
 
-      // TODO UPDATE IN HEADER on each file creation
-      // datetimestamp itself
-      var d = strftime('%d/%m/%Y %H:%M:%S', new Date());
-      len = parseInt(optionsJson.headerData.timestamp.lengthBytes)
-      x = Buffer.from(d.substr(0, len));
-      x.copy(this.headerByteArray, posn);
-      posn = posn + x.length;
-      console.log("capture-data.js: initializeFileWritingData: formatted timestamp is: " + d.substr(0, len));
+          // UPDATE IN HEADER on each file creation
+          // datetimestamp itself
+          // Timestamp
+          //var d = strftime('%d/%m/%Y %H:%M:%S', new Date());
+          var d = strftime(this.timestampFormat, new Date());
+          //len = parseInt(optionsJson.headerData.timestamp.lengthBytes)
+          //re: commented above: the format determines the length,
+          // and this is the same as the length from the file
+          x = Buffer.from(d); //.substr(0, len)); // commented last part: see above comment
+          x.copy(this.headerByteArray, posn);
+          this.bytePosnTimestamp = posn;
+          posn = posn + x.length;
+          console.log("capture-data.js: initializeFileWritingData: formatted timestamp is: " + d.substr(0, len));
 
-      // transducer count
-      posn = this.int16JsonValIntoHeaderArray(
-        optionsJson.headerData.transducersNum.value,
-        posn
-      );
+          // transducer count
+          posn = this.int16JsonValIntoHeaderArray(
+            optionsJson.headerData.transducersNum.value,
+            posn
+          );
 
-      // sampleRateMHz
-      posn = this.int16JsonValIntoHeaderArray(
-        optionsJson.headerData.sampleRateMHz.value,
-        posn
-      );
+          // sampleRateMHz
+          posn = this.int16JsonValIntoHeaderArray(
+            optionsJson.headerData.sampleRateMHz.value,
+            posn
+          );
 
-      // https://www.scadacore.com/tools/programming-calculators/online-hex-converter/
+          // runLengthInches
+          posn = this.float32JsonValIntoHeaderArray(
+            optionsJson.headerData.runLengthInches.value,
+            posn
+          );
 
-      // runLengthInches
-      posn = this.float32JsonValIntoHeaderArray(
-        optionsJson.headerData.runLengthInches.value,
-        posn
-      );
+          // runSpeedInchesPerSec
+          posn = this.float32JsonValIntoHeaderArray(
+            optionsJson.headerData.runSpeedInchesPerSec.value,
+            posn
+          );
 
-      // runSpeedInchesPerSec
-      posn = this.float32JsonValIntoHeaderArray(
-        optionsJson.headerData.runSpeedInchesPerSec.value,
-        posn
-      );
+          // minimumRecordLength
+          posn = this.int16JsonValIntoHeaderArray(
+            optionsJson.headerData.minimumRecordLength.value,
+            posn
+          );
 
-      // minimumRecordLength
-      posn = this.int16JsonValIntoHeaderArray(
-        optionsJson.headerData.minimumRecordLength.value,
-        posn
-      );
+          // This should be updated with actual lengths of XD records (cal files etc)
+          // offsetToFirstCaptureWaveformBaseOne
+          // For example, in the legacy output sample file
+          // The value is 5861 decimal and the first byte of the waveform records
+          // starts at byte # 5860 starting from byte 0
+          // So, it is a base 1 number counting type
+          // In our first testing, the code below generates a value of:
+          // 1513 decimal and the waveforms thus begin at byte number
+          // 1512 starting from byte 0
+          // LEGACY WEIRD: So this is a legacy compatibility thing
+          // NOTE: This is an offset to start, not a length, hence the addition
+          // of the headerSize, which is really the offset to the start of the
+          // transducers section
+          var o = 1 + headerSize + this.getCurrentCaptureFileTransducersSectionHeaderLength();
+          posn = this.int32JsonValIntoHeaderArray(
+            //optionsJson.headerData.offsetToFirstCaptureWaveformBaseOne.value,
+            o,
+            posn
+          );
 
-      // TODO this should be replaced with actual lengths of XD records (cal files etc)
-      // offsetToFirstCaptureWaveformBaseOne
-      posn = this.int32JsonValIntoHeaderArray(
-        optionsJson.headerData.offsetToFirstCaptureWaveformBaseOne.value,
-        posn
-      );
+          // Nominally this can come from the capture options json file
+          // if set up to match actual capture settings here
+          // lengthOfWaveformRecord
+          //console.warn(`Warning: the traditional waveform record length with header and data for 2500 points is: ${parseInt(optionsJson.headerData.lengthOfWaveformRecord.value)} and we are using the actual default hardware length now.`);
+          // was: optionsJson.headerData.lengthOfWaveformRecord.value,
+          // then was:
+          //var wfRecLen = parseInt(optionsJson.additionalFileInfo.waveformRecordHeader.baseHeaderLen);
+          //wfRecLen = wfRecLen + (this.numberOfBytesPerWaveform * 4); // 4 bytes per value for single/float
+          var wfRecLen = this.getCurrentCaptureOutputFileWaveformRecordLengthBytes();
+          console.warn(`Warning: the traditional waveform record length with header and data for 2500 points is: ${parseInt(optionsJson.headerData.lengthOfWaveformRecord.value)} and we are using the actual default hardware length now which brings this to ${wfRecLen} bytes, probably because the waveforms sample longer and at higher sample rate.`);
+          posn = this.int32JsonValIntoHeaderArray(
+            wfRecLen,
+            posn
+          );
 
-      // lengthOfWaveformRecord
-      posn = this.int32JsonValIntoHeaderArray(
-        optionsJson.headerData.lengthOfWaveformRecord.value,
-        posn
-      );
+          // pulseTypeAndAnalyzeMode
+          posn = this.int16JsonValIntoHeaderArray(
+            optionsJson.headerData.pulseTypeAndAnalyzeMode.value,
+            posn
+          );
 
-      // pulseTypeAndAnalyzeMode
-      posn = this.int16JsonValIntoHeaderArray(
-        optionsJson.headerData.pulseTypeAndAnalyzeMode.value,
-        posn
-      );
+          // At present the end of the header isn't used - so we put an indicator to help
+          // identify that this is a different generation and source for these file types
+          var msg = Buffer.from('Custom File Format Adapted to DacqMan and HDL-0108-RSCPT and Family. OshaBlue LLC.');
+          msg.copy(this.headerByteArray, (this.headerByteArray.length - msg.length));
+          // Yes, verified byte positioning exact up to byte 1023 (base 0) from hex output
 
-      // At present the end of the header isn't used - so we put an indicator to help
-      // identify that this is a different generation and source for these file types
-      var msg = Buffer.from('Custom File Format Adapted to DacqMan and HDL-0108-RSCPT and Family. OshaBlue LLC.');
-      msg.copy(this.headerByteArray, (this.headerByteArray.length - msg.length));
-      // Yes, verified byte positioning exact up to byte 1023 (base 0) from hex output
+          return; // Will an empty return allow for sync handling of this then?
+
+        }); // end of first then  // TODO move that stuff to a sep fcn!?
 
     } catch (e) {
-      console.warn("WARNING: Allowing continuance of capture, however something went wrong in initializeFileWritingData in capture-data.js: " + e);
+      console.warn("WARNING: Allowing continuance of capture, however something "
+        + " went wrong in initializeFileWritingData in capture-data.js: " + e);
     }
 
   } // End of: initializeFileWritingData
@@ -483,33 +700,303 @@ class CaptureDataFileOutput {
 
   this.initializeFileWritingTransducerData = ( optionsJson ) => {
 
-    var headerSize = parseInt(optionsJson.additionalFileInfo.offsetToFirstTransducerRecord.value);
-    var offsetToFirstCaptureWaveformBaseOne =
-      parseInt(optionsJson.headerData.offsetToFirstCaptureWaveformBaseOne.value);
-    // parseInt should be 32-bit anyway
+    return new Promise( (resolve, reject) => {
 
-    var lenXdByteArr = offsetToFirstCaptureWaveformBaseOne - headerSize;
-    // eg 5860 - 1024 = 4836
+      try {
 
-    // Actual length should be computed from cal file lengths and data
-    // [0 .. 39] XD header info - always the same
-    // [40 .. 4xCalWaveLengthInPoints-1] because all values are "single" = 4-byte float
-    this.transducerByteArray = Buffer.alloc(lenXdByteArr);
-    console.log("transducer data section byte length is: " + lenXdByteArr);
+        // The transducer header, information, and waveform will always
+        // be the same for every batch output file
 
-    // start index = headerSize => eg 1024
-    // stop index = headerSize + lenXdByteArr - 1
-    //            = 1024 + 4836 = 5860 - 1 = 5859 => yes this matches sample file
-    //            ie transducer data ends at byte 5859 such that 5860 byte index = first byte of waveform record
+        this.minChannelNum = 1;
+        this.maxChannelNum = parseInt(optionsJson.headerData.transducersNum.value);
 
-    // For each transducer there is a constant-length header
-    var len = parseInt(optionsJson.transducersInfo.header.lengthBytes);
-    var xdHeader = Buffer.alloc(len);
-    console.log("created xdHeader buffer len of: " + len + " bytes");
+        //var headerSize = parseInt(optionsJson.additionalFileInfo.offsetToFirstTransducerRecord.value);
+        // TODO -- IMPORTANT -- this next value is calculated from the XD
+        // section total length and should be written correctly
+        // back into the main header as well as used correctly here
+        //var offsetToFirstCaptureWaveformBaseOne =
+        //  parseInt(optionsJson.headerData.offsetToFirstCaptureWaveformBaseOne.value);
+        // parseInt should be 32-bit anyway
+
+        //var lenXdByteArr = offsetToFirstCaptureWaveformBaseOne - headerSize;
+        // eg 5860 - 1024 = 4836
+
+        // Actual length should be computed from cal file lengths and data
+        // [0 .. 39] XD header info - always the same
+        // [40 .. 4xCalWaveLengthInPoints-1] because all values are "single" = 4-byte float
+        //this.transducerByteArray = Buffer.alloc(lenXdByteArr);
+        //console.log("transducer data section byte length is: " + lenXdByteArr);
+
+        // start index = headerSize => eg 1024
+        // stop index = headerSize + lenXdByteArr - 1
+        //            = 1024 + 4836 = 5860 - 1 = 5859 => yes this matches sample file
+        //            ie transducer data ends at byte 5859 such that 5860 byte index = first byte of waveform record
+
+        // For each transducer there is a constant-length header
+        var len = parseInt(optionsJson.transducersInfo.header.lengthBytes);
+
+        console.log("each xdHeader base buffer len set to: " + len + " bytes");
+
+        // Get and order the transducer serial numbers array from json
+        const xdSnLen = parseInt(optionsJson.transducersInfo.serialNumbersInfo.lengthBytes);
+        const xdSnJson = optionsJson.transducersInfo.serialNumbers;
+        var xdSnArr = [];
+
+        // TODO abstract the ordering functionality
+        var ordered = {};
+        Object.keys(xdSnJson).sort().forEach(function(key) {
+          ordered[key] = xdSnJson[key];
+        });
+        for ( var key in ordered ) {
+          xdSnArr.push(ordered[key]);
+        };
+
+        var totalCaptureFileXdSectionHeaderLenBytes =
+          this.getCurrentCaptureFileTransducersSectionHeaderLength();
+
+        this.transducerHeaderByteArray = Buffer.alloc(0);
+
+        var xdn = 0;
+        for ( xdn = parseInt(this.minChannelNum); xdn < parseInt(this.maxChannelNum) + 1; xdn++) {
+
+          console.log(`building header data for transducer # ${xdn}`);
+
+          var xdHeader = Buffer.alloc(len);
+          var wfl = this.transducerCalibrationWaveformArray[xdn - 1];
+          wfl = wfl ? wfl.length : 0;
+          var totalXdRecordLen = xdHeader.length + (wfl * 4); // Yes, here in this header, this is the number of byte = 4 * values
+          console.log(`total transducer # ${xdn} record length is ${totalXdRecordLen}`);
+
+          var posn = 0;
+          var x;
+
+          this.int32JsonValToByteArray(totalXdRecordLen).copy(xdHeader, posn);
+          posn = posn + 4;
+
+          this.int16JsonValToByteArray(xdn).copy(xdHeader, posn);
+          posn = posn + 2;
+
+          // Transducer serial number
+          // Next: that does add the ASCII "0" char which is no good
+          //new Buffer.from(xdSnArr[xdn - 1].toString().padEnd(xdSnLen, 0x00))
+          //  .copy(xdHeader, posn);
+          var tsn = Buffer.alloc(xdSnLen, 0x00);
+          var asn = Buffer.from(xdSnArr[xdn-1].toString());
+          asn.copy(tsn, 0, 0, tsn.length);
+          tsn.copy(xdHeader, posn);
+          posn = posn + xdSnLen;
+
+          // Transducer calibration file waveform point count (not bytes)
+          this.int32JsonValToByteArray(wfl).copy(xdHeader, posn);
+          posn = posn + 4;
+
+          // Timebase = period as a 4-byte float in actual seconds (like 4e-08 = 25MHz)
+          // This value comes from the calibration file previously
+          // However, we'll share the warning to console if it exists
+          // The point: there are various naming conventions and implementations of
+          // this that differ across the codebase differing in whether they mean
+          // MHz or Hz or seconds for the period.
+          // So we just implement this in the capture options file for now.
+          // Further, such cal file usage might not be used much anymore.
+          // For simplicity it is now called sampleFrequencyHz
+          // The legacy transducer header file however uses seconds,
+          // as noted at the top of this comment.
+          var cwf = optionsJson.transducersInfo.calWaveFilesInfo.sampleFrequencyHz;
+          var cwsrtbs = 1.0 / parseFloat(cwf); // Convert freq to timebase in seconds
+          this.float32JsonValToByteArray(cwsrtbs).copy(xdHeader, posn);
+          posn = posn + 4;
+
+          // VB6 legacy array rank indicator (first dimension index I think)
+          // Always 1
+          this.int16JsonValToByteArray(1).copy(xdHeader, posn);
+          posn = posn + 2;
+
+          // VB6 legacy array 2nd dimension indicator of length
+          // as in point size, this is the same as the above value for point count
+          // in practice ... legacy compat ...
+          this.int32JsonValToByteArray(wfl).copy(xdHeader, posn);
+          posn = posn + 4;
+
+          // VB6 legacy array 2nd dimension first index number
+          // legacy compat ...
+          // Should always be 1 also
+          this.int32JsonValToByteArray(1).copy(xdHeader, posn);
+          posn = posn + 4;
+
+          // Double check that our length matches the standard header length:
+          if ( posn != len ) {
+            console.warn("Warning: capture-data.js: initializeFileWritingTransducerData: "
+              + "after inserting all transducer header data, the xd header length "
+              + len + " does not "
+              + "match the last byte position (posn): " + posn);
+          }
+
+          // Now we build up this 40-byte header and the add the suffix
+          // of the waveform as 4-byte single/floats
+          var i;
+          var wfAsByteBuf = Buffer.alloc(wfl * 4);
+          posn = 0;
+          for ( i = 0; i < wfl; i++ ) {
+            var x = this.float32JsonValToByteArray(
+              this.transducerCalibrationWaveformArray[xdn - 1][i]
+            );
+            x.copy(wfAsByteBuf, posn);
+            posn = posn + 4;
+          }
 
 
+          this.transducerHeaderByteArray = Buffer.concat(
+            [this.transducerHeaderByteArray, xdHeader, wfAsByteBuf]);
+
+        } // end of for each xdn number
+
+        if ( this.transducerHeaderByteArray.length != totalCaptureFileXdSectionHeaderLenBytes ) {
+          console.warn(
+              "Warning: capture-data.js: initializeFileWritingTransducerData: "
+            + "this.transducerHeaderByteArray.length, " + this.transducerHeaderByteArray + ", "
+            + "does not equal the result of getCurrentCaptureFileTransducersSectionHeaderLength, "
+            + " " + totalCaptureFileXdSectionHeaderLenBytes);
+        }
+
+        resolve(true);
+
+      } catch ( e ) {
+        console.error("capture-data.js: initializeFileWritingTransducerData: error: " + e + " resolving false.");
+        resolve(false); // for now, let's not crash a whole chain
+      }
+
+    }); // end of new Promise
 
   } // End of: initializeFileWritingTransducerData
+
+
+
+
+
+
+
+
+
+
+  this.updateWaveformRecordHeader = ( scanNumber, transducerNumber ) => {
+
+    return new Promise ( (resolve, reject) => {
+
+      try {
+
+        this.int16JsonValToByteArray(scanNumber).copy(
+          this.waveformRecordHeaderByteArrayTemplate,
+          this.bytePosnWaveformRecordScanNumber
+        );
+
+        this.int16JsonValToByteArray(transducerNumber).copy(
+          this.waveformRecordHeaderByteArrayTemplate,
+          this.bytePosnWaveformRecordChannelNumber
+        );
+
+        resolve(true);
+      } catch (e) {
+        resolve(false);
+      }
+
+    }); // end of new Promise
+
+  } // End of: updateWaveformRecordHeader
+
+
+
+
+
+
+
+
+
+
+  this.updateCaptureBatchFileOutputHeader = ( runId, timestampUnformattedFromNewDate ) => {
+
+    // There is no header param anywhere for actual number of waveforms in a file
+    // So, no need to handle partial captures
+
+    return new Promise ( (resolve, reject) => {
+
+      try {
+
+        this.int16JsonValIntoHeaderArray(
+          this.runId, this.bytePosnRunId
+        );
+
+        new Buffer.from(
+          strftime (
+            this.timestampFormat,
+            timestampUnformattedFromNewDate
+          )
+        ).copy(
+          this.headerByteArray,
+          this.bytePosnTimestamp
+        );
+        resolve(true);
+
+      } catch ( e ) {
+        resolve(false);
+      };
+
+    }); // end of new Promise
+
+  } // End of: updateWaveformRecordHeader
+
+
+
+
+
+
+
+
+
+
+  this.getCurrentCaptureFileTransducersSectionHeaderLength = () => {
+
+    // ASSUMES the instance json has been populated from file first
+
+    var optionsJson = this.customCaptureOptionsJson;
+    var nxd = parseInt(optionsJson.headerData.transducersNum.value);
+    var baseHeaderLen = parseInt(optionsJson.transducersInfo.header.lengthBytes);
+    var lenBytes = 0;
+    lenBytes = nxd * baseHeaderLen;
+    for ( var i = 0; i < nxd; i++ ) {                       // old school
+      let a = this.transducerCalibrationWaveformArray[i];
+      if ( a ) {                                            // will be "false" or an array
+        lenBytes = lenBytes + a.length * 4;                 // 4 bytes per value as a single/float
+      }
+    }
+
+    console.log(`getCurrentCaptureFileTransducersSectionHeaderLength: ${lenBytes} bytes.`);
+    return lenBytes;
+
+  } // End of: getCurrentCaptureFileTransducersSectionHeaderLength
+
+
+
+
+
+
+
+
+
+  this.getCurrentCaptureOutputFileWaveformRecordLengthBytes = () => {
+
+    let json = this.customCaptureOptionsJson.additionalFileInfo.waveformRecordHeader;
+    let hbl = parseInt(json.baseHeaderLen);
+
+    // The output file for capture get the base header length in bytes
+    // plus the number of samples multiplied by the number of bytes
+    // in the OUTPUT sample format
+    hbl = (this.numberOfSamplesPerWaveform
+      * this.captureFileOutputBytesPerWaveformSample) + hbl;
+
+    return hbl;
+
+  } // End of: getCurrentCaptureOutputFileWaveformRecordLengthBytes
+
 
 
 
@@ -725,6 +1212,20 @@ class CaptureDataFileOutput {
 
 
 
+  this.int16JsonValToByteArray = ( val ) => {
+
+    var i16a = new Int16Array(1);
+    i16a[0] = parseInt(val);
+    var x = Buffer.from(i16a.buffer);
+    return x;
+
+  } // End of: int16JsonValToByteArray
+
+
+
+
+
+
 
 
   this.int32JsonValIntoHeaderArray = ( val, posn ) => {
@@ -759,6 +1260,23 @@ class CaptureDataFileOutput {
 
 
 
+  this.int32JsonValToByteArray = ( val ) => {
+
+    var i32a = new Int32Array(1);
+    i32a[0] = parseInt(val);
+    var x = Buffer.from(i32a.buffer);
+    return x;
+
+  } // End of: int32JsonValToByteArray
+
+
+
+
+
+
+
+
+
   this.float32JsonValIntoHeaderArray = ( val, posn ) => {
 
     // https://stackoverflow.com/questions/7744611/pass-variables-by-reference-in-javascript
@@ -783,6 +1301,21 @@ class CaptureDataFileOutput {
 
   } // End of: float32JsonValIntoArray
 
+
+
+
+
+
+
+
+  this.float32JsonValToByteArray = ( val ) => {
+
+    var f32a = new Float32Array(1);
+    f32a[0] = parseFloat(val);
+    var x = Buffer.from(f32a.buffer);
+    return x;
+
+  } // End of: float32JsonValToByteArray
 
 
 
@@ -1037,6 +1570,18 @@ class CaptureDataFileOutput {
 
   this.startNewFile = () => {
 
+    // This is called (ideally?) from a receive data event.
+    // Which means that, as long as the LoadCaptureOptions()
+    // has been called after instantiation,
+    // the capture batch output file header sections for:
+    // - main header
+    // - transducers section
+    // - waveform record header (template)
+    // have all been initialized and prepopulated as templates
+    // Thus at each new file, we just need to update the changing
+    // values in the headers and then write to file
+
+
     // We don't want to overwrite data
     // so ... here the file write flag is presented with "x" appended, as in,
     // don't overwrite if exists
@@ -1046,6 +1591,13 @@ class CaptureDataFileOutput {
     // in the filepath creation routine
 
     return new Promise ( (resolve, reject) => {
+
+      if ( fileCounter > 0 ) {
+        // Then we already has a write stream open, so it is time to close it
+        console.log(`Closing file stream: ${this.captureWriteStream.path}`)
+        this.captureWriteStream.end();
+        // Probably async - but the re-opening on a new fp should be fine
+      }
 
       // Create filename and open the path
       this.fileCounter = this.fileCounter + 1;      // start from 1, init'd at 0
@@ -1068,11 +1620,32 @@ class CaptureDataFileOutput {
               this.readyToCapture = false;
             });
 
-            // Write header data to file
-            console.log("startNewFile: headerByteArray length: " + this.headerByteArray.length);
-            this.captureWriteStream.write(this.headerByteArray);
+            // Update the main header with current data where needed
+            // Waveform record header should be updated before each waveform
+            // record write since the channel number gets updated in addition
+            // to the scan number (which changes only after every set of channels scanned)
+            console.log("startNewFile: update main record header with changeable values.");
+            this.updateCaptureBatchFileOutputHeader(
+              this.fileCounter,   // RunId
+              new Date()          // Unformatted time stamp
+            )
+            .then ( res => {
 
-            resolve(true);
+              // Since the write stream is the same, these should
+              // execute sync
+
+              // Write header data to file
+              console.log("startNewFile: headerByteArray length: " + this.headerByteArray.length);
+              this.captureWriteStream.write(this.headerByteArray);
+
+              // Write transducer header data to file
+              // Nothing to update here - it is always the same
+              // for the whole series of batch capture files
+              console.log("startNewFile: this.transducerHeaderByteArray length: " + this.transducerHeaderByteArray.length);
+              this.captureWriteStream.write(this.transducerHeaderByteArray);
+
+              resolve(true);
+            });
 
           } catch (e) {
             // write is async, so this will not immediately fire
@@ -1085,7 +1658,6 @@ class CaptureDataFileOutput {
         }) // end of then( )
 
       }); // end of new Promise
-
 
   } // End of: startNewFile
 
@@ -1127,6 +1699,7 @@ class CaptureDataFileOutput {
     }
 
     if ( this.fileCounter < 1 || this.waveformCounter > this.waveformsPerFile ) {
+
       this.startNewFile()
         .then ( res => {
           if ( res ) {
@@ -1138,11 +1711,19 @@ class CaptureDataFileOutput {
         .catch ( e => {
           console.warn("capture-data.js: ReceiveData: error: " + e);
         })
+
+        // TODO do we want to .then handle writing any waveform records to file?
+
     } else {
-      this.writeDataToFile(newData);
-      // TODO track whether things have init'd ok and we can actually write, like above?
+
+      // TODO or do we want to handle writing any waveform records to file here?
+      // And handle any backlog from the last time receive data was called?
+
     }
 
+    // TODO or do we just do it here?
+    // The risk is though that we async and write to the wrong position
+    // Is there a writestream seek position? ... ?
 
 
   } // End of: ReceiveData

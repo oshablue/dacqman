@@ -499,7 +499,12 @@
     // At freq of 10 (ms)
     // - chunkSize of 2 * 4095 gives steady sync graph, with eventual huge buffer (overrun)
     // - chunkSize of 3 * 4095 gives walking graph and glitches due to emptiness (underrun)
-    var singleChartBuf = Buffer.alloc(4095,127); //null;
+    const defaultHardwareWaveformSampleFrequencyHz = 40000000; 
+    const defaultHardwareWaveformLengthSamples = 4095;
+    const defaultHardwareWaveformBytesPerSample = 1;
+    const defWfLenB = defaultHardwareWaveformLengthSamples
+                      * defaultHardwareWaveformBytesPerSample;
+    var singleChartBuf = Buffer.alloc(defWfLenB,127); //null;
     var ourReadableStreamBuffer = null;
     var writeStream = null;
     var captureDataFileOutputBatch = null;
@@ -510,7 +515,7 @@
     var gReturnDataTo = "chart";
     var resetReadableStream = function(chunkMultiple) {
       curChan = 0;
-      singleChartBuf =  Buffer.alloc(4095, 127);
+      singleChartBuf =  Buffer.alloc(defWfLenB, 127);
       // changing below to 20ms (and doubling the chunksize) doesn't stop the
       // crash malloc errors
       //chunkMultiple = 33; // 33 in our testing gives split between 8 chans, and no buffer overflow
@@ -518,7 +523,7 @@
       gChunkMultiple = chunkMultiple;
       ourReadableStreamBuffer = new rsb.ReadableStreamBuffer({
         frequency: 10,       // in milliseconds // 5 or 7 was ok // 10 less crashy // less than 7ms to be faster than incoming packets of 4096
-        chunkSize: (chunkMultiple*4095), //16380, //(4095)//,     // bytes -- 4096 gives a left-ward walk -- 4095 was generally steady
+        chunkSize: (chunkMultiple*defWfLenB), //16380, //(4095)//,     // bytes -- 4096 gives a left-ward walk -- 4095 was generally steady
         initialSize: (100 * 1024),    // was 1000 // added these two for size management due to constant overflow
         //incrementAmount: (10 * 1024)  // zero does nothing - doesn't cap it
       });
@@ -576,7 +581,7 @@
             // (data port) errors that might be creating the malloc errors in these
             // revisions
             var selectedChan = 1;
-            chunk.copy(singleChartBuf, 0, 0, 4096);
+            chunk.copy(singleChartBuf, 0, 0, defWfLenB + 1); // TODO is the +1 needed?
             // Big TODO - clean up from Demo mode
             if ( gChunkMultiple > 3 && selectedChan == curChan ) {
               singleWfChart.UpdateChartBuffer(singleChartBuf);
