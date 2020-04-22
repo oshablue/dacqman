@@ -38,6 +38,8 @@ const strftime = require('strftime');
 const csv = require('csv');           // some issues with just csv-parse so using the whole csv package
 //const parse = require('csv-parse/lib/parse');
 
+const wfparse = require('./waveform-parsing-hdl-010n-RSnnn.js');
+
 // These now come from the additionalFileInfo in the capture-options.json
 //const FN_PREFIX = "run_";
 //const FN_SUFFIX = ".UTR";
@@ -103,6 +105,8 @@ const csv = require('csv');           // some issues with just csv-parse so usin
   - https://stackoverflow.com/questions/17217736/while-loop-with-promises
 
   - https://stackoverflow.com/questions/45348955/using-await-within-a-promise
+
+  - https://stackoverflow.com/questions/31413749/node-js-promise-all-and-foreach
 
 
   */
@@ -174,6 +178,7 @@ class CaptureDataFileOutput {
     this.transducerHeaderByteArray = null;
     this.headerByteArray = null;
     this.waveformRecordHeaderByteArrayTemplate = null;
+    this.waveformRecordOutputByteArray = Buffer.alloc(0);
 
     this.fileCapturePrefix = null;
     this.fileCaptureExtWithDot = null;
@@ -202,7 +207,9 @@ class CaptureDataFileOutput {
     this.bytePosnWaveformRecordScanNumber = null;
     this.bytePosnWaveformRecordChannelNumber = null;
 
-    this.inDataBuffer = Buffer.alloc(4095 * 8, 0); // max waveform returned from hardware X 8, init with 0
+    this.inDataBuffer = Buffer.alloc(0);
+
+    this.lengthOfSof = wfparse.lengthOfSof;
 
 
     // TODO BIG FOR RELEASE
@@ -884,19 +891,28 @@ class CaptureDataFileOutput {
 
       try {
 
+        let buf = Buffer.from(this.waveformRecordHeaderByteArrayTemplate);
+
         this.int16JsonValToByteArray(scanNumber).copy(
-          this.waveformRecordHeaderByteArrayTemplate,
+          buf, //this.waveformRecordHeaderByteArrayTemplate,
           this.bytePosnWaveformRecordScanNumber
         );
 
         this.int16JsonValToByteArray(transducerNumber).copy(
-          this.waveformRecordHeaderByteArrayTemplate,
+          buf, //this.waveformRecordHeaderByteArrayTemplate,
           this.bytePosnWaveformRecordChannelNumber
         );
 
-        resolve(true);
+        //console.log(buf);
+        //console.log(`updated waveformRecordHeaderByteArrayTemplate with scan number, xdNumber: ${scanNumber} ${transducerNumber}`);
+
+        resolve(buf);
+
       } catch (e) {
+
+        console.warn(`warning: capture-data.js: updateWaveformRecordHeader: e: ${e}`);
         resolve(false);
+
       }
 
     }); // end of new Promise
@@ -1592,7 +1608,7 @@ class CaptureDataFileOutput {
 
     return new Promise ( (resolve, reject) => {
 
-      if ( fileCounter > 0 ) {
+      if ( this.fileCounter > 0 ) {
         // Then we already has a write stream open, so it is time to close it
         console.log(`Closing file stream: ${this.captureWriteStream.path}`)
         this.captureWriteStream.end();
@@ -1679,6 +1695,8 @@ class CaptureDataFileOutput {
         // Set readyToCapture to false? No. Let's default to trying to allow
         // continuation.  And just output the issue only.
 
+      } else {
+        console.log(`writeDataToFile: received this number of bytes to write: ${buf.length}`);
       }
     });
 
@@ -1698,35 +1716,189 @@ class CaptureDataFileOutput {
       console.warn("capture-data.js: this.ReceiveData: Warning: readyToCapture is false." );
     }
 
+    //console.log(`this.bytePosnWaveformRecordScanNumber: ${this.bytePosnWaveformRecordScanNumber}`);
+    //console.log(`this.bytePosnWaveformRecordChannelNumber: ${this.bytePosnWaveformRecordChannelNumber}`);
+
+    // First process any data to waveforms formatted for writing to file
+    this.inDataBuffer = Buffer.concat([this.inDataBuffer, newData]); // accumulate
+    //this.parseInBufferForWaveforms();
+
     if ( this.fileCounter < 1 || this.waveformCounter > this.waveformsPerFile ) {
+
+      // Yes, we should .then write any waveforms found
+      // to file after start new file to keep
+      // order of write to file
 
       this.startNewFile()
         .then ( res => {
           if ( res ) {
-            this.writeDataToFile(newData);
+            return this.parseInBufferForWaveforms();
           } else {
             console.warn("capture-data.js: ReceiveData: starting new file didn't work: can't write to anything." + res);
+            return Promise.resolve(false);
           }
+        })
+        .then ( res => {
+          if ( res ) {
+            this.writeWaveformsToFile();
+          }
+          return;
         })
         .catch ( e => {
           console.warn("capture-data.js: ReceiveData: error: " + e);
         })
 
-        // TODO do we want to .then handle writing any waveform records to file?
-
     } else {
 
-      // TODO or do we want to handle writing any waveform records to file here?
-      // And handle any backlog from the last time receive data was called?
+      // yes we call it again here - it's in here twice
+      // because it needs to be in sequence if creating new file
+      // as above
+      this.parseInBufferForWaveforms()
+        .then( res => {
+          return this.writeWaveformsToFile();
+        });
 
-    }
-
-    // TODO or do we just do it here?
-    // The risk is though that we async and write to the wrong position
-    // Is there a writestream seek position? ... ?
-
+    } // end of not needing to start a new file
 
   } // End of: ReceiveData
+
+
+
+
+
+
+
+
+  this.parseInBufferForWaveforms = () => {
+
+    return new Promise(( resolve, reject ) => {
+
+      // TODO maybe always start a new file beginning from Channel 1
+      // if the board is running in continuous capture mode already?
+
+      // Any incoming data, unformatted for output
+      // is in the inDataBuffer
+      //console.log(this.inDataBuffer);
+      var datInfos = wfparse.extractSofBoundsSets(this.inDataBuffer, this.scanCounter);
+      console.log(datInfos);
+      /*
+        datInfos = [{
+        sof1: -1,             // Real indices start at 0
+        sof2: -1,             // Real indices start at 0
+        chan: 0               // Real numbers start at 1
+        scan: N
+      }, { next set etc }, { ... }];
+      */
+      if ( !datInfos || datInfos.length < 1 ) {
+        resolve(false);
+      }
+
+      // Update channel and scan number in header
+      // Or instead of forEach use init large correct alloc and then
+      // Promise.all for the di's with internal index tracking for correct offset
+      // in output array
+      //var diExecCounter = datInfos.length;
+
+      // Using forEach mingles results with some async execution blocks
+      // apparently that at this time I can't figure out how to promisify or sync
+      // So
+      // We will break this down into each with sep buffers as indep vars
+      // and then combine in Promise.all
+      var actions = datInfos.map ( di => {
+
+        return new Promise ( (resolve, reject ) => {
+
+          console.log(`di.scan: ${di.scan}, di.chan: ${di.chan}`);
+
+          this.updateWaveformRecordHeader(di.scan, di.chan)
+            .then( resultWaveformHeaderByteArray => {
+
+              //console.log(resultWaveformHeaderByteArray);
+
+              if ( resultWaveformHeaderByteArray ) {
+
+                let stop = di.sof2;
+                let start = di.sof1 + this.lengthOfSof;
+                var outWfDat = Buffer.alloc(
+                  (stop - start)
+                  * this.captureFileOutputBytesPerWaveformSample
+                );
+                //console.log(`outWfdat length: ${outWfDat.length}`);
+                let scaled = 0.0;
+                let outIndex = 0;
+                for ( let i = start; i < stop; i++ ) {
+                  scaled = wfparse.valToScaledFloat(this.inDataBuffer[i]);
+                  outIndex = outWfDat.writeFloatLE(scaled, outIndex); // returns previous offset plus bytes written
+                }
+
+                var waveformRec = Buffer.concat([
+                  resultWaveformHeaderByteArray,
+                  outWfDat
+                ]);
+
+                //console.log(`about to resolve waveformRec with length: ${waveformRec.length}`);
+                resolve(waveformRec);
+
+              } else {
+                console.warn(`action for parse waveforms not: if(resultWaveformHeaderByteArray)`)
+                resolve(false); // null?
+              }
+
+            }); // end of then
+
+          }); // end of new Promise
+
+      }); // end of actions
+
+      var results = Promise.all(actions);
+
+      results.then( data => {
+        //console.log(data);
+        //console.log('about to concat data');
+        var wfRecs = Buffer.concat(data);
+        this.waveformRecordOutputByteArray = Buffer.concat([
+          this.waveformRecordOutputByteArray,
+          wfRecs
+        ]);
+        //console.log('concated data');
+        // Remove the processed data from the beginning of the buffer
+        this.inDataBuffer = this.inDataBuffer.slice(
+          datInfos[datInfos.length - 1].sof2  // chop all beginning up to last SOF2 first byte, keeping that byte
+        );
+        // Store the last scan number that was counted
+        this.scanCounter = datInfos[datInfos.length - 1].scan;
+
+        resolve(true);
+      })
+      .catch( e => {
+        console.warn(`warning: capture-data.js: parseInBufferForWaveforms: ${e}`);
+        console.warn(e);
+        resolve(false);
+      });
+
+    }); // end of new Promise
+
+  } // End of: parseInBufferForWaveforms
+
+
+
+
+
+
+
+
+
+  this.writeWaveformsToFile = () => {
+
+    // TODO we could potentially just use pipes to simplify?
+
+    if ( this.waveformRecordOutputByteArray.length > 0 ) {
+      this.writeDataToFile(this.waveformRecordOutputByteArray);
+      this.waveformRecordOutputByteArray = Buffer.alloc(0);
+    }
+
+  } // End of: writeWaveformsToFile
+
 
 
 
@@ -1792,6 +1964,12 @@ class CaptureDataFileOutput {
       }
     });
   }
+
+
+
+
+
+
 
 
   let loadCustomCaptureOptionsPromise = (prefs) => {
