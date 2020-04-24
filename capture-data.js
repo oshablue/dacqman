@@ -136,9 +136,10 @@ class CaptureDataFileOutput {
     numberOfSamplesPerWaveform = 4095,      // Default HDL-0108-nnnnn WF return length at the time of writing this
     numberOfBytesPerSample = 1,             // Same comment as above
     waveformSampleFrequencyHz = 40000000    // Default HDL-0108/4-nnnnn WF is 40MHz
+
   } = {}) {
 
-    // constructor body
+    // constructor body ... it's most of this code ...
 
     this.directory = directory;
     this.numberOfWaveformsPerFile = numberOfWaveformsPerFile;
@@ -189,6 +190,7 @@ class CaptureDataFileOutput {
 
     this.captureFileOutputBytesPerWaveformSample = null;
     this.timestampFormat = null;
+    this.excludeStartOfFrameFromOutput = null;
 
     this.activeFilePath = null;
     this.activeWriteStream = null;
@@ -336,8 +338,8 @@ class CaptureDataFileOutput {
       json = this.customCaptureOptionsJson.additionalFileInfo;
 
       this.captureFileOutputBytesPerWaveformSample = parseInt(json.captureFileOutputBytesPerWaveformSample.lengthBytes);
-
       this.timestampFormat = json.timestampFormat;
+      this.excludeStartOfFrameFromOutput = json.excludeStartOfFrameFromOutput;
 
       resolve(true);
 
@@ -451,8 +453,9 @@ class CaptureDataFileOutput {
 
           // Number of waveform points (not bytes)
           // Int32 - was nominally 2500 default, now we use our default or passed in value
+          // Adjust this for whether or not we output the SOF
           console.log(posn);
-          this.int32JsonValToByteArray(this.numberOfSamplesPerWaveform).copy(
+          this.int32JsonValToByteArray(this.getNumberOfOutputSamplesPerWaveform()).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           );
           posn = posn + 4;
@@ -483,7 +486,7 @@ class CaptureDataFileOutput {
           // This is also number of points
           // Int32
           console.log(posn);
-          this.int32JsonValToByteArray(this.numberOfSamplesPerWaveform).copy(
+          this.int32JsonValToByteArray(this.getNumberOfOutputSamplesPerWaveform()).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           );
           posn = posn + 4;
@@ -511,6 +514,25 @@ class CaptureDataFileOutput {
       }); // end of new Promise
 
   } // End of: initializeFileWritingWaveformRecordHeader
+
+
+
+
+
+
+
+
+
+
+  this.getNumberOfOutputSamplesPerWaveform = () => {
+
+    var numOutputSamplesPerWaveform = this.excludeStartOfFrameFromOutput ?
+      this.numberOfSamplesPerWaveform - this.lengthOfSof :
+      this.numberOfSamplesPerWaveform;
+
+    return numOutputSamplesPerWaveform;
+
+  }
 
 
 
@@ -1002,11 +1024,13 @@ class CaptureDataFileOutput {
 
     let json = this.customCaptureOptionsJson.additionalFileInfo.waveformRecordHeader;
     let hbl = parseInt(json.baseHeaderLen);
+    let nspwf = this.numberOfSamplesPerWaveform;
 
     // The output file for capture get the base header length in bytes
     // plus the number of samples multiplied by the number of bytes
-    // in the OUTPUT sample format
-    hbl = (this.numberOfSamplesPerWaveform
+    // in the OUTPUT sample format, optionally with or without the start of frame
+    let outputSamples = this.excludeStartOfFrameFromOutput ? nspwf - this.lengthOfSof : nspwf;
+    hbl = (outputSamples
       * this.captureFileOutputBytesPerWaveformSample) + hbl;
 
     return hbl;
@@ -1818,7 +1842,9 @@ class CaptureDataFileOutput {
               if ( resultWaveformHeaderByteArray ) {
 
                 let stop = di.sof2;
-                let start = di.sof1 + this.lengthOfSof;
+                let start =this.excludeStartOfFrameFromOutput ?
+                  di.sof1 + this.lengthOfSof :
+                  di.sof1;
                 var outWfDat = Buffer.alloc(
                   (stop - start)
                   * this.captureFileOutputBytesPerWaveformSample
@@ -1826,9 +1852,16 @@ class CaptureDataFileOutput {
                 //console.log(`outWfdat length: ${outWfDat.length}`);
                 let scaled = 0.0;
                 let outIndex = 0;
+                let sofBuf = Buffer.alloc(0);
                 for ( let i = start; i < stop; i++ ) {
-                  scaled = wfparse.valToScaledFloat(this.inDataBuffer[i]);
-                  outIndex = outWfDat.writeFloatLE(scaled, outIndex); // returns previous offset plus bytes written
+                  if ( this.excludeStartOfFrameFromOutput && i < this.lengthOfSof ) {
+                    scaled = this.int32JsonValToByteArray(this.inDataBuffer[i]);
+                    scaled.copy(outWfDat, outIndex);
+                    outIndex = outIndex + 4;
+                  } else {
+                    scaled = wfparse.valToScaledFloat(this.inDataBuffer[i]);
+                    outIndex = outWfDat.writeFloatLE(scaled, outIndex); // returns previous offset plus bytes written
+                  }
                 }
 
                 var waveformRec = Buffer.concat([
