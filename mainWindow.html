@@ -499,7 +499,16 @@
     // At freq of 10 (ms)
     // - chunkSize of 2 * 4095 gives steady sync graph, with eventual huge buffer (overrun)
     // - chunkSize of 3 * 4095 gives walking graph and glitches due to emptiness (underrun)
-    const defaultHardwareWaveformSampleFrequencyHz = 40000000; 
+
+    // 40000000 corresponds correctly to default HDL hardware sample rate
+    // However, this breaks legacy software in the old file format verification version
+    // that we have due to rounding/conversion errors in timebase going from a single to a double
+    // in the waveform object.
+    // So, using 25000000 happens to fit in with the legacy SW test version and
+    // allow flawless processing with default algorithm settings
+    // Otherwise, 40000000 loads up just fine.  It's just in the algo portion
+    // snapshot from the time that things break 
+    const defaultHardwareWaveformSampleFrequencyHz = 25000000; //40000000;
     const defaultHardwareWaveformLengthSamples = 4095;
     const defaultHardwareWaveformBytesPerSample = 1;
     const defWfLenB = defaultHardwareWaveformLengthSamples
