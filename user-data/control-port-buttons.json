@@ -394,10 +394,10 @@
     },
 
     {
-      "title": "Acquire 2-min Channel Scan To Single File...",
+      "title": "Acquire 1-min Channel Scan To Single File...",
       "command": {
         "type": "hexCsvBytesChained",
-        "chainedCmdDelayMs" : "120000",
+        "chainedCmdDelayMs" : "60000",
         "chainedCmdTimeoutMs" : "1000",
         "chainedCmdCompleteChar" : "",
         "value": [
@@ -448,7 +448,10 @@
           "0. Please set up Tx and Rx voltage/gain prior.",
           "1. Start continuous channel scanning.",
           "???2. Stop continuous scan and switch back to single/manual acquisition mode."
-        ]
+        ],
+        "comments" : {
+          "1" : "chainedCmdDelayMs will be overridden by a duration for each file based on capture options file specified scans per file and the waveform parser file specified waveform receive rate for the hardware."
+        }
       },
       "description": "Scan defined channels continuously until stop/cancel and split up into batch files using custom capture options.",
       "returnDataTo" : "chart",

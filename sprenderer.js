@@ -1360,7 +1360,8 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button)
               launchProgressCountdown(0);
             } else {
               console.log("about to call controlPortSendData_SetupAndSendCommands");
-              controlPortSendData_SetupAndSendCommands(commandAndType);
+              var overrideTotalProgressTimeMs = captureDataFileOutputBatch.SingleFileCaptureDurationMs();
+              controlPortSendData_SetupAndSendCommands(commandAndType, overrideTotalProgressTimeMs);
               // Not sure - perhaps this should be promised and chained:
               console.log("controlPortSendData: waveformsPerFile for batch output calculated to: " + captureDataFileOutputBatch.WaveformsPerFile());
             }
@@ -1385,7 +1386,7 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button)
 
 
 
-var controlPortSendData_SetupAndSendCommands = function(commandAndType) {
+var controlPortSendData_SetupAndSendCommands = function(commandAndType, overrideTotalProgressTimeMs) {
 
   // Now handle the command type and sending the control commands to the device
 
@@ -1458,9 +1459,11 @@ var controlPortSendData_SetupAndSendCommands = function(commandAndType) {
   }
 
   // Again, could instead use percentage of completed steps instead
-  launchProgressCountdown(totTimeout);
+  let tto = overrideTotalProgressTimeMs ? overrideTotalProgressTimeMs : totTimeout;
+  console.log(`controlPortSendData_SetupAndSendCommands: totalProgressCountdown to use: ${tto}`);
+  launchProgressCountdown(tto);
 
-}
+} // End of: controlPortSendData_SetupAndSendCommands
 
 
 

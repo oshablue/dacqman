@@ -56,7 +56,8 @@
       "type" : "Int16",
       "value" : 40,
       "indexByteStart" : 97,
-      "indexByteStop" : 98
+      "indexByteStop" : 98,
+      "comment" : "This may be used and yes legacy is MHz for the value, by the legacy software.  The value here is indeed used to populate the main header.  A value passed in via code from mainWindow is however used to populate the equivalent field, the timebase in seconds, for the individual waveform record header."
     },
 
     "runLengthInches" : {
@@ -140,7 +141,9 @@
 
     "calWaveFilesInfo" : {
       "sampleFrequencyHz" : 35000000,
-      "sampleFrequencyHzComment" : "Please see readme. It seems there are multiple varying naming conventions and implementations of this in the legacy code and file formats.  It is normally imported from the waveform csv file.  However, some files show the frequency in Hz while others store the value as a number of seconds, as in, 4e-08 = 40 ns = 25 MHz.  Thus, we are just using the capture options file here to define a value more clearly."
+      "sampleFrequencyHzComment" : "Please see readme. It seems there are multiple varying naming conventions and implementations of this in the legacy code and file formats.  It is normally imported from the waveform csv file.  However, some files show the frequency in Hz while others store the value as a number of seconds, as in, 4e-08 = 40 ns = 25 MHz.  Thus, we are just using the capture options file here to define a value more clearly.",
+      "comment2" : "Real value for these files was 3500000. However with a 40MHz waveform, this creates a huge ratio value needed in processing for legacy software. So we lie and say 40000000 to match.",
+      "comment3" : "Some software doesn't even use the transducer cal files that are packaged in these UTRs!"
     },
 
     "serialNumbers" : {
@@ -153,6 +156,11 @@
     "serialNumbersInfo" : {
       "comment" : "16 characters allowed per legacy file convention matching",
       "lengthBytes" : 16
+    },
+
+    "numberOfScannedChannels" : {
+      "value" : 8,
+      "comment" : "For example, in the default HDL-0108-RSCPT hardware at this time, 8 channels are queried per scan, even if for legacy compatibility for the end-user demo and their legacy compat, only 4 channels are used in the file.  Change this the firmware and modes on the hardware is updated."
     }
 
   },
@@ -196,7 +204,11 @@
       "comment" : "By default/nominal/legacy: filename begins already with run_ so there is already an underscore before the midfix"
     },
 
-    "timestampFormat" : "%d/%m/%Y %H:%M:%S"
+    "timestampFormat" : "%d/%m/%Y %H:%M:%S",
+
+    "comments" : {
+      "1" : "If you want to update timebase (Wfs) and sample rate in MHz (main header) to match legacy files such that these look exactly the same and don't reflect the new hardware reality, update (1): mainWindow to have the older sample rate in Hz and (2) update this file in the header section to have the legacy sample rate."
+    }
 
 
   }

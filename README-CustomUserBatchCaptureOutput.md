@@ -14,6 +14,8 @@ from early codebases needing to maintain back compat -- issues many possible
 3. Redundancies complicating code maintenance and may include conflicting implementations
 simlar names etc
 
+4. Assumptions remain - like waveform lengths are calcd at init, not at each WF parse - this could be changed ...but is left because the hardware and comms process should be consistent and if it isn't an error needs to happen - at this rendering thought anyway 
+
 ## Gotchas and Stuff That is Different
 
 ### Transducer Calibration Waveform Files

@@ -171,6 +171,7 @@ class CaptureDataFileOutput {
     this.currentSeriesIndex = null;
     this.waveformCounter = 0;
     this.waveformsPerFile = 0;
+    this.scansPerFile = 0;
     this.scanCounter = 0;
     this.minChannelNum = 0;
     this.maxChannelNum = 0;
@@ -191,6 +192,7 @@ class CaptureDataFileOutput {
     this.captureFileOutputBytesPerWaveformSample = null;
     this.timestampFormat = null;
     this.excludeStartOfFrameFromOutput = null;
+    this.numberOfWaveformsPerScanForHardwareMode = null;
 
     this.activeFilePath = null;
     this.activeWriteStream = null;
@@ -341,6 +343,9 @@ class CaptureDataFileOutput {
       this.timestampFormat = json.timestampFormat;
       this.excludeStartOfFrameFromOutput = json.excludeStartOfFrameFromOutput;
 
+      json = this.customCaptureOptionsJson.transducersInfo;
+      this.numberOfWaveformsPerScanForHardwareMode = parseInt(json.numberOfScannedChannels.value);
+
       resolve(true);
 
     }); // end of new Promise
@@ -431,10 +436,12 @@ class CaptureDataFileOutput {
           // changed to "ScanNumber") only after transducer's waveform is packaged
           // Thus each set of transducer channels has the same scan number
           // Legacy-named WaveformNumber ...
-          // TODO - code to update this each scan (or repeat of channel cycle)
+          // Update this each scan (or repeat of channel cycle)
           this.bytePosnWaveformRecordScanNumber = posn;
           console.log(posn);
-          this.int16JsonValToByteArray(this.waveformCounter).copy(
+          // this.waveformCounter is actually wrong here but it doesn't matter
+          // as the value gets updated ... putting scanCounter just for readability
+          this.int16JsonValToByteArray(this.scanCounter).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           );
           posn = posn + 2;
@@ -466,8 +473,10 @@ class CaptureDataFileOutput {
           // from capt options
           // This is hardware dependent also, so it should be part of the hardware
           // options set in the instance
+          // TODO place in hardware descriptor module 
+          var tb = parseFloat(1.0/parseFloat(this.waveformSampleFrequencyHz));
           console.log(posn);
-          this.float32JsonValToByteArray(this.waveformSampleFrequencyHz).copy(
+          this.float32JsonValToByteArray(tb).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           );
           posn = posn + 4;
@@ -562,10 +571,26 @@ class CaptureDataFileOutput {
           // Could add if (res) here if we want to proceed IFF
           // the previous fcn call returns true
 
+          // Some silliness in legacy compat here
+          // Below, nominally comes to 600 waveforms per file
+          // And, divided by the number of transducers in use for capture
+          // output, it should be sensibly some integer number of scans
           this.waveformsPerFile = parseInt(optionsJson.headerData.transducersNum.value)
                            * parseFloat(optionsJson.additionalFileInfo.readingsPerInch.value)
                            * parseFloat(optionsJson.headerData.runLengthInches.value);
           console.log("waveformsPerFile calculated from options to be: " + this.waveformsPerFile);
+
+          // See comment above for this.waveformsPerFile
+          this.scansPerFile =
+              parseFloat(optionsJson.additionalFileInfo.readingsPerInch.value)
+              * parseFloat(optionsJson.headerData.runLengthInches.value);
+          console.log(`scansPerFile calculated from options to be: ${this.scansPerFile}`);
+          if ( !Number.isInteger(this.scansPerFile) ) {
+            let spf = parseInt(this.scansPerFile);
+            console.warn(`Warning: initializeFileWritingData: this.scansPerFile was calculated to be: ${this.scansPerFile}, but this is not an integer.  Thus there will not be the same number of waveforms for each channel.  Thus rounding the number of scansPerFile down to: ${spf}`);
+            this.scansPerFile = spf;
+          }
+
 
           var headerSize = parseInt(optionsJson.additionalFileInfo.offsetToFirstTransducerRecord.value);
           console.log("offsetToFirstTransducerRecord.value: " + headerSize);
@@ -621,7 +646,9 @@ class CaptureDataFileOutput {
           // datetimestamp itself
           // Timestamp
           //var d = strftime('%d/%m/%Y %H:%M:%S', new Date());
-          var d = strftime(this.timestampFormat, new Date());
+          var d = new Date();
+          console.log(`initial main header construction timestamp: ${d}`);
+          var d = strftime(this.timestampFormat, d);
           //len = parseInt(optionsJson.headerData.timestamp.lengthBytes)
           //re: commented above: the format determines the length,
           // and this is the same as the length from the file
@@ -959,8 +986,13 @@ class CaptureDataFileOutput {
 
       try {
 
+        console.log(`called updateCaptureBatchFileOutputHeader with: runId: ${runId} and ts: ${timestampUnformattedFromNewDate}`);
+
+        console.log("before header update:");
+        console.log(this.headerByteArray);
+
         this.int16JsonValIntoHeaderArray(
-          this.runId, this.bytePosnRunId
+          runId, this.bytePosnRunId
         );
 
         new Buffer.from(
@@ -972,9 +1004,14 @@ class CaptureDataFileOutput {
           this.headerByteArray,
           this.bytePosnTimestamp
         );
+
+        console.log("after header update:");
+        console.log(this.headerByteArray);
+
         resolve(true);
 
       } catch ( e ) {
+        console.warn("updateCaptureBatchFileOutputHeader: e: " + e);
         resolve(false);
       };
 
@@ -1641,6 +1678,13 @@ class CaptureDataFileOutput {
 
       // Create filename and open the path
       this.fileCounter = this.fileCounter + 1;      // start from 1, init'd at 0
+
+      // Reset counters that start over within a file or are used to determine
+      // when a new file is needed
+      this.scanCounter = 0;
+      this.waveformCounter = 0; // TODO is this still used?
+      // TODO what else needs to get reset?
+
       this.createCaptureWriteStreamFilePath()
         .then( res => {
 
@@ -1676,6 +1720,7 @@ class CaptureDataFileOutput {
 
               // Write header data to file
               console.log("startNewFile: headerByteArray length: " + this.headerByteArray.length);
+              console.log(this.headerByteArray);
               this.captureWriteStream.write(this.headerByteArray);
 
               // Write transducer header data to file
@@ -1747,7 +1792,11 @@ class CaptureDataFileOutput {
     this.inDataBuffer = Buffer.concat([this.inDataBuffer, newData]); // accumulate
     //this.parseInBufferForWaveforms();
 
-    if ( this.fileCounter < 1 || this.waveformCounter > this.waveformsPerFile ) {
+    if (
+      this.fileCounter < 1
+      || this.waveformCounter > this.waveformsPerFile
+      || this.scanCounter > this.scansPerFile
+    ) {
 
       // Yes, we should .then write any waveforms found
       // to file after start new file to keep
@@ -1793,6 +1842,11 @@ class CaptureDataFileOutput {
 
 
 
+
+
+
+
+
   this.parseInBufferForWaveforms = () => {
 
     return new Promise(( resolve, reject ) => {
@@ -1803,7 +1857,12 @@ class CaptureDataFileOutput {
       // Any incoming data, unformatted for output
       // is in the inDataBuffer
       //console.log(this.inDataBuffer);
-      var datInfos = wfparse.extractSofBoundsSets(this.inDataBuffer, this.scanCounter);
+      var datInfos = wfparse.extractSofBoundsSets(
+        this.inDataBuffer,
+        this.scanCounter,
+        this.scansPerFile
+      );
+      console.log('datInfos are: ');
       console.log(datInfos);
       /*
         datInfos = [{
@@ -1814,100 +1873,152 @@ class CaptureDataFileOutput {
       }, { next set etc }, { ... }];
       */
       if ( !datInfos || datInfos.length < 1 ) {
-        resolve(false);
-      }
+        console.log(`datInfos is nothing ...`);
+        resolve(Buffer.alloc(0)); // was false
+      } //else {
 
-      // Update channel and scan number in header
-      // Or instead of forEach use init large correct alloc and then
-      // Promise.all for the di's with internal index tracking for correct offset
-      // in output array
-      //var diExecCounter = datInfos.length;
+        // Update channel and scan number in header
+        // Or instead of forEach use init large correct alloc and then
+        // Promise.all for the di's with internal index tracking for correct offset
+        // in output array
+        //var diExecCounter = datInfos.length;
 
-      // Using forEach mingles results with some async execution blocks
-      // apparently that at this time I can't figure out how to promisify or sync
-      // So
-      // We will break this down into each with sep buffers as indep vars
-      // and then combine in Promise.all
-      var actions = datInfos.map ( di => {
+        // Using forEach mingles results with some async execution blocks
+        // apparently that at this time I can't figure out how to promisify or sync
+        // So
+        // We will break this down into each with sep buffers as indep vars
+        // and then combine in Promise.all
+        var actions = datInfos.map ( di => {
 
-        return new Promise ( (resolve, reject ) => {
+          return new Promise ( (resolve, reject ) => {
 
-          console.log(`di.scan: ${di.scan}, di.chan: ${di.chan}`);
+            console.log(`di.scan: ${di.scan}, di.chan: ${di.chan}`);
 
-          this.updateWaveformRecordHeader(di.scan, di.chan)
-            .then( resultWaveformHeaderByteArray => {
+            // Only start storing data after the first channel 1 is found
+            // so as not to confuse legacy software addressed for customer in
+            // this code.
 
-              //console.log(resultWaveformHeaderByteArray);
+            // Scan number inits at zero in this module and only increments to
+            // 1 the first after channel 1 is found
+            // If multiple channel 1's for example in a large buffer,
+            // then there are just multiple increments of scan #
+            // and if the first channel is chan 1 then scan # start out incremented
+            if ( di.scan > 0 ) {
 
-              if ( resultWaveformHeaderByteArray ) {
+              // We only store channel data within the number of transducers
+              // Higher number channels are discarded - for example
+              // We could still be in a hardware channel scan mode capturing
+              // all 8 channels but the legacy output requires max of 4 channels
+              // Otherwise it will break / get confused.
+              if ( di.chan < (this.maxChannelNum + 1) ) {
 
-                let stop = di.sof2;
-                let start =this.excludeStartOfFrameFromOutput ?
-                  di.sof1 + this.lengthOfSof :
-                  di.sof1;
-                var outWfDat = Buffer.alloc(
-                  (stop - start)
-                  * this.captureFileOutputBytesPerWaveformSample
-                );
-                //console.log(`outWfdat length: ${outWfDat.length}`);
-                let scaled = 0.0;
-                let outIndex = 0;
-                let sofBuf = Buffer.alloc(0);
-                for ( let i = start; i < stop; i++ ) {
-                  if ( this.excludeStartOfFrameFromOutput && i < this.lengthOfSof ) {
-                    scaled = this.int32JsonValToByteArray(this.inDataBuffer[i]);
-                    scaled.copy(outWfDat, outIndex);
-                    outIndex = outIndex + 4;
-                  } else {
-                    scaled = wfparse.valToScaledFloat(this.inDataBuffer[i]);
-                    outIndex = outWfDat.writeFloatLE(scaled, outIndex); // returns previous offset plus bytes written
-                  }
+                this.updateWaveformRecordHeader(di.scan, di.chan)
+                  .then( resultWaveformHeaderByteArray => {
+
+                    //console.log(resultWaveformHeaderByteArray);
+
+                    if ( resultWaveformHeaderByteArray ) {
+
+                      let stop = di.sof2;
+                      let start =this.excludeStartOfFrameFromOutput ?
+                        di.sof1 + this.lengthOfSof :
+                        di.sof1;
+                      var outWfDat = Buffer.alloc(
+                        (stop - start)
+                        * this.captureFileOutputBytesPerWaveformSample
+                      );
+                      //console.log(`outWfdat length: ${outWfDat.length}`);
+                      let scaled = 0.0;
+                      let outIndex = 0;
+                      let sofBuf = Buffer.alloc(0);
+                      for ( let i = start; i < stop; i++ ) {
+                        if ( this.excludeStartOfFrameFromOutput && i < this.lengthOfSof ) {
+                          scaled = this.int32JsonValToByteArray(this.inDataBuffer[i]);
+                          scaled.copy(outWfDat, outIndex);
+                          outIndex = outIndex + 4;
+                        } else {
+                          scaled = wfparse.valToScaledFloat(this.inDataBuffer[i]);
+                          outIndex = outWfDat.writeFloatLE(scaled, outIndex); // returns previous offset plus bytes written
+                        }
+                      }
+
+                      var waveformRec = Buffer.concat([
+                        resultWaveformHeaderByteArray,
+                        outWfDat
+                      ]);
+
+                      //console.log(`about to resolve waveformRec with length: ${waveformRec.length}`);
+                      resolve(waveformRec);
+
+                    } else {
+                      console.warn(`action for parse waveforms not: if(resultWaveformHeaderByteArray)`)
+                      resolve(Buffer.alloc(0)); //(false); // null?
+                    }
+
+                  }); // end of then
+
+                } else { // chan num > max num chans to store for legacy output
+
+                  console.log(`Skipping adding waveformRecord for chan: ${di.chan}`);
+                  resolve(Buffer.alloc(0));
+
                 }
 
-                var waveformRec = Buffer.concat([
-                  resultWaveformHeaderByteArray,
-                  outWfDat
-                ]);
+              } else { // scan num < 1 - don't start collecting data yet
 
-                //console.log(`about to resolve waveformRec with length: ${waveformRec.length}`);
-                resolve(waveformRec);
+                console.log(`Skipping adding waveformRecord for scan: ${di.scan}, chan: ${di.chan}`);
+                resolve(Buffer.alloc(0)); // resolve as empty buffer such that concat works and just does nothing but doesn't break
 
-              } else {
-                console.warn(`action for parse waveforms not: if(resultWaveformHeaderByteArray)`)
-                resolve(false); // null?
               }
 
-            }); // end of then
+            }); // end of new Promise
 
-          }); // end of new Promise
+        }); // end of actions
 
-      }); // end of actions
+        var results = Promise.all(actions);
 
-      var results = Promise.all(actions);
+        results.then( data => {
+          // TODO - update this.waveformCounter - and watch for max number
+          // and then truncate - but see if we can keep data in the inDataBuffer
+          // to roll forward without loss
 
-      results.then( data => {
-        //console.log(data);
-        //console.log('about to concat data');
-        var wfRecs = Buffer.concat(data);
-        this.waveformRecordOutputByteArray = Buffer.concat([
-          this.waveformRecordOutputByteArray,
-          wfRecs
-        ]);
-        //console.log('concated data');
-        // Remove the processed data from the beginning of the buffer
-        this.inDataBuffer = this.inDataBuffer.slice(
-          datInfos[datInfos.length - 1].sof2  // chop all beginning up to last SOF2 first byte, keeping that byte
-        );
-        // Store the last scan number that was counted
-        this.scanCounter = datInfos[datInfos.length - 1].scan;
+          //console.log(data);
+          //console.log('about to concat data');
+          // data is an array of the Buffer results coming out of the action above
+          // it could contain Buffer.alloc(0) for scans/chans ignored
+          // All of that data will be sliced out below as old data in the input buffer
+          // To prevent slicing at the end of a capture and retain input data to be
+          // processed in a new file - that should be done in the
+          // waveform parsing module such that the datInfos are never released
+          // and thus the input data is never sliced out until it is processed in the
+          // next file cycle
+          var wfRecs = Buffer.concat(data);
+          this.waveformRecordOutputByteArray = Buffer.concat([
+            this.waveformRecordOutputByteArray,
+            wfRecs
+          ]);
+          //console.log('concated data');
+          // Remove the processed data from the beginning of the buffer
+          // This also removes unused data as well like when chan 1 hasn't been
+          // received yet at the beginning of a file
+          // Might start with all scan 0's - not yet a buffer with a chan 1
+          if ( datInfos && datInfos.length > 1) {
+            this.inDataBuffer = this.inDataBuffer.slice(
+              datInfos[datInfos.length - 1].sof2  // chop all beginning up to last SOF2 first byte, keeping that byte
+            );
+            // Store the last scan number that was counted
+            this.scanCounter = datInfos[datInfos.length - 1].scan;
+          }
 
-        resolve(true);
-      })
-      .catch( e => {
-        console.warn(`warning: capture-data.js: parseInBufferForWaveforms: ${e}`);
-        console.warn(e);
-        resolve(false);
-      });
+          resolve(true);
+        })
+        .catch( e => {
+          console.warn(`warning: capture-data.js: parseInBufferForWaveforms: ${e}`);
+          console.warn(e);
+          resolve(false);
+        });
+
+      //} // end of else for when datInfo.length > 0 or is not !datInfos
 
     }); // end of new Promise
 
@@ -1932,6 +2043,21 @@ class CaptureDataFileOutput {
 
   } // End of: writeWaveformsToFile
 
+
+
+
+
+
+
+  this.SingleFileCaptureDurationMs = () => {
+
+    let freq = parseFloat(wfparse.nominalWaveformReceiveFrequencyHz);
+
+    let dur = 1.0/freq * this.numberOfWaveformsPerScanForHardwareMode * this.scansPerFile * 1000.0;
+
+    return dur;
+
+  } // End of: SingleFileCaptureDurationMs
 
 
 
