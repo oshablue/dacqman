@@ -175,6 +175,7 @@ class CaptureDataFileOutput {
     this.scanCounter = 0;
     this.minChannelNum = 0;
     this.maxChannelNum = 0;
+    this.completedCurrentFileScanCount = false;
 
     this.transducerCalibrationWaveformArray = null;
     this.transducerHeaderByteArray = null;
@@ -473,7 +474,7 @@ class CaptureDataFileOutput {
           // from capt options
           // This is hardware dependent also, so it should be part of the hardware
           // options set in the instance
-          // TODO place in hardware descriptor module 
+          // TODO place in hardware descriptor module
           var tb = parseFloat(1.0/parseFloat(this.waveformSampleFrequencyHz));
           console.log(posn);
           this.float32JsonValToByteArray(tb).copy(
@@ -986,10 +987,10 @@ class CaptureDataFileOutput {
 
       try {
 
-        console.log(`called updateCaptureBatchFileOutputHeader with: runId: ${runId} and ts: ${timestampUnformattedFromNewDate}`);
+        //console.log(`called updateCaptureBatchFileOutputHeader with: runId: ${runId} and ts: ${timestampUnformattedFromNewDate}`);
 
-        console.log("before header update:");
-        console.log(this.headerByteArray);
+        //console.log("before header update:");
+        //console.log(this.headerByteArray);
 
         this.int16JsonValIntoHeaderArray(
           runId, this.bytePosnRunId
@@ -1005,8 +1006,8 @@ class CaptureDataFileOutput {
           this.bytePosnTimestamp
         );
 
-        console.log("after header update:");
-        console.log(this.headerByteArray);
+        //console.log("after header update:");
+        //console.log(this.headerByteArray);
 
         resolve(true);
 
@@ -1683,6 +1684,7 @@ class CaptureDataFileOutput {
       // when a new file is needed
       this.scanCounter = 0;
       this.waveformCounter = 0; // TODO is this still used?
+      this.completedCurrentFileScanCount = false;
       // TODO what else needs to get reset?
 
       this.createCaptureWriteStreamFilePath()
@@ -1794,8 +1796,9 @@ class CaptureDataFileOutput {
 
     if (
       this.fileCounter < 1
-      || this.waveformCounter > this.waveformsPerFile
-      || this.scanCounter > this.scansPerFile
+      //|| this.waveformCounter > this.waveformsPerFile
+      //|| this.scanCounter > this.scansPerFile
+      || this.completedCurrentFileScanCount == true
     ) {
 
       // Yes, we should .then write any waveforms found
@@ -2002,12 +2005,22 @@ class CaptureDataFileOutput {
           // This also removes unused data as well like when chan 1 hasn't been
           // received yet at the beginning of a file
           // Might start with all scan 0's - not yet a buffer with a chan 1
-          if ( datInfos && datInfos.length > 1) {
+          if ( datInfos && datInfos.length > 0) {
             this.inDataBuffer = this.inDataBuffer.slice(
               datInfos[datInfos.length - 1].sof2  // chop all beginning up to last SOF2 first byte, keeping that byte
             );
             // Store the last scan number that was counted
             this.scanCounter = datInfos[datInfos.length - 1].scan;
+            // TODO ROBUST
+            // What if we somehow lose the last waveform and we are stuck
+            // waiting for it and no data is going to file?
+            if (
+              this.scanCounter == this.scansPerFile
+              &&
+              datInfos[datInfos.length - 1].chan >= this.maxChannelNum
+            ) {
+              this.completedCurrentFileScanCount = true;
+            }
           }
 
           resolve(true);
@@ -2179,7 +2192,9 @@ class CaptureDataFileOutput {
         } else {
           // File does not exist
           // If no file exists, we get here with a file doesn't exist error
-          console.warn("capture-data.js: fileExists: Error on fs.stat: " + err);
+          console.warn("capture-data.js: fileExists: Error on fs.stat: " + err
+            + " this might be good if it intended to make sure that a write-to file "
+            + "does not yet exist.");
           resolve(false);
         }
       });

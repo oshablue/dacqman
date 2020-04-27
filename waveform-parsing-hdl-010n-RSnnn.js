@@ -64,8 +64,8 @@ var findSofPair = ( buf, startIndex, startingScanNum, maxScanNumToInclude ) => {
     // stream data starting at the first SOF isn't working or etc.)
     // so offset by the first match index for the start
     var sofStopSeqMatchIndex = buf.indexOf(sofStopSeq, matchIndex); //startIndex);
-    console.log("matchIndex: " + matchIndex + " for startIndex: " + startIndex);
-    console.log("sofStopSeqMatchIndex: " + sofStopSeqMatchIndex + " for startIndex: " + startIndex);
+    //console.log("matchIndex: " + matchIndex + " for startIndex: " + startIndex);
+    //console.log("sofStopSeqMatchIndex: " + sofStopSeqMatchIndex + " for startIndex: " + startIndex);
 
     if (
       matchIndex > -1
@@ -73,16 +73,16 @@ var findSofPair = ( buf, startIndex, startingScanNum, maxScanNumToInclude ) => {
       && ( sofStopSeqMatchIndex - matchIndex == sofDeltaStartToStop)
     ) {
 
-      console.log(`raw chan byte: ${buf[matchIndex + channelNumIndex]}`);
-      let s = buf.slice(matchIndex, 12); //sofSize);
-      console.log(s);
+      //console.log(`raw chan byte: ${buf[matchIndex + channelNumIndex]}`);
+      //let s = buf.slice(matchIndex, 12); //sofSize);
+      //console.log(s);
 
       var nextStartIndex = matchIndex + sofSize;
       var matchIndex2 = buf.indexOf(sofStartSeq, nextStartIndex);
       var sofStopSeqMatchIndex2 = buf.indexOf(sofStopSeq, matchIndex2); //nextStartIndex);
 
-      console.log("matchIndex2: " + matchIndex2 + " for nextStartIndex: " + nextStartIndex);
-      console.log("sofStopSeqMatchIndex2: " + sofStopSeqMatchIndex2 + " for nextStartIndex: " + nextStartIndex);
+      //console.log("matchIndex2: " + matchIndex2 + " for nextStartIndex: " + nextStartIndex);
+      //console.log("sofStopSeqMatchIndex2: " + sofStopSeqMatchIndex2 + " for nextStartIndex: " + nextStartIndex);
 
       //console.log(`raw chan byte: ${buf[matchIndex + channelNumIndex]}`);
       //console.log(buf.slice(matchIndex, sofSize));
@@ -102,7 +102,7 @@ var findSofPair = ( buf, startIndex, startingScanNum, maxScanNumToInclude ) => {
         }
 
         var scan = chan == chanAddedBaseAtWhichToIncrementScanNum ? startingScanNum + 1 : startingScanNum;
-        console.log("matchIndex2: " + matchIndex2 + " for next startIndex: " + nextStartIndex);
+        //console.log("matchIndex2: " + matchIndex2 + " for next startIndex: " + nextStartIndex);
 
         // Now make sure we're not beyond the end of the desired scan capture length
         // If we don't want to lose input data buffer information,
@@ -112,6 +112,8 @@ var findSofPair = ( buf, startIndex, startingScanNum, maxScanNumToInclude ) => {
         // then return ok here and exclude in the calling/parent function levels
         // such that that particular data is removed from the parent/full input
         // data buffer
+        // Hmmm - we need that last available scan number available in the buffer
+        // to trigger the next new file start?
         if ( scan > maxScanNumToInclude ) {
             // this will go to the function's last return statement of nothing/null
             console.log(`scan number ${scan} is greater than max to include - not returning this sof set`);
@@ -122,7 +124,7 @@ var findSofPair = ( buf, startIndex, startingScanNum, maxScanNumToInclude ) => {
     }
 
     if ( buf.length > warningThresholdBufMult * fullWfSizeInclSof ) {
-      console.warn("Warning: waveform-parsing-hdl-010n-RSnnn.js: buffer size is very large yet two SOFs have not been located.  This will rapidly become a problem eating up memory with time-consuming searches.");
+      console.warn("Warning: waveform-parsing-hdl-010n-RSnnn.js: buffer size is very large yet two SOFs have not been located that are within the configured scans per file or channels to use range.  This will rapidly become a problem eating up memory with time-consuming searches.");
     }
 
     // TODO also somewhere in here warn if the delta between SOFs does not
