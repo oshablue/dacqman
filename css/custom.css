@@ -156,6 +156,22 @@ p.custom-control-section .switch {
   display: inline;
 }
 
+/*
+  Override in-line style from the data table module that inserts the inline
+  and creates a padding around cell elements
+*/
+#ftdi_ports div.data-table-container td.c {
+  padding: 2px !important;
+}
+
+/*
+  Override user-agent for the margin around the checkbox controls in the
+  ftdi_ports data table - it was expanding the whole row
+*/
+#ftdi_ports div.data-table-container p {
+  margin: 0px;
+}
+
 
 
 /* This is the default side nav popout/in breakpoint */

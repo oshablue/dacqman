@@ -99,6 +99,12 @@
     <ul></ul>
 
 
+
+
+
+
+
+
     <ul id="serialPortSelectionAccordion" class="collapsible collapsible-accordion">
       <li class="active">
         <a class="collapsible-header">Serial Port Selection
@@ -143,7 +149,9 @@
             </li>
           </ul>
 
-          <div id="ports_go_button"></div>
+          <div id="ports_go_button">
+            <button class="btn-large disabled pulse"><i class="material-icons left">device_hub</i>Waiting for serial port enumeration ...</button>
+          </div>
 
         </div>
       </li>
@@ -152,7 +160,11 @@
 
 
 
-    <!-- TODO place into card or section, etc.-->
+
+
+
+
+    <!-- OPTION? Place into card or section, etc.-->
     <div id="active_ports_ui_indicators" class="row">
 
       <div id="active_ports_ui_buttons" class="hide col s4">
@@ -173,6 +185,40 @@
       </div>
 
     </div>
+
+
+
+
+
+
+
+    <!-- OPTION? Place into card or section, etc.-->
+    <div id="capture_ui" class="hide row">
+
+      <div id="capture_ui_buttons" class="col s4">
+        <!--Controls<br>-->
+        <button id="btnCaptureStart" class="btn-small blue" onclick="btnCaptureStartClick(this)" title="Click to begin data capture">
+          START
+        </button>
+        <button id="btnCaptureStop" class="btn-small blue" onclick="btnCaptureStopClick(this)" title="Click to end data capture">
+          STOP
+        </button>
+      </div>
+
+      <div id="capture_ui_status_indicators" class="col s8">
+        <!--Status<br>-->
+        <button id="btnWarnings" class="btn-small blue lighten-4 disabled right" onclick="btnWarningsClick(this)">Warnings</button>
+        <button id="btnErrors" class="btn-small lighten-2 disabled right" onclick="btnErrorsClick(this)">Errors</button>
+        <button id="btnFilesWritten" class="btn-small blue lighten-4 disabled right" onclick="btnFilesWritten(this)">Silence Flashers</button>
+      </div>
+
+    </div>
+
+
+
+
+
+
 
 
 
@@ -296,7 +342,7 @@
 
     <!-- .......................................... --><!--
     ***********************************************
-      CARD - Chart
+      CARD - Chart (Single Waveform)
     *********************************************** -->
     <ul class="collapsible collapsible-accordion">
       <li class="active">
@@ -425,9 +471,19 @@
           <div class="collapsible-body">
             <ul>
               <li><a class="sidenav-close" href="#!" onclick="resetPrefsToDefaults();">Reset Prefs to Defaults</a></li>
-              <li><a href="#!">Second</a></li>
-              <li><a href="#!">Third</a></li>
-              <li><a href="#!">Fourth</a></li>
+            </ul>
+          </div>
+        </li>
+      </ul>
+    </li>
+    <li class="no-padding">
+      <ul class="collapsible collapsible-accordion">
+        <li>
+          <a class="collapsible-header">Interface<i class="material-icons">arrow_drop_down</i></a>
+          <div class="collapsible-body">
+            <ul>
+              <li><a class="sidenav-close" href="#!" onclick="setPrefToInterfaceRegular();">Regular</a></li>
+              <li><a class="sidenav-close" href="#!" onclick="setPrefToInterfaceDataCaptureFocused();">Data Capture Focused</a></li>
             </ul>
           </div>
         </li>
@@ -507,7 +563,7 @@
     // So, using 25000000 happens to fit in with the legacy SW test version and
     // allow flawless processing with default algorithm settings
     // Otherwise, 40000000 loads up just fine.  It's just in the algo portion
-    // snapshot from the time that things break 
+    // snapshot from the time that things break
     const defaultHardwareWaveformSampleFrequencyHz = 25000000; //40000000;
     const defaultHardwareWaveformLengthSamples = 4095;
     const defaultHardwareWaveformBytesPerSample = 1;
@@ -727,8 +783,35 @@
       ipcRenderer.send('prefs:reset');
     }
 
+    function setPrefToInterfaceRegular() {
+      console.log("setting preference to use Regular Interface");
+      ipcRenderer.send('prefs:set', { 'key':'interface', 'value':'regular'});
+      activateInterfaceRegular();
+    }
 
-    // Prevent Closing when work is running
+
+    function setPrefToInterfaceDataCaptureFocused() {
+      console.log("setting preference to use Data Capture Focused Interface");
+      ipcRenderer.send('prefs:set', { 'key':'interface', 'value':'dataCaptureFocused'});
+      activateInterfaceDataCaptureFocused();
+    }
+
+    function activateInterfaceRegular() {
+      //$(document).getElementById('capture_ui').show();
+      //$('#capture_ui').hide();
+      $('#capture_ui').addClass("hide");
+    }
+
+    function activateInterfaceDataCaptureFocused() {
+      //$(document).getElementById('capture_ui').hide();
+      //$('#capture_ui').show();
+      $('#capture_ui').removeClass("hide");
+      //$('#capture_ui').hide();
+    }
+
+
+    // Prevent Closing when work is running or do something else before
+    // the window is closed
     window.onbeforeunload = (e) => {
       //e.returnValue = false;  // this will *prevent* the closing no matter what value is passed
 
@@ -766,7 +849,7 @@
 
         if ( gReturnDataTo === "multiChart") {
           var i = 0;
-          for ( i = 0 ; i < 8 ; i++ ) {
+          for ( i = 0 ; i < 8 ; i++ ) { // TODONOW: rework for variable or configured number of channels
             multiWfs[i].RenderChart();
           }
         }
@@ -1079,7 +1162,7 @@
 
 
 
-
+    // TODONOW: Implement the dataCaptureFocused START and STOP buttons
     function loadButtons(customCommandsJson) {
 
       console.log("loadButtons: customCommandsJson: " + customCommandsJson); // JSON.stringify(customCommandsJson||''));
