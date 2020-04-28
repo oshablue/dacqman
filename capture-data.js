@@ -1567,6 +1567,17 @@ class CaptureDataFileOutput {
 
 
 
+  // Not yet used ...
+  this.SetFileCaptureOutputDirectory = ( newDir ) => {
+    this.directory = dir;
+  } // End of: SetFileCaptureOutputDirectory
+
+
+
+
+
+
+
 
   this.createCaptureWriteStreamFilePath = () => {
 

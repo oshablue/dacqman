@@ -193,24 +193,12 @@
 
 
     <!-- OPTION? Place into card or section, etc.-->
-    <div id="capture_ui" class="hide row">
+    <div id="capture_ui" class="hide"> <!-- row"> -->
 
-      <div id="capture_ui_buttons" class="col s4">
-        <!--Controls<br>-->
-        <button id="btnCaptureStart" class="btn-small blue" onclick="btnCaptureStartClick(this)" title="Click to begin data capture">
-          START
-        </button>
-        <button id="btnCaptureStop" class="btn-small blue" onclick="btnCaptureStopClick(this)" title="Click to end data capture">
-          STOP
-        </button>
-      </div>
-
-      <div id="capture_ui_status_indicators" class="col s8">
-        <!--Status<br>-->
-        <button id="btnWarnings" class="btn-small blue lighten-4 disabled right" onclick="btnWarningsClick(this)">Warnings</button>
-        <button id="btnErrors" class="btn-small lighten-2 disabled right" onclick="btnErrorsClick(this)">Errors</button>
-        <button id="btnFilesWritten" class="btn-small blue lighten-4 disabled right" onclick="btnFilesWritten(this)">Silence Flashers</button>
-      </div>
+      <!-- Please see:
+            - userInterfaceDataCaptureFocused.html
+            - userInterface.js
+      -->
 
     </div>
 
@@ -344,7 +332,7 @@
     ***********************************************
       CARD - Chart (Single Waveform)
     *********************************************** -->
-    <ul class="collapsible collapsible-accordion">
+    <ul id="singleWaveformChartAccordion" class="collapsible collapsible-accordion">
       <li class="active">
         <a class="collapsible-header">Single (Channel) Waveform Data View(s)
           <i class="material-icons medium sidenav-dd-expand">play_arrow</i>
@@ -381,7 +369,7 @@
     ***********************************************
       CARD - Multipane-Chart
     *********************************************** -->
-    <ul class="collapsible collapsible-accordion">
+    <ul id="multiWaveformChartAccordion" class="collapsible collapsible-accordion">
       <li>
         <a class="collapsible-header">Multi-Waveform Data View(s)
           <i class="material-icons medium sidenav-dd-expand">play_arrow</i>
@@ -482,8 +470,8 @@
           <a class="collapsible-header">Interface<i class="material-icons">arrow_drop_down</i></a>
           <div class="collapsible-body">
             <ul>
-              <li><a class="sidenav-close" href="#!" onclick="setPrefToInterfaceRegular();">Regular</a></li>
-              <li><a class="sidenav-close" href="#!" onclick="setPrefToInterfaceDataCaptureFocused();">Data Capture Focused</a></li>
+              <li><a class="sidenav-close" href="#!" value="regular" onclick="setPrefToInterfaceRegular(this);">Regular</a></li>
+              <li><a class="sidenav-close" href="#!" value="dataCaptureFocused" onclick="setPrefToInterfaceDataCaptureFocused(this);">Data Capture Focused</a></li>
             </ul>
           </div>
         </li>
@@ -555,6 +543,8 @@
     // At freq of 10 (ms)
     // - chunkSize of 2 * 4095 gives steady sync graph, with eventual huge buffer (overrun)
     // - chunkSize of 3 * 4095 gives walking graph and glitches due to emptiness (underrun)
+
+    const { UserInterface : YouFace } = require('./userInterface.js');
 
     // 40000000 corresponds correctly to default HDL hardware sample rate
     // However, this breaks legacy software in the old file format verification version
@@ -783,31 +773,30 @@
       ipcRenderer.send('prefs:reset');
     }
 
-    function setPrefToInterfaceRegular() {
+
+
+
+
+    // User Interface selection and instantiation
+    var YourFace = new YouFace({
+      uiRegularDivs: ['#singleWaveformChartAccordion', '#multiWaveformChartAccordion'],
+      uiDataCaptureFocusedParentDiv: '#capture_ui'
+    });
+
+    function setPrefToInterfaceRegular(btn) {
+      let ui = btn.getAttribute("value");
       console.log("setting preference to use Regular Interface");
       ipcRenderer.send('prefs:set', { 'key':'interface', 'value':'regular'});
-      activateInterfaceRegular();
+      YourFace.SwitchInterface(ui);
     }
 
-
-    function setPrefToInterfaceDataCaptureFocused() {
+    function setPrefToInterfaceDataCaptureFocused(btn) {
+      let ui = btn.getAttribute("value");
       console.log("setting preference to use Data Capture Focused Interface");
       ipcRenderer.send('prefs:set', { 'key':'interface', 'value':'dataCaptureFocused'});
-      activateInterfaceDataCaptureFocused();
+      YourFace.SwitchInterface(ui);
     }
 
-    function activateInterfaceRegular() {
-      //$(document).getElementById('capture_ui').show();
-      //$('#capture_ui').hide();
-      $('#capture_ui').addClass("hide");
-    }
-
-    function activateInterfaceDataCaptureFocused() {
-      //$(document).getElementById('capture_ui').hide();
-      //$('#capture_ui').show();
-      $('#capture_ui').removeClass("hide");
-      //$('#capture_ui').hide();
-    }
 
 
     // Prevent Closing when work is running or do something else before
@@ -1056,6 +1045,8 @@
           $('.collapsible').collapsible({
             accordion: true
           });
+          YourFace.Load(prefs.interface);
+          return;
         })
         .catch ( e => {
           console.log("Error loading prefs and customCommandsJson from file: " + e);

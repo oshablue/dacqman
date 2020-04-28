@@ -1198,7 +1198,9 @@ var showControlPortOutput = function ( asciiStuff ) {
 
 
 var executingTimeoutFcns = [];
-var controlPortSendData = async function ( commandAndType, returnDataTo, button) {
+var controlPortSendData = async function ( commandAndType, returnDataTo, button, outputDirectory ) {
+
+  // TODO REFINE This is a scary long function 
 
   console.log("controlPortSendData");
 
@@ -1296,7 +1298,7 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button)
     // garnered items
 
     if (!doFileCapture && !doFileCaptureCustomToDirectory ) {
-      console.log("first controlPortSendData_SetupAndSendCommands about to be called");
+      console.log("Neither file capture setup nor capture custom to files is selected. First controlPortSendData_SetupAndSendCommands about to be called");
       controlPortSendData_SetupAndSendCommands(commandAndType);
     }
 
@@ -1316,12 +1318,19 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button)
 
       var captureDataFileOutputDirectory;
       if ( doFileCaptureCustomToDirectory ) {
-        captureDataFileOutputDirectory = dialog.showOpenDialog( {
-          title : 'Select and/or create your captured data directory ...',
-          buttonLabel: 'Start Capture to this Directory',
-          properties: [ 'openDirectory', 'createDirectory']
-        });
-        console.log("file picker result: " + captureDataFileOutputDirectory);
+        if ( outputDirectory ) {
+          // For example if output directory already selected in the batch
+          // capture user interface modality
+          captureDataFileOutputDirectory = outputDirectory;
+          console.log(`Output directory: ${captureDataFileOutputDirectory} already selected. No need to prompt for directory selection.`);
+        } else {
+          captureDataFileOutputDirectory = dialog.showOpenDialog( {
+            title : 'Select and/or create your captured data directory ...',
+            buttonLabel: 'Start Capture to this Directory',
+            properties: [ 'openDirectory', 'createDirectory']
+          });
+          console.log("file picker result: " + captureDataFileOutputDirectory);
+        }
       }
 
       if ( !captureDataFileOutputDirectory && !currentWriteStreamFilepath ) {
@@ -1400,10 +1409,10 @@ var controlPortSendData_SetupAndSendCommands = function(commandAndType, override
       cmd.forEach(function(c) {
         cmdarr.push(parseInt(c));
       });
-      console.log("controlPortSendData: " + cmdarr);
+      console.log("controlPortSendData_SetupAndSendCommands: " + cmdarr);
       cport.write(cmdarr, function (err) {
         if ( err ) {
-          console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+          console.log('sprenderer: error on write within controlPortSendData_SetupAndSendCommands: ', err.message)
         }
       });
       break;
@@ -1426,7 +1435,7 @@ var controlPortSendData_SetupAndSendCommands = function(commandAndType, override
             console.log(cmdarr);
             cport.write(cmdarr, function (err) {
               if ( err ) {
-                console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+                console.log('sprenderer: error on write within controlPortSendData_SetupAndSendCommands: ', err.message)
               }
             });
             // If this is the last command, clear the list somehow
@@ -1455,7 +1464,7 @@ var controlPortSendData_SetupAndSendCommands = function(commandAndType, override
       // End case: hexCsvBytesChained
 
     default:
-      console.log('sprenderer: error on controlPortSendData: type in command with type is not (yet) supported: ' + commandAndType.type);
+      console.log('sprenderer: error on controlPortSendData_SetupAndSendCommands: type in command with type is not (yet) supported: ' + commandAndType.type);
   }
 
   // Again, could instead use percentage of completed steps instead
@@ -1724,7 +1733,7 @@ var controlPortSendDataFromTextInput = function ( button, commandAndType) {
         console.log("controlPortSendDataFromTextInput: " + cmdarr);
         cport.write(cmdarr, function (err) {
           if ( err ) {
-            console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+            console.log('sprenderer: error on write within controlPortSendDataFromTextInput: ', err.message)
           }
         });
         break;
@@ -1752,7 +1761,7 @@ var controlPortSendDataFromTextInput = function ( button, commandAndType) {
               console.log(cmdarr);
               cport.write(cmdarr, function (err) {
                 if ( err ) {
-                  console.log('sprenderer: error on write within controlPortSendData: ', err.message)
+                  console.log('sprenderer: error on write within controlPortSendDataFromTextInput: ', err.message)
                 }
               });
             }, totTimeout, index, len, cmdarr);
@@ -1771,16 +1780,16 @@ var controlPortSendDataFromTextInput = function ( button, commandAndType) {
         // End case: hexCsvBytesChained
 
       default:
-        console.log('sprenderer: error on controlPortSendData: type in command with type is not (yet) supported: ' + commandAndType.type);
+        console.log('sprenderer: error on controlPortSendDataFromTextInput: type in command with type is not (yet) supported: ' + commandAndType.type);
     }
 
 
 
   } else {  // if not port ...
-    console.log ('sprenderer: error on controlPortSendData: port does not yet exist or has not been opened');
+    console.log ('sprenderer: error on controlPortSendDataFromTextInput: port does not yet exist or has not been opened');
   }
 
-}
+} // End of: controlPortSendDataFromTextInput
 
 
 

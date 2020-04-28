@@ -172,6 +172,19 @@ p.custom-control-section .switch {
   margin: 0px;
 }
 
+/* User Interface Variations */
+#capture_ui_status_indicators .btn-small {
+  height: 24px;
+  line-height: 24px;
+  font-size: 11px;
+  margin-left: 4px;
+}
+span#filesWrittenBadge.badge {
+  height: 18px;
+  line-height: 18px;
+  margin-top: 3px;
+}
+
 
 
 /* This is the default side nav popout/in breakpoint */
@@ -274,7 +287,8 @@ a.collapsible-header {
 }
 
 /* Condense text inputs a bit */
-.input-field .prefix ~ input {
+/* Top one just for the early dev serial send text compaction */
+#stuffToSendSpan .input-field .prefix ~ input {
   height: 1.5rem;
   margin-bottom: 1px;
 }
