@@ -43,6 +43,9 @@ class UserInterface {
     // Not constructed:
     this.captureDataFileOutputDirectory = null;
 
+
+    // TODO store prefs and/or currently selected UI
+
   } // end of constructor
 
 
@@ -93,7 +96,7 @@ class UserInterface {
 
   // TODO need to draw focus to the directory selection box
   // once the serial ports are selected and opened and we're ready for the
-  // next step 
+  // next step
 
 
 
@@ -115,6 +118,7 @@ class UserInterface {
       // we lose reference to this, so we don't call or define or use
       // this . enable Capture Buttons
       EnableCaptureButtons();
+      $('#capture_ui_directory_select').removeClass("pulse-div");
     }
 
   } // End of: DirectorySelectClick
@@ -140,6 +144,10 @@ class UserInterface {
 
 
 
+
+
+
+
 } // End of : class UserInterface
 
 
@@ -157,6 +165,7 @@ class UserInterface {
 // we need it in cases where the reference to this is otherwise lost
 // when for example this function is called in the added click event
 // that calls Directory Select Click
+// Arrow function auto-creates reference to "this"
 EnableCaptureButtons = () => {
 
   var d = $(document);
@@ -164,10 +173,10 @@ EnableCaptureButtons = () => {
   [
     '#btnFilesWritten',
     '#btnWarnings',
-    '#btnErrors',
+    '#btnErrors'
 
-    '#btnCaptureStart',
-    '#btnCaptureStop'
+    , '#btnCaptureStart'
+    , '#btnCaptureStop'
   ].map( function(i) {
     d.find( $(i) ).removeClass('disabled');
   });
@@ -175,6 +184,21 @@ EnableCaptureButtons = () => {
   $('#filesWrittenBadge').removeClass('grey').addClass('blue lighten-2')
 
 } // End of: enableCaptureButtons
+
+
+
+
+
+UserInterface.Ready = () => {
+  // TODO check current UI selection - move above check about
+  // the doc being filled with this content
+  // and then conditional adjust this ... otherwise of course
+  // an error will be gen'd as this div won't exist 
+  $('#capture_ui_directory_select').addClass("pulse-div");
+}
+
+
+
 
 
 

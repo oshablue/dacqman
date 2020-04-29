@@ -150,7 +150,7 @@
           </ul>
 
           <div id="ports_go_button">
-            <button class="btn-large disabled pulse"><i class="material-icons left">device_hub</i>Waiting for serial port enumeration ...</button>
+            <button id="portsGoButtonInactive" class="btn-large disabled pulse"><i class="material-icons left">device_hub</i>Waiting for serial port enumeration ...</button>
           </div>
 
         </div>
@@ -544,6 +544,7 @@
     // - chunkSize of 2 * 4095 gives steady sync graph, with eventual huge buffer (overrun)
     // - chunkSize of 3 * 4095 gives walking graph and glitches due to emptiness (underrun)
 
+    var YourFace = null;
     const { UserInterface : YouFace } = require('./userInterface.js');
 
     // 40000000 corresponds correctly to default HDL hardware sample rate
@@ -559,6 +560,7 @@
     const defaultHardwareWaveformBytesPerSample = 1;
     const defWfLenB = defaultHardwareWaveformLengthSamples
                       * defaultHardwareWaveformBytesPerSample;
+
     var singleChartBuf = Buffer.alloc(defWfLenB,127); //null;
     var ourReadableStreamBuffer = null;
     var writeStream = null;
@@ -778,7 +780,7 @@
 
 
     // User Interface selection and instantiation
-    var YourFace = new YouFace({
+    YourFace = new YouFace({
       uiRegularDivs: ['#singleWaveformChartAccordion', '#multiWaveformChartAccordion'],
       uiDataCaptureFocusedParentDiv: '#capture_ui'
     });

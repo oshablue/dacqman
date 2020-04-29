@@ -34,6 +34,8 @@ const fs = require('fs');
 //const CaptureDataFileOutput = require('./capture-data.js');
 const { CaptureDataFileOutput : CaptureDataFileOutput } = require('./capture-data.js');
 
+const { UserInterface : YouFace } = require('./userInterface.js');
+
 
 var buf = []; // new Uint8Array; //[];
 var nsamp = 4096;
@@ -542,7 +544,7 @@ var openDataPort = function(portHash) {
     //$("#serialPortGoButton").addClass("lighten-5");
     //$("#serialPortGoButton").removeClass("waves-light");
     $("#serialPortGoButton").addClass("red");
-    $("#btnDataPortStatus").removeClass('hide blue-grey').addClass('green pulse');
+    $("#btnDataPortStatus").removeClass('hide blue-grey').addClass('green'); // TODO-TBD Used to have the pulse class set, removed for UI overlays TODO could make this conditional
     $("#btnListeningForData").removeClass('hide disabled').addClass('pulse');
     $("#active_ports_ui_status_indicators").removeClass('hide');
     $("#active_ports_ui_buttons").removeClass('hide');
@@ -982,10 +984,21 @@ var serialCheckbox = function (checkbox) {
     console.log( "Ok, one data and one control port selected.");
     // Now populate/show/enable the "Go" button to open ports and prep
     var h = `<button id="serialPortGoButton" class="waves-effect waves-light btn-large" onclick="beginSerialComms(this)"><i class="material-icons left">device_hub</i>Connect to Ports and Begin Listening for Data</button>`;
-    $('#ports_go_button').html(h).removeClass('hide'); // `<button id="serialPortGoButton" name="" onclick="beginSerialComms(this)">Begin</button>` );
+    $('#ports_go_button').html(h).removeClass('hide');
+    //YouFace.Ready();
   } else {
-    // TODO - complete the disable code
-    $('#ports_go_button').addClass('hide');
+    // If nothing found, indicate the situation
+    // Was: or optionally:
+    //$('#ports_go_button').addClass('hide');
+    // Now we indicate the situation and leave the button there
+    $('#portsGoButtonInactive')
+      .addClass("brown lighten-3")
+      .removeClass("disabled pulse")        // Remove disabled so we can apply color
+      .css( "line-height", "18px" )
+      .css( "pointer-events", "none")       // Make it act like a disabled button
+      .text("Ports couldn't be auto-selected. If you see them listed, you can select them manually... Or Plug-In/Re-Plug and Reload?");
+    // For testing purposes, you may want to enable this
+    //YouFace.Ready();                     // Instantiated in mainWindow.html
   }
 }
 
@@ -1021,8 +1034,11 @@ var beginSerialComms = function(button) {
   openControlPortThatIsChecked();
 
 
-  // TODO if no errors, then collapse the selection window ...
+  // Then collapse the selection window ...
   $("#serialPortSelectionAccordion").collapsible('close'); //.children('li:first-child'));
+
+  // Enable anything else if/as needed
+  YouFace.Ready();
 }
 
 
@@ -1200,7 +1216,7 @@ var showControlPortOutput = function ( asciiStuff ) {
 var executingTimeoutFcns = [];
 var controlPortSendData = async function ( commandAndType, returnDataTo, button, outputDirectory ) {
 
-  // TODO REFINE This is a scary long function 
+  // TODO REFINE This is a scary long function
 
   console.log("controlPortSendData");
 
