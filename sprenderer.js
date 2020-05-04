@@ -765,9 +765,9 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   if ( t.length == 0 ) {
     console.log(`t.length is 0 for ${serialNumberLessAorB} - maybe this is Windows? Checking pnpId column...`);
     if ( !suffix.match(/[A-B]/) ) {
-      console.log(`yeah, suffix is not A or B, seems probable...`);
-      t = $('#vcp_ports').find("td[data-header='comName']").find(".cv:contains('" + serialNumberWithAorB + "')");
-      console.log("Number of VCP comNames matching the selected control port serialNumber: " + t.length);
+      console.log(`yeah, suffix is not A or B, seems probable...full serial number with suffix: ${serialNumberWithAorB}`);
+      t = $('#vcp_ports').find(".cv:contains('" + serialNumberWithAorB + "')").closest("tr").find("td[data-header='comName']").find(".cv");
+      console.log("2nd tier: number of VCP comNames matching the selected control port serialNumber: " + t.length);
     }
   }
 
