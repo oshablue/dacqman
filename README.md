@@ -148,6 +148,18 @@ Let me know.  I'll test too, coming up ...
 
 ### Development Environment
 
+Initial steps, if not already done :
+- [With a live Internet connection...]
+- Install notepad++ (search for it, use the installer)
+- Install Atom IDE
+- Install nvm-windows (search for it, use the installer)
+- Open a git-bash terminal window
+- git clone the repository & cd into it
+- nvm use 10.18.0 (see Windows packaging notes below for remaining items and notes about node versions) (if you haven't already done so)
+- npm install
+- npm start
+
+
 Development has been with nvm (including the nvm-Windows package, just for the
   purpose of building the Windows exe) and npm.
 

@@ -738,8 +738,19 @@ var openDataPort = function(portHash) {
 
 var getVcpPortNameFromPortInfoHash = function (infoHash) {
   var serialNumberLessAorB = infoHash.serialNumber.substr(0, infoHash.serialNumber.length - 1);
+  var serialNumberWithAorB = infoHash.serialNumber;
   var suffix = infoHash.serialNumber.substr(infoHash.serialNumber.length - 2, 1);
   console.log("getVcpPortNameFromPortInfoHash: base serial number: " + serialNumberLessAorB + " with suffix found to be: " + suffix);
+
+  // Another Windows scenario:
+  // In the FTDI table, the two devices are listed as eg:
+  // FT4MS1MKA/B
+  // But in the top COM port table, A is only listed as the base FT4MS1MK
+  // However, the pnpId column so far does contain the A/B along with much other chars
+  // On Mac, the pnpId is empty
+  // Either way, in the VCP table (not the FTDI table) the serial number will
+  // show with the A/B so we can use that search item
+  // Thus logic below until proven guilty:
 
   // Or simply just regex replace trailing A with 0 and trailing B with 1
   var sn = infoHash.serialNumber.replace(/A$/,'0').replace(/B$/,'1');
@@ -749,6 +760,16 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   // div class cv contains text
   var t = $('#vcp_ports').find("td[data-header='comName']").find(".cv:contains('" + sn + "')");
   console.log("Number of VCP comNames matching the selected control port serialNumber: " + t.length);
+
+  // Win work around, as described above
+  if ( t.length == 0 ) {
+    console.log(`t.length is 0 for ${serialNumberLessAorB} - maybe this is Windows? Checking pnpId column...`);
+    if ( !suffix.match(/[A-B]/) ) {
+      console.log(`yeah, suffix is not A or B, seems probable...`);
+      t = $('#vcp_ports').find("td[data-header='comName']").find(".cv:contains('" + serialNumberWithAorB + "')");
+      console.log("Number of VCP comNames matching the selected control port serialNumber: " + t.length);
+    }
+  }
 
   console.log("comName is chosen as: " + $(t).text());
 
