@@ -761,6 +761,7 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   var t = $('#vcp_ports').find("td[data-header='comName']").find(".cv:contains('" + sn + "')");
   console.log("Number of VCP comNames matching the selected control port serialNumber: " + t.length);
 
+  // WINDOWS WIN32
   // Win work around, as described above
   if ( t.length == 0 ) {
     console.log(`t.length is 0 for ${serialNumberLessAorB} - maybe this is Windows? Checking pnpId column...`);
@@ -774,12 +775,6 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   console.log("comName is chosen as: " + $(t).text());
 
   return $(t).text();
-
-
-  //
-  // TODO WIN32
-  // TODO BIG TIME -- for Windows implementation XXXX
-  //
 
 }
 
@@ -1059,7 +1054,9 @@ var beginSerialComms = function(button) {
   $("#serialPortSelectionAccordion").collapsible('close'); //.children('li:first-child'));
 
   // Enable anything else if/as needed
+  // This instance variable, YouFace, comes from mainWindow.html
   YouFace.Ready();
+
 }
 
 

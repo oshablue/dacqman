@@ -5,6 +5,9 @@
 // TODO create object and pass parent div?
 
 
+const captDataEmitter = require('./capture-data.js').CaptDataEmitter; // For subscribing to events
+
+
 
 
 // Consts
@@ -39,18 +42,41 @@ class UserInterface {
     this._uiRegularDivs = uiRegularDivs;
     this._uiDataCaptureFocusedParentDiv = $(uiDataCaptureFocusedParentDiv);
 
-
     // Not constructed:
-    this.captureDataFileOutputDirectory = null;
+    this._captureDataFileOutputDirectory = null;
+    this._buttonsJson = null;
 
 
-    // TODO store prefs and/or currently selected UI
+    captDataEmitter.on('captureDataNewFile', (data) => {
+      let e = $('#capture_ui_current_filename');
+      e.text(data);
+      e.addClass('pulse-div');
+      setTimeout(
+        function () {
+          $('#capture_ui_current_filename').removeClass('pulse-div');
+        }, 2000
+      );
+    });
+
 
   } // end of constructor
 
 
+  get captureDataFileOutputDirectory() {
+    return this._captureDataFileOutputDirectory;
+  }
 
+  get buttonsJson () {
+    return this._buttonsJson;
+  }
 
+  set captureDataFileOutputDirectory (dir) {
+    this._captureDataFileOutputDirectory = dir;
+  }
+
+  set buttonsJson (js) {
+    this._buttonsJson = js;
+  }
 
 
 
@@ -64,11 +90,12 @@ class UserInterface {
         break;
       case useDataCaptureFocused:
         if ( this._uiDataCaptureFocusedParentDiv.children("div").length < 1 ) {
-          this._uiDataCaptureFocusedParentDiv.load(uiDataCaptureFocusedHtmlSnippetFilepath);
+            var json = this.buttonsJson;
+            // 2nd param is callback function on completion
+            this._uiDataCaptureFocusedParentDiv.load(uiDataCaptureFocusedHtmlSnippetFilepath, this.afterHtmlLoadedCallback(json));
         }
         this._uiDataCaptureFocusedParentDiv.removeClass("hide");
         this._uiRegularDivs.map(function(d){$(d).collapsible("close")});
-        this.addOnClickFunctionsToDataCaptureFocused();
         break;
       default:
         console.log(`uiInterface case: ${uiInterface} not handled.`);
@@ -83,49 +110,20 @@ class UserInterface {
 
 
 
-  addOnClickFunctionsToDataCaptureFocused () {
+  afterHtmlLoadedCallback (addlParam) {
+    // We stack in the extra param value here and return the expected callback
+    // signature because otherwise the addlParam (eg json) gets lost due to lost
+    // this. context
 
-    $(document).unbind('click');
-    $(document).on('click', '#capture_ui_directory_select', this.DirectorySelectClick);
-
-  } // End of: addOnClickFunctionsToDataCaptureFocused
-
-
-
-
-
-  // TODO need to draw focus to the directory selection box
-  // once the serial ports are selected and opened and we're ready for the
-  // next step
-
-
-
-
-  DirectorySelectClick () {
-
-    var captureDataFileOutputDirectory = dialog.showOpenDialog( {
-      title : 'Select and/or create your captured data directory ...',
-      buttonLabel: 'Start Capture to this Directory',
-      properties: [ 'openDirectory', 'createDirectory']
-    });
-
-    if ( captureDataFileOutputDirectory ) {
-      this.captureDataFileOutputDirectory = captureDataFileOutputDirectory;
-      $('#labelForSelectOutputDirectory').empty();  // clear the label
-      $('#selectOutputDirectory').val(this.captureDataFileOutputDirectory);
-
-      // When the click event is added, at the moment, as coded,
-      // we lose reference to this, so we don't call or define or use
-      // this . enable Capture Buttons
-      EnableCaptureButtons();
-      $('#capture_ui_directory_select').removeClass("pulse-div");
+    // this. works here, but you won't be able to access the added html here
+    //this.addOnClickFunctionsToDataCaptureFocused();
+    return function ( htmlResult, status, xhr ) {
+      // this. doesn't work here, and these functions use arrow notation outside
+      // of the class
+      addButtonLogicFromJson(addlParam);
+      addOnClickFunctionsToDataCaptureFocused();
     }
-
-  } // End of: DirectorySelectClick
-
-
-
-  // TODO if capture started, disable other buttons as needed
+  } // End of: afterHtmlLoadedCallback
 
 
 
@@ -133,12 +131,13 @@ class UserInterface {
 
 
 
-  Load ( uiInterface ) {
+
+  Load ( uiInterface, buttonsJson ) {
+
+    this.buttonsJson = buttonsJson;
     this.SwitchInterface(uiInterface);
+
   } // End of: Load
-
-
-
 
 
 
@@ -189,12 +188,98 @@ EnableCaptureButtons = () => {
 
 
 
+
+
+DirectorySelectClick = (event) => {
+
+  var captureDataFileOutputDirectory = dialog.showOpenDialog( {
+    title : 'Select and/or create your captured data directory ...',
+    buttonLabel: 'Start Capture to this Directory',
+    properties: [ 'openDirectory', 'createDirectory']
+  });
+
+  if ( captureDataFileOutputDirectory ) {
+    // This below actually does nothing, the way that this function is defined
+    // and used -- because it loses scope of the originating this
+    this.captureDataFileOutputDirectory = captureDataFileOutputDirectory;
+    $('#labelForSelectOutputDirectory').empty();  // clear the label
+    $('#selectOutputDirectory').val(this.captureDataFileOutputDirectory);
+
+    // When the click event is added, at the moment, as coded,
+    // we lose reference to this, so we don't call or define or use
+    // this . enable Capture Buttons
+    EnableCaptureButtons();
+    $('#capture_ui_directory_select').removeClass("pulse-div");
+
+    // Re-add the buttons logic with the updated capture Data File Output Directory
+    //addButtonLogicFromJson();
+  }
+
+} // End of: DirectorySelectClick
+
+
+
+
+
+
+
+
+addButtonLogicFromJson = ( jsonButtons ) => {
+
+  jsonButtons.map( function(jb) {
+    var b = $(document).find("#" + jb.mapToButtonId);
+    if ( b ) {
+      console.log(`Adding logic from json button to id ${jb.mapToButtonId} for button ${b.attr("id")}`);
+      b
+        .prop('title', jb.description)
+        .click(function() {
+          var d = $('#capture_ui_directory_select').find("input").val();
+          controlPortSendData(jb.command, jb.returnDataTo, jb, d );
+        });
+    }
+  });
+
+} // End of: addButtonLogicFromJson
+
+
+
+
+
+
+
+
+
+addOnClickFunctionsToDataCaptureFocused = () => {
+
+  $('#capture_ui_directory_select.row').click( function(event) {
+    DirectorySelectClick(event);
+  });
+
+} // End of: addOnClickFunctionsToDataCaptureFocused
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 UserInterface.Ready = () => {
   // TODO check current UI selection - move above check about
   // the doc being filled with this content
   // and then conditional adjust this ... otherwise of course
-  // an error will be gen'd as this div won't exist 
+  // an error will be gen'd as this div won't exist
   $('#capture_ui_directory_select').addClass("pulse-div");
+  $('#capture_ui_current_filename').show().text("No output file created yet ... this will show after STARTing acquisition ...");
 }
 
 
@@ -208,8 +293,9 @@ module.exports = {
 
   // Constants
 
-  // Functions
+  // Functions to be accessed from other modules
   EnableCaptureButtons,
+  DirectorySelectClick,
 
   // Classes
   UserInterface

@@ -32,6 +32,10 @@ const {ipcRenderer} = electron;
 // TODO I don't think this is right
 const { dialog } = require('electron').remote;
 
+const EventEmitter = require('events');
+class Emitter extends EventEmitter {};
+var CaptDataEmitter = new Emitter();
+
 const fs = require('fs');
 const path = require('path');
 const strftime = require('strftime');
@@ -215,6 +219,7 @@ class CaptureDataFileOutput {
     this.inDataBuffer = Buffer.alloc(0);
 
     this.lengthOfSof = wfparse.lengthOfSof;
+
 
 
     // TODO BIG FOR RELEASE
@@ -1711,6 +1716,8 @@ class CaptureDataFileOutput {
                 flags: 'wx'   // open for write but do not overwrite
               }
             );
+            // EMIT Notification to any subscribers
+            CaptDataEmitter.emit('captureDataNewFile', this.activeFilePath);
             this.captureWriteStream.setDefaultEncoding('hex');
             this.captureWriteStream.on('error', function(e) {
               console.error("capture-data.js: captureWriteStream error event: " + e);
@@ -2221,8 +2228,13 @@ class CaptureDataFileOutput {
 
 
 
+
+
+
+
 // module.exports = CaptureDataFileOutput;
 //module.export.CaptureDataFileOutput;
 module.exports = {
-  CaptureDataFileOutput
+  CaptureDataFileOutput,
+  CaptDataEmitter
 };

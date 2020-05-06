@@ -181,11 +181,23 @@ p.custom-control-section .switch {
   line-height: 24px;
   font-size: 11px;
   margin-left: 4px;
+  margin-top: 12px;
 }
 span#filesWrittenBadge.badge {
   height: 18px;
   line-height: 18px;
   margin-top: 3px;
+}
+#capture_ui_buttons button {
+  width:  45%;
+  height: 100px;
+  font-size: 4em;
+  margin: 12px;
+}
+#capture_ui_current_filename.row {
+  margin: 6px;
+  font-size: 1.2em;
+  padding: 3px;
 }
 
 /* https://codepen.io/wifeo/pen/KwdXwV */

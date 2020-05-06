@@ -175,6 +175,10 @@ ipcMain.on('prefs:set', (e, args) => {
   logToMain("Stored to prefs: " + JSON.stringify(args))
   settingsStorage.set(args.key, args.value);
 });
+ipcMain.on('prefs:get', (e, key) => {
+  console.log(`prefs:get for key ${key} is ${settingsStorage.get(key)}`);
+  e.returnValue = settingsStorage.get(key);
+});
 
 
 

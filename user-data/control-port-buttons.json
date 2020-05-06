@@ -73,7 +73,7 @@
 
 
 
-"controlGroups" : [
+  "controlGroups" : [
 
 
   {
@@ -119,7 +119,7 @@
 
 
 
-{
+  {
 
   "name" : "Tx Channel",
 
@@ -151,7 +151,7 @@
 
 
 
-{
+  {
 
   "name" : "Rx Channel",
 
@@ -207,7 +207,7 @@
 
 
 
-{
+  {
 
   "name" : "Rx Gain",
 
@@ -243,7 +243,7 @@
 
 
 
-{
+  {
 
   "name" : "PAQ Mode",
 
@@ -333,7 +333,7 @@
 
 
 
-{
+  {
 
   "name" : "Chained Commands",
 
@@ -367,7 +367,7 @@
     },
 
     {
-      "title": "Basic CH 2 Cont PAQ Setup Chain Kabam",
+      "title": "Basic CH 2 Cont PAQ Setup Chain",
       "command": {
         "type": "hexCsvBytesChained",
         "chainedCmdDelayMs" : "1500",
@@ -476,7 +476,80 @@
 
   ]
 }
-]
+  ],
+
+
+
+  "uiDataCaptureFocused" : [
+
+    {
+      "title": "Acquire Channel Scans To Split Batch Custom Files",
+      "mapToButtonId" : "btnCaptureStart",
+      "command": {
+        "type": "hexCsvBytesChained",
+        "chainedCmdDelayMs" : "120000",
+        "chainedCmdTimeoutMs" : "1000",
+        "chainedCmdCompleteChar" : "",
+        "value": [
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x50",
+          "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x50"
+        ],
+        "description-summary" : "Command chain/sequence to set PAQ to continuous channel scan and stop on cancel click. You will need to set the Tx voltage and Rx gain separately.",
+        "description-detail" : [
+          "0. Please set up Tx and Rx voltage/gain prior.",
+          "1. Start continuous channel scanning.",
+          "???2. Stop continuous scan and switch back to single/manual acquisition mode."
+        ],
+        "comments" : {
+          "0" : "this is copied from the previous chained commands section as a template - same format is used to populate this ui customization",
+          "1" : "chainedCmdDelayMs will be overridden by a duration for each file based on capture options file specified scans per file and the waveform parser file specified waveform receive rate for the hardware."
+        }
+      },
+      "description": "Scan defined channels continuously until stop/cancel and split up into batch files using custom capture options.",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "fileCaptureCustomToDirectory",
+          "value" : "true"
+        },
+        {
+          "key" : "captureBufferMultiple",
+          "value" : 8
+        },
+        {
+          "key" : "captureSizeNumberOfWaveformsPerFile",
+          "value" : {
+            "number" : 600,
+            "note" : "600 is 150 scans X 4 channels - eg per sample UTR type output file from specific user demo"
+          }
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set PAQ Mode Single and Get a PAQ WF",
+      "mapToButtonId" : "btnCaptureStop",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x50"
+      },
+      "description": "Set PAQ mode to single pulse and acquire",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ],
+      "comments" : {
+        "0" : "This is copied from the basic buttons section as a template for ui customization application"
+      }
+    }
+
+
+
+  ]
 
 
 }

@@ -782,7 +782,8 @@
     // User Interface selection and instantiation
     YourFace = new YouFace({
       uiRegularDivs: ['#singleWaveformChartAccordion', '#multiWaveformChartAccordion'],
-      uiDataCaptureFocusedParentDiv: '#capture_ui'
+      uiDataCaptureFocusedParentDiv: '#capture_ui',
+      mainWindow: this
     });
 
     function setPrefToInterfaceRegular(btn) {
@@ -799,6 +800,9 @@
       YourFace.SwitchInterface(ui);
     }
 
+    function getPref(key) {
+      return ipcRenderer.sendSync('prefs:get', key);
+    }
 
 
     // Prevent Closing when work is running or do something else before
@@ -912,10 +916,10 @@
     function serialSendData(commandAndType, returnDataTo) {
       sprend.serialSendData(commandAndType, returnDataTo);
     }
-    function controlPortSendData(commandAndType, returnDataTo, button) {
+    function controlPortSendData(commandAndType, returnDataTo, button, outputDirectory) {
       // We capture and send the button item as well to be able parse and handle
       // any options that are not specified at the command level of the tree
-      sprend.controlPortSendData(commandAndType, returnDataTo, button);
+      sprend.controlPortSendData(commandAndType, returnDataTo, button, outputDirectory);
     }
     function beginSerialComms() {
       sprend.beginSerialComms();
@@ -1047,7 +1051,7 @@
           $('.collapsible').collapsible({
             accordion: true
           });
-          YourFace.Load(prefs.interface);
+          YourFace.Load(prefs.interface, customCommandsJson.uiDataCaptureFocused);
           return;
         })
         .catch ( e => {
@@ -1156,6 +1160,8 @@
 
 
     // TODONOW: Implement the dataCaptureFocused START and STOP buttons
+    // Loads button descriptions and associated command definitions from the
+    // json files into the UI
     function loadButtons(customCommandsJson) {
 
       console.log("loadButtons: customCommandsJson: " + customCommandsJson); // JSON.stringify(customCommandsJson||''));
@@ -1181,7 +1187,7 @@
         $('#serialButtonsFromFileDiv').append(newb);
       });
       // These(above) are not at this writing actually loaded into the document anymore
-      // to simplify the IF 
+      // to simplify the IF
 
 
       //const cp_path = "./user-data/control-port-buttons.json"
@@ -1333,6 +1339,21 @@
       });
 
       parseAndShowCustomTextInputsAsButtonsAndTextInputs(customCommandsJson);
+
+      // Now add check if any special UI-destined buttons should be loaded and exist
+      // and then load them
+      /*
+      console.log(`getPref: ${getPref('interface')}`);
+      let ui = getPref('interface');
+      if ( ui == 'dataCaptureFocused') {
+        var j = customCommandsJson.uiDataCaptureFocused;
+        if ( j ) {
+          YourFace.AddButtonLogicFromJson(j);
+        } else {
+          console.log(`pref is for uiDataCaptureFocused but custom json aka eg control-port-buttons json for uiDataCaptureFocused is: ${j} - nothing to populate`);
+        }
+      }
+      */
 
     }
 
