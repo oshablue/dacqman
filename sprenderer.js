@@ -1644,8 +1644,8 @@ var progress = function (timeleft, timetotal, element) {
   console.log("progress: " + timeleft);
   var timeoutId;
   var progressBarWidth = Math.round((1.0 - (timeleft / timetotal)) * 100) + "%"; // timeleft * $element.width() / timetotal;
-  console.log("current: " + $(element).css("width"));
-  console.log("progress: " + progressBarWidth);
+  //console.log("current: " + $(element).css("width"));
+  //console.log("progress: " + progressBarWidth);
   //$(element).animate({ width: progressBarWidth }); //.html(timeleft + " seconds to go");
   $(element).css("width", progressBarWidth);
   if(timeleft > 0) {

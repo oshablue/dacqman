@@ -446,7 +446,7 @@ class CaptureDataFileOutput {
           this.bytePosnWaveformRecordScanNumber = posn;
           console.log(posn);
           // this.waveformCounter is actually wrong here but it doesn't matter
-          // as the value gets updated ... putting scanCounter just for readability
+          // as the value gets updated ... putting scan Counter not waveformCounter just for readability
           this.int16JsonValToByteArray(this.scanCounter).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           );
@@ -1717,7 +1717,7 @@ class CaptureDataFileOutput {
               }
             );
             // EMIT Notification to any subscribers
-            CaptDataEmitter.emit('captureDataNewFile', this.activeFilePath);
+            CaptDataEmitter.emit('captureDataNewFile', { "fp": this.activeFilePath, "fn": this.fileCounter } );
             this.captureWriteStream.setDefaultEncoding('hex');
             this.captureWriteStream.on('error', function(e) {
               console.error("capture-data.js: captureWriteStream error event: " + e);
@@ -2028,7 +2028,13 @@ class CaptureDataFileOutput {
               datInfos[datInfos.length - 1].sof2  // chop all beginning up to last SOF2 first byte, keeping that byte
             );
             // Store the last scan number that was counted
-            this.scanCounter = datInfos[datInfos.length - 1].scan;
+            //this.scanCounter = datInfos[datInfos.length - 1].scan;
+            let scanCountNow = datInfos[datInfos.length - 1].scan;
+            // Emit scan counter progress event if needed
+            if ( scanCountNow != this.scanCounter ) {
+              CaptDataEmitter.emit( 'captureDataProgress', (scanCountNow/this.scansPerFile * 100.0) );
+            }
+            this.scanCounter = scanCountNow;
             // TODO ROBUST
             // What if we somehow lose the last waveform and we are stuck
             // waiting for it and no data is going to file?

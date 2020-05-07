@@ -5,7 +5,7 @@
 
 -->
 
-
+<hr>
 <div id="capture_ui_dynamically_loaded" class="row">
 
 
@@ -19,7 +19,7 @@
         <span id="filesWrittenBadge" class="new badge grey">0</span>
       </button>
       <!-- Right -->
-      <button id="btnErrors" class="btn-small red lighten-2 disabled right">Errors</button>
+      <button id="btnErrors" class="btn-small red lighten-4 disabled right">Errors</button>
       <button id="btnWarnings" class="btn-small orange lighten-4 disabled right">Warnings</button>
     </div>
   </div>
@@ -40,8 +40,10 @@
 
 
   <div class="row">
-    <div id="capture_ui_current_filename" class="row z-depth-3">
-
+    <div id="capture_ui_current_filename" class="row z-depth-3 hide">
+      <div id="uiProgressHolder" class="progress">
+        <div id="uiProgressTextBar" class="determinate" style="width: 100%"></div>
+      </div>
     </div>
   </div>
 

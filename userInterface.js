@@ -48,18 +48,29 @@ class UserInterface {
 
 
     captDataEmitter.on('captureDataNewFile', (data) => {
-      let e = $('#capture_ui_current_filename');
-      e.text(data);
-      e.addClass('pulse-div');
+      let e = $('#uiProgressTextBar');
+      let eHolder = $('#capture_ui_current_filename');
+      $('#filesWrittenBadge').text(data.fn);
+      e.text(data.fp); // filepath here
+      eHolder.addClass('pulse-div');
+      this.updateProgressPercentage(0);
       setTimeout(
         function () {
           $('#capture_ui_current_filename').removeClass('pulse-div');
-        }, 2000
+        }, 1500
       );
     });
 
+    captDataEmitter.on('captureDataProgress', (data) => {
+      console.log("userInterface.js: capt Data Emitter: data: " + data);
+      this.updateProgressPercentage(data);
+    }); // end of capt Data Emitter.on capture Data Progress
+
 
   } // end of constructor
+
+
+
 
 
   get captureDataFileOutputDirectory() {
@@ -77,6 +88,36 @@ class UserInterface {
   set buttonsJson (js) {
     this._buttonsJson = js;
   }
+
+
+
+
+
+
+  updateProgressPercentage ( percent ) {
+
+    // We limit to 99% because the UI displays best this way
+    // At 100% it extends past the end -- we could fix in custom styling
+    // or maybe in js somewhere - it's a materializecss thing I think so far
+    // In this particular implementation anyway
+    // Update: with the updated 99% in the holder in custom.css, this is no
+    // longer needed
+    //percent = percent > 99.0 ? 99.0 : percent;
+    $('#uiProgressTextBar').css("width", parseInt(percent) + "%");
+    console.log("update progress percentage: percent: " + percent);
+    if ( percent > 99 ) {
+      $('#capture_ui_current_filename').addClass("green");
+      $('#uiProgressHolder').addClass("green lighten-1");
+      setTimeout( function() {
+        $('#capture_ui_current_filename').removeClass("green");
+        $('#uiProgressHolder').removeClass("green lighten-1");
+      }, 800);
+    }
+
+  } // end of update Progress Percentage
+
+
+
 
 
 
@@ -175,7 +216,7 @@ EnableCaptureButtons = () => {
     '#btnErrors'
 
     , '#btnCaptureStart'
-    , '#btnCaptureStop'
+    //, '#btnCaptureStop' // Only enable if Start has been clicked, and etc for such UX
   ].map( function(i) {
     d.find( $(i) ).removeClass('disabled');
   });
@@ -209,10 +250,10 @@ DirectorySelectClick = (event) => {
     // we lose reference to this, so we don't call or define or use
     // this . enable Capture Buttons
     EnableCaptureButtons();
-    $('#capture_ui_directory_select').removeClass("pulse-div");
+    $('#capture_ui_directory_select').removeClass("teal lighten-5 pulse-div");
 
-    // Re-add the buttons logic with the updated capture Data File Output Directory
-    //addButtonLogicFromJson();
+    // Now show the filename info area (which includes its progress bar)
+    $('#capture_ui_current_filename').removeClass("hide");
   }
 
 } // End of: DirectorySelectClick
@@ -233,6 +274,27 @@ addButtonLogicFromJson = ( jsonButtons ) => {
       b
         .prop('title', jb.description)
         .click(function() {
+          // if this is a stop/cancel button: call the cancel functionality
+          // within the sprendered.js module/file
+          // Also, we should call this first - because the called function(s)
+          // will cancel pending progress ids
+          // Whereas the control port send data in this case will also
+          // create a progress update to 0 which would clear out the ref
+          // to pending progress timeout ids and thus the ability to clear
+          // timeouts by id gets nulled out
+          if ( jb.mapToButtonId === 'btnCaptureStop' ) {
+            cancelCustomControlButtonCommand();
+            endOfCaptureBatch();
+            $('#btnCaptureStop').addClass("disabled");
+            $('#btnCaptureStart').removeClass("disabled");
+          }
+
+          if ( jb.mapToButtonId === 'btnCaptureStart' ) {
+            $('#btnCaptureStop').removeClass("disabled");
+            $('#btnCaptureStart').addClass("disabled");
+          }
+
+          // Then send the command
           var d = $('#capture_ui_directory_select').find("input").val();
           controlPortSendData(jb.command, jb.returnDataTo, jb, d );
         });
@@ -241,6 +303,21 @@ addButtonLogicFromJson = ( jsonButtons ) => {
 
 } // End of: addButtonLogicFromJson
 
+
+
+
+
+
+
+
+endOfCaptureBatch = () => {
+
+  // Not available at this. :
+  //updateProgressPercentage(0);
+
+  $('#uiProgressTextBar').css("width", "0%");
+
+} // End of: endOfCaptureBatch
 
 
 
@@ -278,8 +355,9 @@ UserInterface.Ready = () => {
   // the doc being filled with this content
   // and then conditional adjust this ... otherwise of course
   // an error will be gen'd as this div won't exist
-  $('#capture_ui_directory_select').addClass("pulse-div");
-  $('#capture_ui_current_filename').show().text("No output file created yet ... this will show after STARTing acquisition ...");
+  $('#capture_ui_directory_select').addClass("teal lighten-5 pulse-div");
+  //$('#capture_ui_current_filename div:last-child').text("No output file created yet ... this will show after STARTing acquisition ...");
+  $('#uiProgressTextBar').text("No output file created yet ... this will show after STARTing acquisition ...");
 }
 
 

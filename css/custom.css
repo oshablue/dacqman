@@ -193,6 +193,11 @@ span#filesWrittenBadge.badge {
   height: 100px;
   font-size: 4em;
   margin: 12px;
+  /*background-image: url('../assets/eagle-bear.jpg');*/ /* for fun */
+
+}
+#capture_ui_buttons .green {
+  /*opacity: 0.5;*/
 }
 #capture_ui_current_filename.row {
   margin: 6px;
@@ -209,7 +214,7 @@ span#filesWrittenBadge.badge {
   border-color: #00ffbf;
   box-shadow: 0 0 0 0 rgba(0, 204, 123, 0.5);
   /* border-radius: 50%; */
-  background-color: #b3ffcc;
+  /*background-color: #b3ffcc;*/
   /* background-image: url(http) */
   background-size: cover;
   background-repeat: no-repeat;
@@ -354,9 +359,20 @@ a.collapsible-header {
 }
 
 /* Progress */
-.progress {
+#divControlActionLog .progress {
   margin: 4px;
   width: 95%;
+}
+/* Progress in UI customization */
+#capture_ui_current_filename .progress {
+  height: 1.4em;
+  margin: 6px;
+  width: 99%; /* this keeps the bar within the holder so it doesn't overextend to the right */
+}
+#uiProgressTextBar.determinate {
+  height: 100%;
+  /* margin: 6px; */ /* no margin means the bar fill will fill up the container height */
+  padding: 3px;
 }
 
 
