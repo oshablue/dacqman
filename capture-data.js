@@ -1746,7 +1746,7 @@ class CaptureDataFileOutput {
 
               // Write header data to file
               console.log("startNewFile: headerByteArray length: " + this.headerByteArray.length);
-              console.log(this.headerByteArray);
+              //console.log(this.headerByteArray);
               this.captureWriteStream.write(this.headerByteArray);
 
               // Write transducer header data to file

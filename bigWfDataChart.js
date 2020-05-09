@@ -229,9 +229,6 @@ function DataChart({
   // versus using requestAnimationFrame...
   async function update(newdata) {
 
-    // DEBUG ALERT - aborting this function for now
-    //return;
-
     svg.selectAll("path.line").remove();
     svg.append("path")
         .datum(newdata) // 10. Binds data to the line
@@ -304,10 +301,22 @@ function DataChart({
   }
 
 
+  // Option in place here:
+  // Highlight the chart when new data is added, allowing the last update to
+  // fade out within 1000 ms - such that if no new data, chart background
+  // fades out 
+  this.flashColorTimeoutId;
+
   this.UpdateChartBuffer = function(newBuffer) {
+    $('#' + parentElementIdName).addClass("flash-color");
+    if ( this.flashColorTimeoutId ) {
+      clearTimeout(this.flashColorTimeoutId);
+    }
+    this.flashColorTimeoutId = setTimeout( function() {
+      $('#' + parentElementIdName).removeClass("flash-color", 1000);
+    }, 1000);
     newBuffer.copy(this.chartBuffer, 0, 0, 4096);
     freshData = true;
-    //console.log("freshData = true");
   }
 
 

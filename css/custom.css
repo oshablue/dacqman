@@ -185,16 +185,30 @@ p.custom-control-section .switch {
   margin: 0px;
 }
 
+
+
+
+
 /* User Interface Variations */
 #capture_ui_dynamically_loaded .row {
   margin-bottom: 0.1em;
+}
+#capture_ui_directory_select .input-field {
+  margin-top: 0.5em;
+}
+#capture_ui_directory_select input {
+  height: 2.2rem;
+  margin-bottom: 4px;
+}
+#capture_ui_status_indicators {
+
 }
 #capture_ui_status_indicators .btn-small {
   height: 24px;
   line-height: 24px;
   font-size: 11px;
   margin-left: 4px;
-  margin-top: 12px;
+  margin-top: 6px;
 }
 span#filesWrittenBadge.badge {
   height: 18px;
@@ -203,9 +217,9 @@ span#filesWrittenBadge.badge {
 }
 #capture_ui_buttons button {
   width:  45%;
-  height: 100px;
+  height: 80px;
   font-size: 4em;
-  margin: 12px;
+  margin: 6px;
   /*background-image: url('../assets/eagle-bear.jpg');*/ /* for fun */
 }
 #capture_ui_buttons .green {
@@ -297,19 +311,25 @@ li.active > a.collapsible-header i.sidenav-dd-expand {
 
 /* Materializecss overrides */
 
+
+
 /* Some general condensing */
 html {
   line-height: 1.1;
 }
 
+
+
 /* Header showing App name and click = reload */
 nav {
-  line-height: 24px;
-  height: 24px;
+  line-height: 18px;
+  height: 18px;
 }
 a.brand-logo {
   font-size: 1rem;
 }
+
+
 
 /* Condense the collapsible real estate a bit */
 .collapsible {
@@ -331,6 +351,9 @@ a.collapsible-header {
   padding: 0.5rem;
 }
 
+
+
+
 /* Condense the card content a bit */
 .card .card-content {
   padding: 12px;
@@ -346,6 +369,8 @@ a.collapsible-header {
 .card .card-action {
   padding: 4px;
 }
+
+
 
 /* Condense text inputs a bit */
 /* Top one just for the early dev serial send text compaction */
@@ -365,10 +390,15 @@ a.collapsible-header {
   margin-bottom: 0;
 }
 
+
+
 /* Switches */
 .switch {
   display: inline-block;
 }
+
+
+
 
 /* Progress */
 #divControlActionLog .progress {
@@ -404,6 +434,9 @@ a.collapsible-header {
 
 
 /* Chart */
+.flash-color {
+  background-color: rgba(244, 255, 0, 0.1);
+}
 path {
     stroke: steelblue;
     /*stroke-width: 2;*/
@@ -442,7 +475,6 @@ path {
   display: inline-block;
   position: absolute; /*absolute;*//* absolute breaks parent expanding to fit this child */
   top: 0px;
-  /*left: 0; */
 }
 
 /* End: Chart */
