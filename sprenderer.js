@@ -1515,7 +1515,7 @@ var controlPortSendData_SetupAndSendCommands = function(commandAndType, override
 
 
 setupFileCaptureCustomBatches = ( outputDirectory, numberOfWaveformsPerFile ) => {
-  //var everythingIsFine = true;
+
   captureDataFileOutputBatch = null;
 
   captureDataFileOutputBatch = new CaptureDataFileOutput({
@@ -1641,7 +1641,7 @@ var launchProgressCountdown = function( totMs ) {
 
 
 var progress = function (timeleft, timetotal, element) {
-  console.log("progress: " + timeleft);
+  //console.log("progress: " + timeleft);
   var timeoutId;
   var progressBarWidth = Math.round((1.0 - (timeleft / timetotal)) * 100) + "%"; // timeleft * $element.width() / timetotal;
   //console.log("current: " + $(element).css("width"));

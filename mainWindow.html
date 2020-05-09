@@ -564,12 +564,36 @@
     var singleChartBuf = Buffer.alloc(defWfLenB,127); //null;
     var ourReadableStreamBuffer = null;
     var writeStream = null;
+
+    // Variable declared here for access but initialized in sprenderer.js
     var captureDataFileOutputBatch = null;
+
     var currentWriteStreamFilepath = null;
     var currentBytesCaptured = null;
     var currentMaxCaptureFileSizeBytes = null;
     var gChunkMultiple = null;
     var gReturnDataTo = "chart";
+
+
+
+
+
+
+    var MainWindowGetNumberOfChannels = function() {
+
+      if ( captureDataFileOutputBatch ) {
+        return captureDataFileOutputBatch.NumberOfChannels();
+      } else {
+        return numChans;
+      }
+
+    }
+
+
+
+
+
+
     var resetReadableStream = function(chunkMultiple) {
       curChan = 0;
       singleChartBuf =  Buffer.alloc(defWfLenB, 127);
@@ -648,10 +672,10 @@
             }
             //singleWfChart.UpdateChartBuffer(singleChartBuf);
 
-            // Now for chan scans:
-            curChan = curChan == 8 ? 0 : curChan;
-            multiWfs[curChan].UpdateChartBuffer(singleChartBuf);
-            curChan++;
+            // TODO implement correct number of channels from capture options etc.
+            // with fallback etc.
+
+
 
             // TODO can we just set up a simple pipe instead, since we want all
             // the data going to file? -- see above quick test ... need more on it
@@ -687,7 +711,20 @@
             //
             // if ( capture file output set )
             if ( captureDataFileOutputBatch ) {
+
+              // This module/class-instance parses out the data
               captureDataFileOutputBatch.ReceiveData(chunk);
+
+            } else {
+
+              // If we're not parsing waveforms (which at the moment, is only done
+              // in the capture data file output batch module) then just dump to
+              // waveform charts
+
+              curChan = curChan == numChans ? 0 : curChan;
+              multiWfs[curChan].UpdateChartBuffer(singleChartBuf);
+              curChan++;
+
             }
 
 
@@ -718,6 +755,31 @@
         }
       });
     }
+
+
+
+
+
+    // TODO we can probably get this from the button definition too
+    // or configure it elsewhere
+    // TODO probably add some UI for when a chart isn't getting updated
+    // needs to track timeout ID, cancel it, and start a new timeout
+    // probably best to do in the chart code 
+    var decimate = 0;
+    var decimateKick = 15;
+    var MainWindowUpdateChart = function ( channelNumber, buf ) {
+
+      // Decimate the data so we don't overwhelm the system...
+      // Testing temporary with a simple multiple of total calls decimation
+      decimate += 1;
+      if ( decimate == decimateKick ) {
+        decimate = 0;
+        multiWfs[channelNumber - 1].UpdateChartBuffer(buf);
+      }
+
+    }
+
+
 
 
 
@@ -824,10 +886,9 @@
 
     var animStarted = false;
     function mainWindowUpdateChartData(data) {
-      //chart.update(data);
-      //return;
 
       console.log("mainWindowUpdateChartData: gReturnDataTo: " + gReturnDataTo);
+      console.log("mainWindowUpdateChartData: animStarted: " + animStarted);
 
       if ( data !== null ) {
         console.log("ERROR: mainWindowUpdateChartData is not implemented \
@@ -838,42 +899,37 @@
       if ( !animStarted ) {
         resetReadableStream();   // Or move to data Port event handler for close()?
         console.log("mainWindowUpdateChartData: animStarted = false, calling renderChart()");
-        //chart.renderChart(); // This initiates the loop
         singleWfChart.RenderChart();
         animStarted = true;
 
         if ( gReturnDataTo === "multiChart") {
           var i = 0;
-          for ( i = 0 ; i < 8 ; i++ ) { // TODONOW: rework for variable or configured number of channels
+          for ( i = 0 ; i < numChans ; i++ ) {
             multiWfs[i].RenderChart();
           }
         }
 
-        // TODO finish mult-chart implementation
-
-
         // Update the UI status indicator showing Graph/Data Listening
 
       } else {
-        // clearReadStream??? or just reset it too?
         console.log("mainWindowUpdateChartData: animStarted = true, calling cancelRenderChart()");
-        //chart.cancelRenderChart();
         singleWfChart.CancelRenderChart();
         animStarted = false;
 
-        // TODO finish multi-chart implementation
-        // TODO conditional for gReturnDataTo === "multiChart" ???
         if ( gReturnDataTo === "multiChart") {
           var i = 0;
-          for ( i = 0 ; i < 8 ; i++ ) {
+          for ( i = 0 ; i < numChans ; i++ ) {
             multiWfs[i].CancelRenderChart();
           }
         }
-
         // Update the UI status indicator showing Graph/Data Not Listening
 
       }
     }
+
+
+
+
 
     // Remove item on double-click from main  list
     ul.addEventListener('dblclick', removeItem);
@@ -953,12 +1009,21 @@
       chartBuffer: singleChartBuf
     });
 
+
+
+
+
     var multiWfs = [];
     var multiWfBufs = [];
     var curChan = 0;
+    const defNumChans = 8;
+    var numChans = defNumChans;
     var prefs;
     var customCommandsFilePath;
     var customCommandsJson;
+
+
+
 
 
 
@@ -977,6 +1042,10 @@
         }
       });
     }
+
+
+
+
 
 
     let  loadCustomCommandsPromise = (prefs) => {
@@ -1015,33 +1084,9 @@
 
 
 
-
-
-    // TODO wrap pass-through functions above and thus DRY ...
-
-    // Materialize - sidenav support
-    // Without jQuery
-    /*document.addEventListener('DOMContentLoaded', function() {
-      var options = {};
-      var elems = document.querySelectorAll('.sidenav');
-      var instances = M.Sidenav.init(elems, options);
-    });*/
-
-    // Initialize collapsible (uncomment the lines below if you use the dropdown variation)
-    // var collapsibleElem = document.querySelector('.collapsible');
-    // var collapsibleInstance = M.Collapsible.init(collapsibleElem, options);
-
-    // Or with jQuery:
-    // Materialize inits
-    // For both browser and electron app work, this needs the script pre and
-    // post load items in the head section to prevent undefined $ or jQuery etc
-    //jQuery(document).ready(function($){
     $(document).ready(function(){
-    //window.onload = function(){
 
 
-      // Wow - I don't believe this actually works ...
-      // It does ... so far.  Improvements to clean it up?
       getPrefsPromise()
         .then(prefs => loadCustomCommandsPromise(prefs))
         .then( function(customCommandsJson) {
@@ -1059,15 +1104,6 @@
         })
 
 
-
-      //loadButtons(customCommandsJson);
-
-
-
-
-      // Check for stuff that needs to execute on page load after population
-      //serialCheckbox(); // arg not used ... TODO better way to do this of course
-
       // Check for stuff that needs to execute on page load after population
       // For our win32 VM 8.1 Pro - this timeout lets things load on launch
       // and then fires the test to see if we can show the proceed button
@@ -1078,22 +1114,11 @@
       }, 2000);
 
 
-      // TODO - parametrize and customizable / settings / create object
-      const nChans = 8;
-      setupMultipaneCharts($("#divMultichart"), nChans);
+      setupMultipaneCharts($("#divMultichart"), numChans);
 
-
-
-
-      // Let's start by showing the text inputs as sliders - seems better for UI demo
-      //$(".switch").find("input[type=checkbox]").attr('checked', true);
-      //showCustomControlsAsRangeSliders(true, customCommandsJson);
 
       $('.sidenav').sidenav();
       $(".dropdown-trigger").dropdown();
-      //$('.collapsible').collapsible({
-      //  accordion: true
-      //});
 
     });
 
@@ -1101,7 +1126,28 @@
 
 
 
-    var setupMultipaneCharts = function (parentEle, nChans) {
+    var SetupMultipaneCharts = function( nChans, chartDivClasses ) {
+      numChans = nChans;
+      var d = $('#divMultichart');
+      d.empty();
+      setupMultipaneCharts(d, nChans, chartDivClasses);
+      $('#multiWaveformChartAccordion').collapsible("open");
+      mainWindowUpdateChartData(null); // to reset render loops
+    }
+
+
+
+
+
+
+
+    var setupMultipaneCharts = function (parentEle, nChans, chartDivClasses) {
+
+      // TODO add some click or similar to allow fullscreen or class change to
+      // single column for charts? etc.
+
+      // How many charts to display per row for particular @media size
+      var divClasses = chartDivClasses ? chartDivClasses : "col s12 m6 l4";
 
       var i;
       multiWfs = [];
@@ -1110,7 +1156,8 @@
         var buf = Buffer.alloc(4095, 127);
         var idName = "divMultipaneChart" + i;
         var dChartBlock = $(document.createElement("div"))
-          .addClass("col s12 m6 l4")
+          //.addClass("col s12 m6 l4")
+          .addClass(divClasses)
           ;
         var dHeader = $(document.createElement("div"))
           .addClass("divMultiChartTitleArea")
@@ -1132,12 +1179,11 @@
           chartBuffer : buf
         });
         multiWfs.push(multiWfDataChart);
-
-
-
       }
 
-    }
+    } // End of: setupMultipaneCharts
+
+
 
 
 
@@ -1362,6 +1408,8 @@
 
 
 
+
+
     var loadTextInputs = function (customCommandsJson) {
 
       // Dual-port style functions
@@ -1503,6 +1551,7 @@
       });
 
     }
+
 
 
 

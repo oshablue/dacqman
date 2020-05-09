@@ -10,6 +10,7 @@ const captDataEmitter = require('./capture-data.js').CaptDataEmitter; // For sub
 
 
 
+
 // Consts
 // From prefs implementation
 const useRegular = 'regular';
@@ -62,9 +63,14 @@ class UserInterface {
     });
 
     captDataEmitter.on('captureDataProgress', (data) => {
-      console.log("userInterface.js: capt Data Emitter: data: " + data);
+      //console.log("userInterface.js: capt Data Emitter: data: " + data);
       this.updateProgressPercentage(data);
     }); // end of capt Data Emitter.on capture Data Progress
+
+    captDataEmitter.once('captureDataNumberOfChannelsSet', (data) => {
+      UISetupMultipaneCharts(data);
+    });
+
 
 
   } // end of constructor
@@ -104,7 +110,7 @@ class UserInterface {
     // longer needed
     //percent = percent > 99.0 ? 99.0 : percent;
     $('#uiProgressTextBar').css("width", parseInt(percent) + "%");
-    console.log("update progress percentage: percent: " + percent);
+    //console.log("update progress percentage: percent: " + percent);
     if ( percent > 99 ) {
       $('#capture_ui_current_filename').addClass("green");
       $('#uiProgressHolder').addClass("green lighten-1");
@@ -115,6 +121,8 @@ class UserInterface {
     }
 
   } // end of update Progress Percentage
+
+
 
 
 
@@ -340,17 +348,8 @@ addOnClickFunctionsToDataCaptureFocused = () => {
 
 
 
-
-
-
-
-
-
-
-
-
-
 UserInterface.Ready = () => {
+
   // TODO check current UI selection - move above check about
   // the doc being filled with this content
   // and then conditional adjust this ... otherwise of course
@@ -358,6 +357,38 @@ UserInterface.Ready = () => {
   $('#capture_ui_directory_select').addClass("teal lighten-5 pulse-div");
   //$('#capture_ui_current_filename div:last-child').text("No output file created yet ... this will show after STARTing acquisition ...");
   $('#uiProgressTextBar').text("No output file created yet ... this will show after STARTing acquisition ...");
+
+}
+
+
+
+
+
+UISetupMultipaneCharts = ( nChans ) => {
+
+  //var nChans = GetNumberOfChannels() || 4; // Common usage to date is 4 as a reasonable default
+  var classes = "col s12 m6 l4"; // This is/was the default for 8 channels
+  if ( nChans == 4 ) {
+    classes = "col s12 m6"; // here since no l specified it will max at 6-cols = 2 per row
+  }
+  console.log(`userInterface: setting up multipane charts for ${nChans} channels`);
+  SetupMultipaneCharts(nChans, classes); // declared in the mainWindow.html script, thus this module must be loaded from within mainWindow.html
+
+  // TODO cleanup the implementation of this function overall, esp.
+  // in mainWindow.html
+  // It is called again here for now because it is called in pairs switching
+  // from multiChart to default of chart -- one cancels the previous and the next
+  // starts the new mode -- without this, we are left in cancel mode so adding
+  // this here starts the RenderCharts again 
+  mainWindowUpdateChartData(null);
+}
+
+
+
+
+
+GetNumberOfChannels = () => {
+  return MainWindowGetNumberOfChannels(); // also declared within mainWindow.html script, thus this module must be loaded from within mainWindow.html
 }
 
 

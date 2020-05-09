@@ -221,6 +221,11 @@ class CaptureDataFileOutput {
     this.lengthOfSof = wfparse.lengthOfSof;
 
 
+    this.NumberOfChannels = () => {
+      return this.maxChannelNum;
+    }
+
+
 
     // TODO BIG FOR RELEASE
     // (1)  move the third-party custom user code and
@@ -429,7 +434,7 @@ class CaptureDataFileOutput {
           // Total record size including wf in bytes
           // Int32
           let wfrl = this.getCurrentCaptureOutputFileWaveformRecordLengthBytes();
-          console.log(wfrl);
+          //console.log(wfrl);
           this.int32JsonValToByteArray(wfrl).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           );
@@ -444,7 +449,7 @@ class CaptureDataFileOutput {
           // Legacy-named WaveformNumber ...
           // Update this each scan (or repeat of channel cycle)
           this.bytePosnWaveformRecordScanNumber = posn;
-          console.log(posn);
+          //console.log(posn);
           // this.waveformCounter is actually wrong here but it doesn't matter
           // as the value gets updated ... putting scan Counter not waveformCounter just for readability
           this.int16JsonValToByteArray(this.scanCounter).copy(
@@ -457,7 +462,7 @@ class CaptureDataFileOutput {
           // REPLACED with each waveform
           this.bytePosnWaveformRecordChannelNumber = posn; // TODO fix from posn counter in fleshed out fcn here
           // TODO - code to update this each waveform
-          console.log(posn);
+          //console.log(posn);
           this.int16JsonValToByteArray(this.minChannelNum).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           );
@@ -467,7 +472,7 @@ class CaptureDataFileOutput {
           // Number of waveform points (not bytes)
           // Int32 - was nominally 2500 default, now we use our default or passed in value
           // Adjust this for whether or not we output the SOF
-          console.log(posn);
+          //console.log(posn);
           this.int32JsonValToByteArray(this.getNumberOfOutputSamplesPerWaveform()).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           );
@@ -481,7 +486,7 @@ class CaptureDataFileOutput {
           // options set in the instance
           // TODO place in hardware descriptor module
           var tb = parseFloat(1.0/parseFloat(this.waveformSampleFrequencyHz));
-          console.log(posn);
+          //console.log(posn);
           this.float32JsonValToByteArray(tb).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           );
@@ -493,14 +498,14 @@ class CaptureDataFileOutput {
           this.int16JsonValToByteArray(parseInt(json.legacyArrayDescriptorRank)).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           )
-          console.log(posn);
+          //console.log(posn);
           posn = posn + 2;
 
           // Size of first array - is this 2500? legacy - yes eg 2500
           // Just another duplication of data - notably:
           // This is also number of points
           // Int32
-          console.log(posn);
+          //console.log(posn);
           this.int32JsonValToByteArray(this.getNumberOfOutputSamplesPerWaveform()).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           );
@@ -508,13 +513,13 @@ class CaptureDataFileOutput {
 
           // Lower bound index of this array length previously indicated - legacy - is this always 1?
           // Int32
-          console.log(posn);
+          //console.log(posn);
           this.int32JsonValToByteArray(parseInt(json.legacyLowerBoundIndex)).copy(
             this.waveformRecordHeaderByteArrayTemplate, posn
           );
           posn = posn + 4;
 
-          console.log(`waveform record header length as last posn value ${posn}`);
+          //console.log(`waveform record header length as last posn value ${posn}`);
 
           // End header
           // Note: In a complete record, the wf data would be next
@@ -771,6 +776,7 @@ class CaptureDataFileOutput {
 
         this.minChannelNum = 1;
         this.maxChannelNum = parseInt(optionsJson.headerData.transducersNum.value);
+        CaptDataEmitter.emit('captureDataNumberOfChannelsSet', this.maxChannelNum);
 
         //var headerSize = parseInt(optionsJson.additionalFileInfo.offsetToFirstTransducerRecord.value);
         // TODO -- IMPORTANT -- this next value is calculated from the XD
@@ -1785,7 +1791,7 @@ class CaptureDataFileOutput {
         // continuation.  And just output the issue only.
 
       } else {
-        console.log(`writeDataToFile: received this number of bytes to write: ${buf.length}`);
+        //console.log(`writeDataToFile: received this number of bytes to write: ${buf.length}`);
       }
     });
 
@@ -1883,8 +1889,8 @@ class CaptureDataFileOutput {
         this.scanCounter,
         this.scansPerFile
       );
-      console.log('datInfos are: ');
-      console.log(datInfos);
+      //console.log('datInfos are: ');
+      //console.log(datInfos);
       /*
         datInfos = [{
         sof1: -1,             // Real indices start at 0
@@ -1913,7 +1919,7 @@ class CaptureDataFileOutput {
 
           return new Promise ( (resolve, reject ) => {
 
-            console.log(`di.scan: ${di.scan}, di.chan: ${di.chan}`);
+            //console.log(`di.scan: ${di.scan}, di.chan: ${di.chan}`);
 
             // Only start storing data after the first channel 1 is found
             // so as not to confuse legacy software addressed for customer in
@@ -1949,6 +1955,16 @@ class CaptureDataFileOutput {
                         * this.captureFileOutputBytesPerWaveformSample
                       );
                       //console.log(`outWfdat length: ${outWfDat.length}`);
+
+                      // Optionally, push the raw data buffer to the correct
+                      // chart channel in the mainWindow
+                      var chartOut = Buffer.alloc( (stop - start) );
+                      this.inDataBuffer.copy(chartOut, 0, start, stop); // base 0, start at beginning of new buffer, start at start, stop is not inclusive
+                      MainWindowUpdateChart( di.chan, chartOut );
+
+                      // Scale and place into waveform record formatted buffer
+                      // for file output per capture output options and customization
+                      // here, setup for custom-requested output demo
                       let scaled = 0.0;
                       let outIndex = 0;
                       let sofBuf = Buffer.alloc(0);
@@ -1980,14 +1996,14 @@ class CaptureDataFileOutput {
 
                 } else { // chan num > max num chans to store for legacy output
 
-                  console.log(`Skipping adding waveformRecord for chan: ${di.chan}`);
+                  //console.log(`Skipping adding waveformRecord for chan: ${di.chan}`);
                   resolve(Buffer.alloc(0));
 
                 }
 
               } else { // scan num < 1 - don't start collecting data yet
 
-                console.log(`Skipping adding waveformRecord for scan: ${di.scan}, chan: ${di.chan}`);
+                //console.log(`Skipping adding waveformRecord for scan: ${di.scan}, chan: ${di.chan}`);
                 resolve(Buffer.alloc(0)); // resolve as empty buffer such that concat works and just does nothing but doesn't break
 
               }

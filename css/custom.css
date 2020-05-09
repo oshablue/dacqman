@@ -17,6 +17,19 @@ header, main, footer {
   margin: 10px;*/
 }
 
+.divMultiChartTitleArea {
+  font-size: 1.5em;
+}
+
+#multiWaveformChartAccordion span.card-title {
+  font-size: 1.8em;
+  /*background-color: lightslategrey;*/
+  background-image: linear-gradient(to right, lightslategrey, rgba(0,0,0,0));
+  height: 24px;
+  line-height: 16px;
+  padding: 4px;
+}
+
 .dataChart-title {
   color: rgba(240, 240, 240, 0.6);
   font-size: 3em;
@@ -194,7 +207,6 @@ span#filesWrittenBadge.badge {
   font-size: 4em;
   margin: 12px;
   /*background-image: url('../assets/eagle-bear.jpg');*/ /* for fun */
-
 }
 #capture_ui_buttons .green {
   /*opacity: 0.5;*/

@@ -506,7 +506,7 @@
         }
       },
       "description": "Scan defined channels continuously until stop/cancel and split up into batch files using custom capture options.",
-      "returnDataTo" : "chart",
+      "returnDataTo" : "multiChart",
       "options" : [
         {
           "key" : "fileCaptureCustomToDirectory",
@@ -528,7 +528,7 @@
 
 
     {
-      "title": "Set PAQ Mode Single and Get a PAQ WF",
+      "title": "Set PAQ Mode (Back to) Single (Not continuous)",
       "mapToButtonId" : "btnCaptureStop",
       "command": {
         "type": "hexCsvBytes",
