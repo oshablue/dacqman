@@ -544,6 +544,9 @@
     // - chunkSize of 2 * 4095 gives steady sync graph, with eventual huge buffer (overrun)
     // - chunkSize of 3 * 4095 gives walking graph and glitches due to emptiness (underrun)
 
+    const sprend = require('./sprenderer.js')
+    const SingleWfDataChart = require('./bigWfDataChart.js');
+
     var YourFace = null;
     const { UserInterface : YouFace } = require('./userInterface.js');
 
@@ -571,8 +574,34 @@
     var currentWriteStreamFilepath = null;
     var currentBytesCaptured = null;
     var currentMaxCaptureFileSizeBytes = null;
+
+    // Defines how many full waveform lengths (or returned data set lengths, maybe including the SOF)
+    // are allowed for in the buffer read (and thus in some cases push to chart/graph)
+    // thus essentially creating the option to decimate the data that is actually
+    // graphed to reduce UI overhead
+    // For example, if you only ever graph the first waveform length, and the remaining
+    // multiples in a read threshold trigger event are not graphed, then you're
+    // decimating the data that is actually graphed/charted/plotted
     var gChunkMultiple = null;
+
+    // Default. May alternately have functionality loaded with multiChart or similar
     var gReturnDataTo = "chart";
+
+    var multiWfs = [];
+    var multiWfBufs = [];
+
+    var curChanToGraphSingle = 0;
+    var curChanToGraphMulti = 0;
+
+    const defNumChans = 8;
+    var numChans = defNumChans;
+
+    var prefs;
+    var customCommandsFilePath;
+    var customCommandsJson;
+
+
+
 
 
 
@@ -594,9 +623,14 @@
 
 
 
+
+
     var resetReadableStream = function(chunkMultiple) {
-      curChan = 0;
+
+      curChanToGraphSingle = 0;
+      curChanToGraphMulti = 0;
       singleChartBuf =  Buffer.alloc(defWfLenB, 127);
+
       // changing below to 20ms (and doubling the chunksize) doesn't stop the
       // crash malloc errors
       //chunkMultiple = 33; // 33 in our testing gives split between 8 chans, and no buffer overflow
@@ -623,97 +657,81 @@
       ourReadableStreamBuffer.on('readable', function(data) {
 
         try {
+
           var chunk;
-          //console.log(ourReadableStreamBuffer.size());
+
           if ( ourReadableStreamBuffer.size() > (1000*1024) ) {
             console.log(ourReadableStreamBuffer.size());
             $('#btnBufferOverflowing').removeClass('disabled').addClass('orange pulse');
-            //console.log("ALERT: ourReadableStreamBuffer is larger than ...1MB ... dumping data ...");
-            // Do something to dump or pause this
-            //ourReadableStreamBuffer.pause(); // no effect in a readable event listener
-            //console.log("new ourReadableStreamBuffer size: " + ourReadableStreamBuffer.size());
           } else {
-            // TODO LT this is a lot of overhead to do every time?
             $('#btnBufferOverflowing').removeClass('orange pulse').addClass('disabled');
           }
+
           // Could try to:
           // - Increment the decimation counter here instead and it talks to the sprendered code
           // or
           // - Use 'data' event subscription instead and then use pause and resume to allow
           //   screen plotting to catch up
           while((chunk = ourReadableStreamBuffer.read()) !== null) {
-            //assert.isTrue(chunk instanceof Buffer);
-            //console.log(chunk.length);
-            //console.log('t');
-            // could implement skipping code here - take every 8th and plot it
-            //n = (n > 8) ? 0 : n;
-            //if ( n === 8 ) {
 
-            //console.log("chunk read of length: " + chunk.length);
-            //console.log(chunk);
+            // The channel to graph in the single waveform chart
+            // NEXT: Move to UI for single-channel focused selection
+            // Base 0
+            var selectedChanToGraph = 0;
 
-            // deimation stuff: no dice - not a copy must not be the bottleneck
-            //dataPushDecimationCounter++; // increment only with each chunk
-            //if ( dataPushDecimationCounter > decimationValue ) {
-            //  dataPushDecimationCounter = 0;
-            //}
-            //if ( dataPushDecimationCounter === decimationValue ) {
-            // TODO - add try catches for all memory stuff to catch serial port
-            // (data port) errors that might be creating the malloc errors in these
-            // revisions
-            var selectedChan = 1;
             chunk.copy(singleChartBuf, 0, 0, defWfLenB + 1); // TODO is the +1 needed?
-            // Big TODO - clean up from Demo mode
-            if ( gChunkMultiple > 3 && selectedChan == curChan ) {
+
+
+            // This was for quick live demo updated functionality
+            // If the chunk multiple was larger, then we were probably decimating
+            // the data and wanting to just graph some interval of a single channel
+            if ( gChunkMultiple > 3 && selectedChanToGraph == curChanToGraphSingle ) {
               singleWfChart.UpdateChartBuffer(singleChartBuf);
             }
+            // Versus:
+            // for smaller chunks, assume this is more of a single channel
+            // scan or snapshot and that the chunk size does the decimation
+            // sufficiently and we don't care about trying to always grab and
+            // chart the same channel
             if ( gChunkMultiple < 4 ) {
               singleWfChart.UpdateChartBuffer(singleChartBuf);
             }
-            //singleWfChart.UpdateChartBuffer(singleChartBuf);
 
-            // TODO implement correct number of channels from capture options etc.
-            // with fallback etc.
+            // Sure, for now, basic testing, each chunk, whatever multiple, each
+            // time we're here, just increment the channel number,
+            // assuming that the multiple of chunk is set to intentionally
+            // account for cycling through channels or the interaction is known
+            // and correspondingly accounted for / set up
+            curChanToGraphSingle += 1;
 
 
 
-            // TODO can we just set up a simple pipe instead, since we want all
-            // the data going to file? -- see above quick test ... need more on it
-            // TODO -- need of course to end the stream at events and thus close
-            // the file -- just a reminder at stopping point to do this next ...
-            // Yeah this approach seems to allow watching the live WF updates on the
-            // screen and also the file is getting built --
-            // Now using hex encoding, we'll see the size after 2 mins to see if
-            // got it all ...
-            // 63,194,040 bytes - yeah, all data is there => / 128 / 120 seconds => 4114.2 byte chunks which is about right
-            // Cool.
-            // TODO could do a manual file close button, to allow contnuous adding
-            // to file?
+            // For plain old capture to plain file, earliest tests/functionality of file capture
             if ( writeStream ) {
               if ( currentMaxCaptureFileSizeBytes ) {
                 if ( currentBytesCaptured < currentMaxCaptureFileSizeBytes ) {
-                  //currentBytesCaptured += chunk.length; // since we're calling this a "max" size for now we put this before the write
                   writeStream.write(chunk, 'hex');
                   currentBytesCaptured += chunk.length;
-                  // TODO implement exact difference calculation at the edge
-                  // versus just stopping writing after the chunk
-                  // TODO LT could switch the logic to notify user and other
-                  // processes to cancel.
-                  // We're still in system demo rapid drafting mode ...
+                  // We're still in system demo rapid drafting mode really ...
                 }
               }
             }
 
 
+            if ( prefs.interface === 'dataCaptureFocused' ) {
 
+              if ( captureDataFileOutputBatch ) {
 
-            //
-            //
-            // if ( capture file output set )
-            if ( captureDataFileOutputBatch ) {
+                // This module/class-instance parses out the data
+                captureDataFileOutputBatch.ReceiveData(chunk);
 
-              // This module/class-instance parses out the data
-              captureDataFileOutputBatch.ReceiveData(chunk);
+                // The data capture and user interface code handles
+                // pushing to the appropriate chart, separately/independently
+                // from this code block
+              } else {
+                console.warn("mainWindow: readable stream buffer .on readable: "
+                  + "prefs is set to UI data capture focused, but the capture data fileoutput batch is not a thing (yet?).");
+              }
 
             } else {
 
@@ -721,39 +739,19 @@
               // in the capture data file output batch module) then just dump to
               // waveform charts
 
-              curChan = curChan == numChans ? 0 : curChan;
-              multiWfs[curChan].UpdateChartBuffer(singleChartBuf);
-              curChan++;
+              curChanToGraphMulti = curChanToGraphMulti == numChans ? 0 : curChanToGraphMulti;
+              multiWfs[curChanToGraphMulti].UpdateChartBuffer(singleChartBuf);
+              curChanToGraphMulti++;
 
             }
 
-
-
-            //
-            //
-            //
-
-
-
-
-            // Debugging:
-            //console.log(chartBuf.slice(0,11)); // checking the SOF section
-            // The 5th bit [4] is the sequence_id - it begins at 1 and wraps after 255
-            // Thus we are only counting 255 WFs maximum (not 256)
-            // Though, need to check that after the RST signal - as this is for
-            // just after power up as for the first WF returning 1 for seq_id
-
-
-            //}
-            //}
-            //n++;
-            // nope the n thing still allows the internal buffer to grow ... and slow
-            //console.log(n);
           }
+
         } catch (e) {
           console.log("Error in readable event: " + e);
         }
-      });
+      }); // end of: our Readable Stream Buffer .on ( 'readable'
+
     }
 
 
@@ -764,7 +762,16 @@
     // or configure it elsewhere
     // TODO probably add some UI for when a chart isn't getting updated
     // needs to track timeout ID, cancel it, and start a new timeout
-    // probably best to do in the chart code 
+    // probably best to do in the chart code
+    // NEXT:
+    // Yes - let's go back to using what's in place in the button options json
+    // that is imported, regarding the capture buffer multiple option value.
+    // That should then be handled in user interface code, because that defines
+    // the user IF and does contain also the button option for this - so it can
+    // handle the call to publish the data to chart.  The capture-data
+    // code will create the data set and it can be pushed to the user interface
+    // and then user interface can decide how/when to call the chart object to
+    // update its data display
     var decimate = 0;
     var decimateKick = 15;
     var MainWindowUpdateChart = function ( channelNumber, buf ) {
@@ -785,13 +792,9 @@
 
 
 
-    // From SP EG
-    // You can also require other files to run in this process
-    const sprend = require('./sprenderer.js')
-    //const chartRend = require('./chartRend.js')
-    //const chart = require('./simpleChartRend.js')
-    const SingleWfDataChart = require('./bigWfDataChart.js');
-
+    // Basic demo of some ipc rendered window/interaction Electron type
+    // application functionality:
+    //
     // Add item
     ipcRenderer.on('item:add', function(e, item){
       ul.className = 'collection';
@@ -801,17 +804,29 @@
       li.appendChild(itemText);
       ul.appendChild(li);
     });
-
+    //
     // Clear items
     ipcRenderer.on('item:clear', function(){
       ul.innerHTML = '';
       ul.className = '';
     });
+    // Remove item on double-click from main  list
+    ul.addEventListener('dblclick', removeItem);
+    function removeItem(e){
+      e.target.remove();
+      if(ul.children.length == 0){
+        ul.className = '';
+      }
+    }
 
 
-    // TODO - need to use some kind of buffer management here
-    // sprenderer (FTDI/D2XX) Port data received from peripheral device
-    // TODO - we're not really using ipc here -- fix this -- clean up / remove
+
+
+
+
+    // This is retained for legacy/early stage dev reference -
+    // but it's probably not used any more as the data parsing functionality
+    // happens in sprenderer and capture data mostly now
     ipcRenderer.on('port:ondata', function(e, data){
       chart.update(data);
     });
@@ -824,10 +839,14 @@
 
 
 
+
+
+    // Preferences/settings basics
     function showUserPrefsData() {
       console.log("sending prefs:show from ipcRenderer");
       ipcRenderer.send('prefs:show');
     }
+
     ipcRenderer.on('prefs:show', function(e, data) {
       console.log("prefs:show: " + JSON.stringify(data));
     });
@@ -836,6 +855,11 @@
       console.log("resetting prefs to defaults...");
       ipcRenderer.send('prefs:reset');
     }
+
+    function getPref(key) {
+      return ipcRenderer.sendSync('prefs:get', key);
+    }
+
 
 
 
@@ -862,9 +886,10 @@
       YourFace.SwitchInterface(ui);
     }
 
-    function getPref(key) {
-      return ipcRenderer.sendSync('prefs:get', key);
-    }
+
+
+
+
 
 
     // Prevent Closing when work is running or do something else before
@@ -884,6 +909,8 @@
 
 
 
+
+    // NEXT: this, animStarted, tracking/use is a bit clunky
     var animStarted = false;
     function mainWindowUpdateChartData(data) {
 
@@ -931,24 +958,19 @@
 
 
 
-    // Remove item on double-click from main  list
-    ul.addEventListener('dblclick', removeItem);
 
-    function removeItem(e){
-      e.target.remove();
-      if(ul.children.length == 0){
-        ul.className = '';
-      }
-    }
 
-    // Serial port -- TODO MOVE & DRY
+    // Serial port -- selection and basics, from early / legacy dev
+    // NEXT: can probably eliminate some of these mainWindow wrappers
+    // and simply make sure the module is loaded and items exported and
+    // just call directly perhaps ... or keep them as wrappers for flexibility
+    // maybe?
     function serialSelect(button) {
       var d = document.querySelector("#activePort");
       $('#activeSerialPortStuff').show();
       d.innerHTML = button.name;
     }
     function serialCheckbox(checkbox) {
-      //alert(checkbox.checked); // yeah the property works, even with the materializecss
       sprend.serialCheckbox(checkbox);
     }
     function serialOpen() {
@@ -960,7 +982,6 @@
       sprend.serialClose();
     }
     function controlPortClose() {
-      //console.log("cpClose");
       sprend.controlPortClose();
     }
     function controlPortOpen() {
@@ -1003,24 +1024,16 @@
 
 
 
-    // Chart / graphing / data view items
+
+
+
+    // Chart / graphing / data view items - Single
     var singleWfChart = new SingleWfDataChart({
       parentElementIdName: "chart",
       chartBuffer: singleChartBuf
     });
 
 
-
-
-
-    var multiWfs = [];
-    var multiWfBufs = [];
-    var curChan = 0;
-    const defNumChans = 8;
-    var numChans = defNumChans;
-    var prefs;
-    var customCommandsFilePath;
-    var customCommandsJson;
 
 
 
