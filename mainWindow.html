@@ -730,7 +730,10 @@
                 // from this code block
               } else {
                 console.warn("mainWindow: readable stream buffer .on readable: "
-                  + "prefs is set to UI data capture focused, but the capture data fileoutput batch is not a thing (yet?).");
+                  + "prefs is set to UI data capture focused, but the capture data fileoutput batch is not a thing (yet?)."
+                  + " If capture has ended this warning may just be from from a few last unprocessed buffers of data coming in."
+                  + " This is more likely if you have a lot happening on your PC at the same time this program is running."
+                );
               }
 
             } else {
@@ -1575,6 +1578,7 @@
 
       // https://stackoverflow.com/questions/11293857/fastest-way-to-copy-file-in-node-js
       // destination.txt will be created or overwritten by default.
+      /*
       var currentWriteStreamFilepath;
       currentWriteStreamFilepath = dialog.showSaveDialog( {
         options : {
@@ -1582,28 +1586,104 @@
           buttonLabel: 'Copy'
         }
       });
-      console.log("file picker result: " + currentWriteStreamFilepath);
+      */
+      // TODO check for and if non-existent add a .json file extension
+      // That is mandatory for proper import of the file, otherwise it's not parsed
+      // by the node engine module(s) correctly
+      //console.log("file picker result: " + currentWriteStreamFilepath);
+
       const app = require('electron').remote.app;
       var a = app.getAppPath();
       console.log("getAppPath: " + a);
       var path = require('path');
-      var srcFilePath = path.join(a, prefs.customCommandsFilePathPackaged);
-      console.log("srcFilePath: " + srcFilePath);
-      if ( !currentWriteStreamFilepath ) {
-        console.log("no file selected for copy custom control file to ... returning.");
-      } else {
-        console.log("selected " + currentWriteStreamFilepath + " for copy custom control file to...")
-        cancelThis = fs.copyFile(srcFilePath, currentWriteStreamFilepath, (err) => {
+      //var srcFilePath = path.join(a, prefs.customCommandsFilePathPackaged);
+      //console.log("srcFilePath: (if using single-file copy)" + srcFilePath);
+
+      var currentWriteStreamDirectory;
+      currentWriteStreamDirectory = dialog.showOpenDialog( {
+        title : 'Select and/or create your custom directory for customizable config files...',
+        buttonLabel: 'Copy Config Files to this Directory',
+        properties: [ 'openDirectory', 'createDirectory']
+      });
+
+      // Now switching to directory-based method and copying all files over
+      // to the custom selected directory
+      // TODO could add a readme file too => indicating to keep the same filename
+      // and indicating that you used to be able to customize the filename and that
+      // you still could by updating the code here if you like
+      var srcFilePaths = [];
+      srcFilePaths.push({ 'key': 'customCommandsFilePath', 'value': path.join(a, prefs.customCommandsFilePathPackaged) });
+      srcFilePaths.push({ 'key': 'customCaptureOptionsFilePath', 'value': path.join(a, prefs.customCaptureOptionsFilePathPackaged) });
+
+      var calFilePaths = [];
+      var calFileSrcDir = path.join(a, prefs.customTransducerCalibrationFilesDirectoryPackaged);
+      var calFileSubdir = path.basename(calFileSrcDir); // even though this is 'basename' it will grab just the subdir
+      fs.readdirSync(calFileSrcDir).forEach( fn => {
+        // TODO exclude any .DS_Store
+        calFilePaths.push(path.join(calFileSrcDir, fn));
+      });
+
+      console.log("srcFilePaths and calFilePaths: (for copying all customizable files to a single directory)");
+      console.log(srcFilePaths);
+      console.log(calFilePaths);
+
+      //if ( !currentWriteStreamFilepath ) {
+      if ( !currentWriteStreamDirectory ) {
+        console.log("No directory selected for copy custom control file to ... returning.");
+        return;
+      }
+
+      currentWriteStreamDirectory = currentWriteStreamDirectory[0]; // it's an array
+
+      //console.log("selected " + currentWriteStreamFilepath + " for copy custom control file to...")
+      console.log("selected " + currentWriteStreamDirectory + " for copying customizable files to...")
+      //cancelThis = fs.copyFile(srcFilePath, currentWriteStreamFilepath, (err) => {
+
+      // First the top level files
+      srcFilePaths.map( fpKvp => {
+        var destFp = path.join(currentWriteStreamDirectory, path.basename(fpKvp.value));
+        fs.copyFile(fpKvp.value, destFp, (err) => {
           if (err) {
-            console.log("error copying the source file to the destination file, for copy custom command control packaged file to local. " + err);
+            console.log("error copying the source file" + fpKvp.value + " to the destination file, " + destFp + " for copy custom command control packaged file(s) to local custom dir. " + err);
           } else {
-            console.log('source.txt was copied to destination.txt ... storing path as pref also.');
-            ipcRenderer.send('prefs:set', { 'key' : 'customCommandsFilePath', 'value' : currentWriteStreamFilepath});
+            console.log('Source (packaged) file ' + fpKvp.value + ' was copied to destination directory ... storing path as pref also.');
+
+            //ipcRenderer.send('prefs:set', { 'key' : 'customCommandsFilePath', 'value' : currentWriteStreamFilepath});
+
+            // TODO DRY Yeah we do this manually for now ...
+            ipcRenderer.send('prefs:set', { 'key' : fpKvp.key, 'value' : destFp } );
+
             // And reload into the local copy
-            prefs = ipcRenderer.sendSync('prefs:getPrefs');
+            //prefs = ipcRenderer.sendSync('prefs:getPrefs');
           }
         });
+      }); // end of map
+
+      // Create the calFileDirectory
+      var calFileDstDir = path.join(currentWriteStreamDirectory, calFileSubdir);
+      if (!fs.existsSync(calFileDstDir)) {
+        fs.mkdirSync(calFileDstDir);
       }
+
+      // Update the pref setting
+      ipcRenderer.send('prefs:set', { 'key' : 'customTransducerCalibrationFilesDirectory', 'value' : calFileDstDir } );
+
+      // Now copy any calibration files
+      calFilePaths.map( calFp => {
+
+        var destFp = path.join(calFileDstDir, path.basename(calFp));
+        fs.copyFile(calFp, destFp, (err) => {
+          if (err) {
+            console.log("error copying the source file" + calFp + " to the destination file, " + destFp + " for copy custom command control packaged file(s) to local custom dir for cal file. " + err);
+          } else {
+            console.log("Source (packaged) cal file " + calFp + " was copied to destination directory ... storing path as pref also.");
+          }
+        }); // end of copyFile
+
+      }); // end of map for calFp
+
+      // And reload into the local copy
+      prefs = ipcRenderer.sendSync('prefs:getPrefs');
 
     };
 

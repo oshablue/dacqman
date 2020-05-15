@@ -30,7 +30,7 @@ const settingsDefaults = {
   customCommandsFilePath: './user-data/control-port-buttons.json', // TODO - move to constants?
   customCommandsFilePathPackaged: './user-data/control-port-buttons.json',
   customCaptureOptionsFilePath: './user-data/capture-options.json',
-  customCaptureOptionsPathFilePackaged: './user-data/capture-options.json',
+  customCaptureOptionsFilePathPackaged: './user-data/capture-options.json',
   customTransducerCalibrationFilesDirectory: './user-data/transducer-calibration-files/',
   customTransducerCalibrationFilesDirectoryPackaged: './user-data/transducer-calibration-files/',
   interfaceDefault: 'regular',
