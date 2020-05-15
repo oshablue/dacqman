@@ -48,6 +48,8 @@ Much of which comes from excellent information available on the web, and is note
 
 ### Revisions
 
+- **0.0.8** - alpha - Adds customized batch capture output demo format ("UTR file") to match a user-specific data work flow for legacy compatibility with their software and hardware system. Includes as well a related data-capture-focused UI/UX. Configurable via json config files and simply adjusting source code as well.
+
 - **0.0.6** - alpha - adds a demo, not well crafted but functional, of start of frame (SOF) parsing to sync the SOF portion of a waveform data
 packet to the beginning of the plotted data chart - not clean but worthy at least of playing around with a runtime (packaged) "release"
 

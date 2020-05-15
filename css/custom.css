@@ -415,6 +415,10 @@ a.collapsible-header {
   height: 100%;
   /* margin: 6px; */ /* no margin means the bar fill will fill up the container height */
   padding: 3px;
+  /* the next two force the text to be seen even if the progress bar width is
+   * shorter than the text length */
+  overflow: visible;
+  white-space: nowrap;
 }
 
 
