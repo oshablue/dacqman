@@ -50,6 +50,11 @@ Much of which comes from excellent information available on the web, and is note
 
 - **0.0.8** - alpha - Adds customized batch capture output demo format ("UTR file") to match a user-specific data work flow for legacy compatibility with their software and hardware system. Includes as well a related data-capture-focused UI/UX. Configurable via json config files and simply adjusting source code as well.
 
+NOTE: If you have made any previous customizations for the packaged control buttons and etc using this feature in the software, you'll probably need or want
+to use the gear icon (very bottom of the page, left side) for extra options to reset your preferences so that the software can find the new files it needs
+to work with the added features.  You can always merge any customizations back into a re-copying of the packages files to your local directory.  When releases get
+more stable, then of course this type of need would change, such that pref or customization behavior is migrated or integrated or separated appropriately.
+
 - **0.0.6** - alpha - adds a demo, not well crafted but functional, of start of frame (SOF) parsing to sync the SOF portion of a waveform data
 packet to the beginning of the plotted data chart - not clean but worthy at least of playing around with a runtime (packaged) "release"
 
