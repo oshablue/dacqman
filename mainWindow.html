@@ -732,8 +732,10 @@
                 console.warn("mainWindow: readable stream buffer .on readable: "
                   + "prefs is set to UI data capture focused, but the capture data fileoutput batch is not a thing (yet?)."
                   + " If capture has ended this warning may just be from from a few last unprocessed buffers of data coming in."
-                  + " This is more likely if you have a lot happening on your PC at the same time this program is running."
+                  + " This is more likely if you have a lot happening on your PC at the same time this program is running. "
+                  + " Or this could simply be a single WF from putting the HDL into a single PAQ mode to stop acquisition. Chunk is:"
                 );
+                console.warn(chunk);
               }
 
             } else {

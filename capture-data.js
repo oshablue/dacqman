@@ -1288,7 +1288,7 @@ class CaptureDataFileOutput {
     x.copy(this.headerByteArray, posn);
     posn = posn + x.length; // 2
 
-    console.log("int16JsonValIntoHeaderArray posn exit value: " + posn);
+    //console.log("int16JsonValIntoHeaderArray posn exit value: " + posn);
 
     return posn;
 
@@ -1528,7 +1528,7 @@ class CaptureDataFileOutput {
             });
 
             console.log("filenameMidFixFix: files found: filtered for: " + this.fileCaptureMidFixPrefix);
-            console.log(files);
+            //console.log(files);
 
             // Extract the series number
             var start = this.fileCapturePrefix.length + this.fileCaptureMidFixPrefix.length;  // base 1, so we get the next index
@@ -1734,7 +1734,7 @@ class CaptureDataFileOutput {
             // Waveform record header should be updated before each waveform
             // record write since the channel number gets updated in addition
             // to the scan number (which changes only after every set of channels scanned)
-            console.log("startNewFile: update main record header with changeable values.");
+            //console.log("startNewFile: update main record header with changeable values.");
             this.updateCaptureBatchFileOutputHeader(
               this.fileCounter,   // RunId
               new Date()          // Unformatted time stamp
@@ -1745,14 +1745,14 @@ class CaptureDataFileOutput {
               // execute sync
 
               // Write header data to file
-              console.log("startNewFile: headerByteArray length: " + this.headerByteArray.length);
+              //console.log("startNewFile: headerByteArray length: " + this.headerByteArray.length);
               //console.log(this.headerByteArray);
               this.captureWriteStream.write(this.headerByteArray);
 
               // Write transducer header data to file
               // Nothing to update here - it is always the same
               // for the whole series of batch capture files
-              console.log("startNewFile: this.transducerHeaderByteArray length: " + this.transducerHeaderByteArray.length);
+              //console.log("startNewFile: this.transducerHeaderByteArray length: " + this.transducerHeaderByteArray.length);
               this.captureWriteStream.write(this.transducerHeaderByteArray);
 
               resolve(true);

@@ -484,7 +484,7 @@
 
     {
       "title": "Acquire Channel Scans To Split Batch Custom Files",
-      "mapToButtonId" : "btnCaptureStart",
+      "mapToButtonId" : "btnCaptureStartDummyForTimedSeries",
       "command": {
         "type": "hexCsvBytesChained",
         "chainedCmdDelayMs" : "120000",
@@ -502,8 +502,47 @@
         ],
         "comments" : {
           "0" : "this is copied from the previous chained commands section as a template - same format is used to populate this ui customization",
-          "1" : "chainedCmdDelayMs will be overridden by a duration for each file based on capture options file specified scans per file and the waveform parser file specified waveform receive rate for the hardware."
+          "1" : "chainedCmdDelayMs will be overridden for file writing purposes by a duration for each file based on capture options file specified scans per file and the waveform parser file specified waveform receive rate for the hardware.",
+          "2" : "however, the second command will still fire, so if that second command tells the hardware to stop streaming, that'll happen. "
         }
+      },
+      "description": "Scan defined channels continuously until stop/cancel and split up into batch files using custom capture options.",
+      "returnDataTo" : "multiChart",
+      "options" : [
+        {
+          "key" : "fileCaptureCustomToDirectory",
+          "value" : "true"
+        },
+        {
+          "key" : "captureBufferMultiple",
+          "value" : 8,
+          "notes" : [
+            "This defines chunk size multiple, the number of waveform-lengths, nominally, to include in the buffer readable event for the read stream buffer in the main window graph demo code.",
+            "It is also used in the data capture and user interface demo code to determine how much to decimate the UI data that gets pushed to the graph(s) to reduce UI overhead and prevent buffer processing overflows for display purposes.",
+            "That is, if too much data is pushed to the graph continuously, the graphable data buffer processing will fall behind and the buffer will continue to grow, basically towards overflowing, slowing the system down, or eating up memory.",
+            "In the UI code, for data focused capture, a value of 15 for example, might mean that every 16th waveform is pushed to its corresponding channel number graph.",
+            "Thus, at 128 waveforms per second spread through 8 channels, only graphing 4 of the 8 channels (a separate configuration to mimic legacy 4-channel systems for customization request by user),",
+            "every 128/16 = 8th waveform per second is pushed to a chart, and since there are 8 real channels, only 4 of which get graphed per this particular use case,",
+            "there is one waveform update to graph per channel per second."
+            ]
+        },
+        {
+          "key" : "captureSizeNumberOfWaveformsPerFile",
+          "value" : {
+            "number" : 600,
+            "note" : "600 is 150 scans X 4 channels - eg per sample UTR type output file from specific user demo"
+          }
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set PAQ Mode Continuous Channel Scan",
+      "mapToButtonId" : "btnCaptureStart",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x00, 0x00, 0x00, 0x08, 0x00, 0x04, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x50"
       },
       "description": "Scan defined channels continuously until stop/cancel and split up into batch files using custom capture options.",
       "returnDataTo" : "multiChart",
