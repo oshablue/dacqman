@@ -139,7 +139,8 @@ class CaptureDataFileOutput {
     numberOfWaveformsPerFile = 600,
     numberOfSamplesPerWaveform = 4095,      // Default HDL-0108-nnnnn WF return length at the time of writing this
     numberOfBytesPerSample = 1,             // Same comment as above
-    waveformSampleFrequencyHz = 40000000    // Default HDL-0108/4-nnnnn WF is 40MHz
+    waveformSampleFrequencyHz = 40000000,    // Default HDL-0108/4-nnnnn WF is 40MHz
+    structureIdInfoInputEle = null
 
   } = {}) {
 
@@ -147,6 +148,7 @@ class CaptureDataFileOutput {
 
     this.directory = directory;
     this.numberOfWaveformsPerFile = numberOfWaveformsPerFile;
+
 
 
     // Hardware-specific - could be moved to a parent / separate level
@@ -252,6 +254,54 @@ class CaptureDataFileOutput {
   } catch(err) {
     console.log("ES100 not supported :(")
   }*/
+
+
+
+
+  this.parseStructureIdInfo = (inputEle) => {
+
+    if ( !inputEle ) {
+      return null;
+    }
+
+    try {
+
+      if ( $.trim(inputEle.val()) ) {
+        // Yeah, so let's say one literally types in:
+        // #{a} 99 ' by 77" #3 @West \right \r\n
+        // then inputEle.val() will return in a string on the console
+        // in debugger at least:
+        // "#{a} 99 ' by 77" #3 @West \right \r\n"
+        var t = $.trim(inputEle.val());
+        // and should be fine to write any of that to file because
+        // just the ascii chars are stored apparently
+        // and it shouldn't be possible to enter control chars into the
+        // text input (?)
+        // So just trim beginning and ending spaces
+        // Truncation or padding is handled in the header prep code
+        // for example, search this code file for "TankId"
+        return t;
+      } else {
+        return null;
+      }
+
+    } catch (e) {
+      console.error("Error capture-data parse Structure Id Info: ");
+      console.error(e);
+      return null;
+    }
+
+  }
+
+
+
+
+  // Constructed inits are not hoisted ...come after the function declaration
+  this.structureIdInfo = this.parseStructureIdInfo(structureIdInfoInputEle);
+
+
+
+
 
 
   // still inside constructor
@@ -639,8 +689,9 @@ class CaptureDataFileOutput {
           // this
           // Tank Id Information
           len = parseInt(optionsJson.headerData.tankId.lengthBytes);
+          let ti = this.structureIdInfo ? this.structureIdInfo : optionsJson.headerData.tankId.value.toString();
           x = Buffer.from(
-            optionsJson.headerData.tankId.value.toString()
+            ti
               .substr(0, len).padEnd(len, ' ') // pad with space char
           );
           x.copy(this.headerByteArray, posn);

@@ -48,6 +48,11 @@ Much of which comes from excellent information available on the web, and is note
 
 ### Revisions
 
+- **0.0.9** - alpha
+  - Incremented revision since previous version was packaged for Mac and Win releases 
+  - Adds structure id information UI and updated UTR output matching it for data-capture focused UI/UX
+  -
+
 - **0.0.8** - alpha - Adds customized batch capture output demo format ("UTR file") to match a user-specific data work flow for legacy compatibility with their software and hardware system. Includes as well a related data-capture-focused UI/UX. Configurable via json config files and simply adjusting source code as well.
 
 NOTE: If you have made any previous customizations for the packaged control buttons and etc using this feature in the software, you'll probably need or want

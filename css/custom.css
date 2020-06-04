@@ -210,6 +210,21 @@ p.custom-control-section .switch {
   margin-left: 4px;
   margin-top: 6px;
 }
+/* */
+#divStructureIdInfo.input-field {
+  margin-top: 0.6em;
+}
+label#labelForStructureIdInfo.active {
+  line-height: 1.5em;
+}
+label#labelForStructureIdInfo {
+  line-height: 0.5em;
+}
+input#structureIdInfo {
+  height: 1.5em;
+  margin-bottom: 0;
+}
+/* */
 span#filesWrittenBadge.badge {
   height: 18px;
   line-height: 18px;

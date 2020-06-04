@@ -229,7 +229,7 @@ EnableCaptureButtons = () => {
     d.find( $(i) ).removeClass('disabled');
   });
 
-  $('#filesWrittenBadge').removeClass('grey').addClass('blue lighten-2')
+  $('#filesWrittenBadge').removeClass('grey').addClass('blue lighten-2');
 
 } // End of: enableCaptureButtons
 
@@ -295,15 +295,19 @@ addButtonLogicFromJson = ( jsonButtons ) => {
             endOfCaptureBatch();
             $('#btnCaptureStop').addClass("disabled");
             $('#btnCaptureStart').removeClass("disabled");
+            $('#structureIdInfo').prop('disabled', false);
           }
 
           if ( jb.mapToButtonId === 'btnCaptureStart' ) {
             $('#btnCaptureStop').removeClass("disabled");
             $('#btnCaptureStart').addClass("disabled");
+            $('#structureIdInfo').prop('disabled', true);
           }
 
           // Then send the command
           var d = $('#capture_ui_directory_select').find("input").val();
+
+          // the command is implemented in sprenderer
           controlPortSendData(jb.command, jb.returnDataTo, jb, d );
         });
     }
@@ -358,6 +362,8 @@ UserInterface.Ready = () => {
   //$('#capture_ui_current_filename div:last-child').text("No output file created yet ... this will show after STARTing acquisition ...");
   $('#uiProgressTextBar').text("No output file created yet ... this will show after STARTing acquisition ...");
 
+  $('#structureIdInfo').prop('disabled', false);
+
 }
 
 
@@ -379,7 +385,7 @@ UISetupMultipaneCharts = ( nChans ) => {
   // It is called again here for now because it is called in pairs switching
   // from multiChart to default of chart -- one cancels the previous and the next
   // starts the new mode -- without this, we are left in cancel mode so adding
-  // this here starts the RenderCharts again 
+  // this here starts the RenderCharts again
   mainWindowUpdateChartData(null);
 }
 
@@ -389,6 +395,26 @@ UISetupMultipaneCharts = ( nChans ) => {
 
 GetNumberOfChannels = () => {
   return MainWindowGetNumberOfChannels(); // also declared within mainWindow.html script, thus this module must be loaded from within mainWindow.html
+}
+
+
+
+
+
+
+UserInterface.GetStructureIdInfoInput = () => {
+
+  ele = null;
+
+  if ( $('#structureIdInfo') ) {
+    if ( $('#structureIdInfo').is(":visible") ) {
+      ele = $('#structureIdInfo');
+    }
+  }
+
+  return ele;
+
+
 }
 
 

@@ -10,19 +10,41 @@
 
 
 
+
+
+
   <div class="row">
     <div id="capture_ui_status_indicators" class="col s12">
       <!-- Status --><!-- Top -->
+
       <!-- Left -->
-      <button id="btnFilesWritten" class="btn-small blue lighten-4 disabled">
-        Files Written
-        <span id="filesWrittenBadge" class="new badge grey">0</span>
-      </button>
+      <div class="col s3">
+        <button id="btnFilesWritten" class="btn-small blue lighten-4 disabled">
+          Files Written
+          <span id="filesWrittenBadge" class="new badge grey">0</span>
+        </button>
+      </div>
+
+      <!-- Target Scan Structure Info Tag that goes into file -->
+      <div id="divStructureIdInfo" class="input-field col s6">
+        <label id="labelForStructureIdInfo" for="structureIdInfo">Structure ID Information (Optional) [64 Characters Max]</label>
+        <input disabled id="structureIdInfo" type="text" />
+      </div>
+
       <!-- Right -->
-      <button id="btnErrors" class="btn-small red lighten-4 disabled right">Errors</button>
-      <button id="btnWarnings" class="btn-small orange lighten-4 disabled right">Warnings</button>
+      <div class="col s3">
+        <button id="btnErrors" class="btn-small red lighten-4 disabled right">Errors</button>
+        <button id="btnWarnings" class="btn-small orange lighten-4 disabled right">Warnings</button>
+      </div>
+
     </div>
   </div>
+
+
+
+
+
+
 
 
 

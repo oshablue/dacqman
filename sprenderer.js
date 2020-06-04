@@ -48,7 +48,7 @@ var time;
 
 
 
-// TODO -- static --> and then --> callback structure for correct data destination
+
 
 
 SerialPort.list((err, ports) => {
@@ -208,6 +208,11 @@ Ftdi.find( function(err, devices) {
 
 
 
+
+
+
+
+
 // TODO 11/27/19
 // - complete wiring up the open/close/testwrite buttons and diable/enable
 //   functionality for the control port
@@ -277,6 +282,9 @@ var serialOpenByName = function (name) {
   port.open()
 }
 /* ABOVE: Standard VCP Serial port, works with AppleUSBFTDI too */
+
+
+
 
 
 
@@ -432,6 +440,10 @@ var devSerialOpenByName = function (name) {
 
 
 
+
+
+
+
 var btnDataPortClick = function(button) {
   if ( $(button).hasClass("green") === false ) {
     //console.log("data port button clicked: but button is not green = active port - so, returning");
@@ -444,6 +456,8 @@ var btnDataPortClick = function(button) {
     }
   }
 }
+
+
 
 
 
@@ -736,6 +750,9 @@ var openDataPort = function(portHash) {
 
 
 
+
+
+
 var getVcpPortNameFromPortInfoHash = function (infoHash) {
   var serialNumberLessAorB = infoHash.serialNumber.substr(0, infoHash.serialNumber.length - 1);
   var serialNumberWithAorB = infoHash.serialNumber;
@@ -777,6 +794,9 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   return $(t).text();
 
 }
+
+
+
 
 
 
@@ -939,6 +959,9 @@ var openControlPort = function(portHash) {
 
 
 
+
+
+
 // TODO move to utils
 // https://www.w3resource.com/javascript-exercises/javascript-string-exercise-28.php
 function hexBufToAscii (dataAsHexBuf) {
@@ -954,6 +977,8 @@ function hexBufToAscii (dataAsHexBuf) {
 
 
 
+
+
 var serialClose = function () {
   if ( port ) port.close ( function (err) {
     console.log('port.close called')
@@ -962,6 +987,8 @@ var serialClose = function () {
     }
   });
 }
+
+
 
 
 
@@ -982,6 +1009,8 @@ var controlPortClose = function() {
 
 
 
+
+
 var controlPortOpen = function() {
   openControlPortThatIsChecked();
 }
@@ -993,16 +1022,20 @@ var controlPortOpen = function() {
 
 
 var serialCheckbox = function (checkbox) {
+
   // Check that one data and one control port are selected
   var nDataChecked = $("[id^=UseForData][type=checkbox]:checked").length;
   var nControlChecked = $("[id^=UseForControl][type=checkbox]:checked").length;
+
   if ( nDataChecked === 1 && nControlChecked === 1 ) {
+
     console.log( "Ok, one data and one control port selected.");
     // Now populate/show/enable the "Go" button to open ports and prep
     var h = `<button id="serialPortGoButton" class="waves-effect waves-light btn-large" onclick="beginSerialComms(this)"><i class="material-icons left">device_hub</i>Connect to Ports and Begin Listening for Data</button>`;
     $('#ports_go_button').html(h).removeClass('hide');
-    //YouFace.Ready();
+
   } else {
+
     // If nothing found, indicate the situation
     // Was: or optionally:
     //$('#ports_go_button').addClass('hide');
@@ -1013,10 +1046,12 @@ var serialCheckbox = function (checkbox) {
       .css( "line-height", "18px" )
       .css( "pointer-events", "none")       // Make it act like a disabled button
       .text("Ports couldn't be auto-selected. If you see them listed, you can select them manually... Or Plug-In/Re-Plug and Reload?");
-    // For testing purposes, you may want to enable this
-    //YouFace.Ready();                     // Instantiated in mainWindow.html
   }
-}
+
+} // end of: serialCheckbox
+
+
+
 
 
 
@@ -1030,9 +1065,16 @@ var getSelectedDataPortInfoHash = function() {
 
 
 
+
+
+
 var getSelectedControlPortInfoHash = function() {
   return checkboxToPortHash($("[id^=UseForControl][type=checkbox]:checked"));
 }
+
+
+
+
 
 
 
@@ -1053,11 +1095,15 @@ var beginSerialComms = function(button) {
   // Then collapse the selection window ...
   $("#serialPortSelectionAccordion").collapsible('close'); //.children('li:first-child'));
 
-  // Enable anything else if/as needed
+  // Enable anything else if/as needed, esp. in the UI/UX - here, the selected interface
+  // including potentially the data-capture-focused UI/UX
   // This instance variable, YouFace, comes from mainWindow.html
   YouFace.Ready();
 
 }
+
+
+
 
 
 
@@ -1073,10 +1119,16 @@ var openControlPortThatIsChecked = function() {
 
 
 
+
+
+
 var openDataPortThatIsChecked = function() {
   var dataPortHash = checkboxToPortHash($("[id^=UseForData][type=checkbox]:checked"));
   openDataPort(dataPortHash);
 }
+
+
+
 
 
 
@@ -1094,6 +1146,10 @@ var checkboxToPortHash = function(checkbox) {
   //console.log(JSON.stringify(r));
   return r;
 }
+
+
+
+
 
 
 
@@ -1122,6 +1178,9 @@ var serialTestWrite = function () {
 
 
 
+
+
+
 var controlPortSendStuff = function (textInput) {
   //console.log(textInput);
   var t = $(textInput).val();
@@ -1136,6 +1195,10 @@ var controlPortSendStuff = function (textInput) {
     console.log("I'd really like to help you man ...");
   }
 }
+
+
+
+
 
 
 
@@ -1221,12 +1284,22 @@ var serialSendData = function ( commandAndType, returnDataTo) {
 
 
 
+
+
+
+
 var showControlPortOutput = function ( asciiStuff ) {
 
   $('#cmdOutput').prepend(asciiStuff); // or prepend()
   // nogo ... :
   //$('#cmdOutput').scrollTop($('#cmdOutput').prop("scrollHeight"));
 }
+
+
+
+
+
+
 
 
 
@@ -1399,7 +1472,7 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
           )
           .then( (res) => {
             if ( !res ) {
-              console.error("setupFileCaptureCustomBatches returned : " + res + ", so ... returning, ie not proceeding with the command processing");
+              console.error("setup File Capture Custom Batches returned : " + res + ", so ... returning, ie not proceeding with the command processing");
               launchProgressCountdown(0);
             } else {
               console.log("about to call controlPortSendData_SetupAndSendCommands");
@@ -1410,7 +1483,7 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
             }
           })
           .catch( (e) => {
-            console.error("Error proceeding after setupFileCaptureCustomBatches and doing the command processing and sending: " + e);
+            console.error("Error proceeding after setup File Capture Custom Batches and doing the command processing and sending: " + e);
             launchProgressCountdown(0);
           });
         } // end: if doFileCaptureCustomToDirectory
@@ -1423,6 +1496,10 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
   }
 
 }
+
+
+
+
 
 
 
@@ -1516,6 +1593,9 @@ var controlPortSendData_SetupAndSendCommands = function(commandAndType, override
 
 setupFileCaptureCustomBatches = ( outputDirectory, numberOfWaveformsPerFile ) => {
 
+  // Yes, functionally, at this writing,
+  // this is called each time we "start" acquisition from the data capture focused UI/UX
+
   captureDataFileOutputBatch = null;
 
   captureDataFileOutputBatch = new CaptureDataFileOutput({
@@ -1523,7 +1603,8 @@ setupFileCaptureCustomBatches = ( outputDirectory, numberOfWaveformsPerFile ) =>
     numberOfWaveformsPerFile: numberOfWaveformsPerFile,
     numberOfSamplesPerWaveform : defaultHardwareWaveformLengthSamples,  // Same as below
     numberOfBytesPerSample: defaultHardwareWaveformBytesPerSample,       // From mainWindow
-    waveformSampleFrequencyHz: defaultHardwareWaveformSampleFrequencyHz   // Same as comment above
+    waveformSampleFrequencyHz: defaultHardwareWaveformSampleFrequencyHz,   // Same as comment above
+    structureIdInfoInputEle: YouFace.GetStructureIdInfoInput()
   });
 
   return new Promise ((resolve, reject) => {
@@ -1537,7 +1618,7 @@ setupFileCaptureCustomBatches = ( outputDirectory, numberOfWaveformsPerFile ) =>
       resolve(true);
     })
     .catch ( e => {
-      console.error("setupFileCaptureCustomBatches error in chain: " + e);
+      console.error("setup File Capture Custom Batches error in chain: " + e);
       reject(false);
     });
 
@@ -1545,6 +1626,9 @@ setupFileCaptureCustomBatches = ( outputDirectory, numberOfWaveformsPerFile ) =>
 
   //return everythingIsFine;
 }
+
+
+
 
 
 
@@ -1582,6 +1666,11 @@ var setupFileCapture = ( durationMs, maxFileSizeBytes ) => {
   });
 
 }
+
+
+
+
+
 
 
 var closeAndCleanupFileCapture = function() {
@@ -1708,6 +1797,9 @@ var cancelCustomControlButtonCommand = function() {
 
 
 
+
+
+
 var controlPortSendDataFromTextInput = function ( button, commandAndType) {
 
   // At this draft, button may be a button control or a p with range child
@@ -1824,6 +1916,9 @@ var controlPortSendDataFromTextInput = function ( button, commandAndType) {
   }
 
 } // End of: controlPortSendDataFromTextInput
+
+
+
 
 
 
