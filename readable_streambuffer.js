@@ -139,6 +139,10 @@ var ReadableStreamBuffer = module.exports = function(opts) {
     return size;
   };
 
+  this.chunkSize = function() {
+    return chunkSize;
+  };
+
   this.maxSize = function() {
     return buffer.length;
   };

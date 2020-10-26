@@ -496,7 +496,22 @@ var btnControlPortClick = function(button) {
 var sofFound = false;
 var srcIndexStart = 0;
 var openDataPort = function(portHash) {
-  console.log("openDataPort: " + JSON.stringify(portHash));
+    if ( $("#hardware-id").text().includes("RS104") ) {
+      openDataPortVcp(portHash);
+    } else {
+      openDataPortFtdi(portHash);
+    }
+}
+
+
+
+
+
+
+
+
+var openDataPortFtdi = function(portHash) {
+  console.log("openDataPortFtdi: " + JSON.stringify(portHash));
 
   dport = new Ftdi.FtdiDevice({
     locationId: portHash.locationId,
@@ -632,7 +647,7 @@ var openDataPort = function(portHash) {
       console.log("looking for SOF (sofFound === false)");
 
       buf.push(...data);
-      //console.log(buf);
+      console.log(buf);
 
       var sofSize = 12;
       var bufSize = 4095;
@@ -750,6 +765,169 @@ var openDataPort = function(portHash) {
 
 
 
+var openDataPortVcp = function(portHash) {
+  console.log("openDataPortVcp: " + JSON.stringify(portHash));
+
+  var comName = getVcpPortNameFromPortInfoHash(portHash);
+
+  var settings = {
+    autoOpen: false,
+    baudRate: 2000000,
+    databits: 8,
+    stopbits: 1,
+    parity  : 'none',
+  }
+
+  dport = new SerialPort(comName, settings, function(err) {
+    if ( err ) {
+      return console.log('sprenderer: openDataPortVcp: error on create new VCP style data port: ', err.message);
+    }
+  });
+
+  dport.on('error', function(err) {
+    console.log('dport.on error: ', err);
+    // TODO -- UI error panel/log/indicator, etc.
+  });
+
+  dport.on('close', function(err) {
+    console.log('dport.close event subscription ');
+    /*console.timeEnd("timeOpen");
+    console.log("samples collected: " + samples);
+    const difftime = process.hrtime(time);
+    // difftime contains [seconds, nanoseconds] difference from start time
+    const nsps = 1e9; // nano sec per sec
+    var dt_sec = difftime[0] + difftime[1]/nsps;
+    var sps = samples / dt_sec;
+    console.log(`Delta time by hrtime: ${dt_sec} seconds giving ${sps} samples per second for ${samples} samples.`);
+    */
+
+    $("#btnDataPortStatus").removeClass('green pulse').addClass('blue-grey');
+    $("#btnListeningForData").removeClass('pulse').addClass('disabled');
+    $("#btnSilenceIndicators").addClass('disabled');
+
+    mainWindowUpdateChartData(null); // should call the cancel on the requestAnimationFrame
+
+  });
+
+  dport.on('open', function(err) {
+    // TODO checkbox for run test on open
+    //$("#serialPortGoButton").addClass("lighten-5");
+    //$("#serialPortGoButton").removeClass("waves-light");
+    //console.log(dport);
+    $("#serialPortGoButton").addClass("red");
+    $("#btnDataPortStatus").removeClass('hide blue-grey').addClass('green'); // TODO-TBD Used to have the pulse class set, removed for UI overlays TODO could make this conditional
+    $("#btnListeningForData").removeClass('hide disabled').addClass('pulse');
+    $("#active_ports_ui_status_indicators").removeClass('hide');
+    $("#active_ports_ui_buttons").removeClass('hide');
+    $("#btnSilenceIndicators").removeClass('disabled');
+    console.log('dport.on open');
+    //console.time("timeOpen");
+    //time = process.hrtime();  // restart the timer, storing in "time"
+
+    sofFound = false;
+
+    mainWindowUpdateChartData(null); // init the loop for requestAnimationFrame
+
+  });
+
+  const sof = [0xaa, 0x55, 0xaa, 0x55, 0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0xff, 0x00];
+  const sofSkipMatchByte = [ 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0];
+  dport.on('data', function (data) {
+
+    // Debugging the RS485 serial data
+    // below shows that indeed in the _pool all of the data is present
+    //console.log(dport);
+    //console.log(data.length); // this shows correct number of iterative data receives and total number of samples
+    console.log("dport.on.data");
+
+    var pushStartIndex = 0;
+
+    if ( !sofFound ) {
+
+      // Wait for and start dumping data on SOF found
+      // SOF goes:
+      // initial begin
+      // sof[0] <= 8'h aa;
+      // sof[1] <= 8'h 55;
+      // sof[2] <= 8'h aa;
+      // sof[3] <= 8'h 55;
+      //
+      // sof[8] <= 8'h ff;
+      // sof[9] <= 8'h 00;
+      // sof[10] <= 8'h ff;
+      // sof[11] <= 8'h 00;
+      // end
+
+      console.log("looking for SOF (sofFound === false)");
+
+      buf.push(...data);
+      //console.log(buf); // this will just show the first data while sof is not found
+
+
+
+      var sofSize = 12;
+      var bufSize = 4095;
+      const bufMult = 10;
+
+      if ( buf.length > (sofSize -1) && buf.length < (bufSize * bufMult + 1 - sofSize) ) {
+
+        var matchIndex = buf.indexOf(0xAA, srcIndexStart);
+        console.log("matchIndex: " + matchIndex + " for srcIndexStart: " + srcIndexStart);
+
+        if ( matchIndex > -1 ) {
+
+          var stillGood = true;
+          var i = 0;
+          while ( stillGood  && ( i < sofSize ) ) {
+            if ( !sofSkipMatchByte[i] ) {
+              stillGood = buf[ matchIndex + i ] === sof[ i ];
+            }
+            i++;
+          }
+
+          console.log("stillGood: " + stillGood + " for i breaking out of while at: " + i);
+          if ( stillGood ) {
+            sofFound = true;
+            pushStartIndex = matchIndex; // yes, we'll keep the SOF bytes in the graph output / buffer
+            console.log("pushing starting from: " + pushStartIndex + " to stream buffer from source buffer of size: " + buf.length);
+            var b = new Buffer.from(buf.slice(pushStartIndex));
+            // Yes, we want to "put" a typeof Buffer here - otherwise weird behavior with current versions, perhaps all versions
+            ourReadableStreamBuffer.put(b); //, buf.length));
+            //console.log(buf.slice(pushStartIndex, buf.length));
+            buf = [];
+            srcIndexStart = 0; //??// already reset on each port open, so not needed?
+          } else {
+            srcIndexStart += i;
+          }
+
+        } else {  // match not found
+          srcIndexStart += buf.length;
+        }
+
+      } else if ( buf.length > (bufSize * bufMult - sofSize) ) {
+        console.log(`buf.length > ${bufSize * bufMult - sofSize} and not sofFound, so aborting the SOF test and just pushing data to stream regardless. buf size: ${buf.length}`);
+        sofFound = true;
+        buf = [];
+        srcIndexStart = 0;
+      }
+      console.log("sofFound: " + sofFound + " set pushStartIndex: " + pushStartIndex);
+
+    } else {  // SOF has already been found
+      ourReadableStreamBuffer.put(data);
+    }
+
+    console.log("sprenderer: ");
+    console.log(ourReadableStreamBuffer.size());
+
+  });   // end dport.on('data'...)
+
+  dport.open();
+
+}
+
+
+
+
 
 
 
@@ -782,8 +960,8 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   // Win work around, as described above
   if ( t.length == 0 ) {
     console.log(`t.length is 0 for ${serialNumberLessAorB} - maybe this is Windows? Checking pnpId column...`);
-    if ( !suffix.match(/[A-B]/) ) {
-      console.log(`yeah, suffix is not A or B, seems probable...full serial number with suffix: ${serialNumberWithAorB}`);
+    if ( !suffix.match(/[A-B]/) || (process.platform == "win32") ) {
+      console.log(`yeah, suffix is not A or B, or process.platform is win32 ... seems probable...full serial number with suffix: ${serialNumberWithAorB}`);
       t = $('#vcp_ports').find(".cv:contains('" + serialNumberWithAorB + "')").closest("tr").find("td[data-header='comName']").find(".cv");
       console.log("2nd tier: number of VCP comNames matching the selected control port serialNumber: " + t.length);
     }
@@ -1034,6 +1212,9 @@ var serialCheckbox = function (checkbox) {
     var h = `<button id="serialPortGoButton" class="waves-effect waves-light btn-large" onclick="beginSerialComms(this)"><i class="material-icons left">device_hub</i>Connect to Ports and Begin Listening for Data</button>`;
     $('#ports_go_button').html(h).removeClass('hide');
 
+    // If both are checked, assume the hardware identity ... for now ...
+    guessAndSetHardwareIdentity();
+
   } else {
 
     // If nothing found, indicate the situation
@@ -1050,6 +1231,30 @@ var serialCheckbox = function (checkbox) {
 
 } // end of: serialCheckbox
 
+
+
+
+
+
+
+var guessAndSetHardwareIdentity = function() {
+
+  console.log("Guessing hardware ID: ");
+  // TODO put in I dunno some config or param place - extract basically
+  var descrips = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains('COM485')");
+  var hw = "Undetermined";
+  if ( descrips.length === 2 ) {
+    // Assume HDL-0104-RS104
+    console.log("Found 2x *COM485* in the device descriptions ... assuming RS104");
+    hw = "HDL-0104-RS104 (\"RS104\")";
+  } else {
+    // Assume HDL-0108-RSCPT
+    console.log("Did not find 2x *COM485* in the device descriptions ... assuming HDL-0108-RSCPT");
+    hw = "HDL-0108-RSCPT";
+  }
+  $("#hardware-id").text(hw);
+
+} // end of: guessAndSetHardwareIdentity
 
 
 
@@ -1373,6 +1578,28 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
             // mainWindow.html at the moment
             // Anyway, reset and just use a single chunksize buffer
             resetReadableStream(1);
+            // If readable stream is finished, but buffer isn't quite full, there will
+            // be nothing chunked out to pushed the readable event.  This might matter
+            // for non-standard hardware, hardware in dev, or some scenario where not
+            // all data is getting through, or some other test mode.  Hence:
+            //if ( chunkMultiple == 1 ) {
+              setTimeout( function() {
+                if ( ourReadableStreamBuffer.size() < ourReadableStreamBuffer.chunkSize() ) { //ourReadableStreamBuffer.chunkSize ) {
+                  console.log( "mainWindow: ourReadableStreamBuffer.size()" + ourReadableStreamBuffer.size() + " is less than chunkSize..." );
+                  console.log ( "Appending zero data to push data to chart...");
+                  // https://stackoverflow.com/questions/1295584/most-efficient-way-to-create-a-zero-filled-javascript-array
+                  // See speed comparison entry circa 2020
+                  let n = ourReadableStreamBuffer.chunkSize() - ourReadableStreamBuffer.size();
+                  //let a = new Array(n);
+                  //for (let i=0; i<n; ++i) a[i] = 0;
+                  let a = Buffer.alloc(n, 0);
+                  console.log("adding " + n + " elements ...");
+                  ourReadableStreamBuffer.put(a);
+                  console.log("ourReadableStreamBuffer.size(): " + ourReadableStreamBuffer.size());
+                }
+              }, 500);
+            //}
+
             break;
 
           case "captureBufferMultiple":

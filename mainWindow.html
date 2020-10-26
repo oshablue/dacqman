@@ -149,6 +149,10 @@
             </li>
           </ul>
 
+          <div id="hardware-id-container">
+            <button id="hardwareIdButton" class="btn-small">Hardware is: <span id="hardware-id">Undetermined</span></button>
+          </div>
+
           <div id="ports_go_button">
             <button id="portsGoButtonInactive" class="btn-large disabled pulse"><i class="material-icons left">device_hub</i>Waiting for serial port enumeration ...</button>
           </div>
@@ -627,6 +631,8 @@
 
     var resetReadableStream = function(chunkMultiple) {
 
+      console.log("resetReadableStream");
+
       curChanToGraphSingle = 0;
       curChanToGraphMulti = 0;
       singleChartBuf =  Buffer.alloc(defWfLenB, 127);
@@ -654,7 +660,10 @@
         ourReadableStreamBuffer.pipe(writeStream);
       }*/
 
+
       ourReadableStreamBuffer.on('readable', function(data) {
+
+        console.log("ourReadableStreamBuffer.(on).readable");
 
         try {
 

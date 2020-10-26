@@ -1,0 +1,34 @@
+{
+  "fileinfo" :{
+    "description" : "Identify and list functional data for different hardware."
+  },
+
+  "hardwares" : [
+
+    {
+      "fullname" : "HDL-0108-RSCPT",
+      "shortname" : "RS8",
+      "numberOfChannels" : 8,
+      "waveformLengthSamples" : 4095,
+      "waveformBytesPerSample" : 1,
+      "comPortDeviceIdTextTypicallyContains" : "",
+      "comments" : [
+        "Blank comPortDeviceIdTextTypicallyContains is because it is implemented as deafult"
+      ]
+    },
+
+    {
+      "fullname" : "HDL-0104-RS104",
+      "shortname" : "RS104",
+      "numberOfChannels" : 4,
+      "waveformLengthSamples" : 4095,
+      "waveformBytesPerSample" : 1,
+      "comPortDeviceIdTextTypicallyContains" : "COM485",
+      "comments" : [
+        "None yet"
+      ]
+    }
+
+  ]
+
+}
