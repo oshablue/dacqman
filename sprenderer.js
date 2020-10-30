@@ -772,7 +772,7 @@ var openDataPortVcp = function(portHash) {
 
   var settings = {
     autoOpen: false,
-    baudRate: 2000000,
+    baudRate: 2000000, //2000000, //1000000 // 1Mbps works too if f/w is updated to match
     databits: 8,
     stopbits: 1,
     parity  : 'none',
@@ -838,7 +838,7 @@ var openDataPortVcp = function(portHash) {
     // below shows that indeed in the _pool all of the data is present
     //console.log(dport);
     //console.log(data.length); // this shows correct number of iterative data receives and total number of samples
-    console.log("dport.on.data");
+    //console.log("dport.on.data");
 
     var pushStartIndex = 0;
 
@@ -916,8 +916,8 @@ var openDataPortVcp = function(portHash) {
       ourReadableStreamBuffer.put(data);
     }
 
-    console.log("sprenderer: ");
-    console.log(ourReadableStreamBuffer.size());
+    //console.log("sprenderer: ");
+    //console.log(ourReadableStreamBuffer.size());
 
   });   // end dport.on('data'...)
 
@@ -1585,17 +1585,22 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
             //if ( chunkMultiple == 1 ) {
               setTimeout( function() {
                 if ( ourReadableStreamBuffer.size() < ourReadableStreamBuffer.chunkSize() ) { //ourReadableStreamBuffer.chunkSize ) {
-                  console.log( "mainWindow: ourReadableStreamBuffer.size()" + ourReadableStreamBuffer.size() + " is less than chunkSize..." );
-                  console.log ( "Appending zero data to push data to chart...");
-                  // https://stackoverflow.com/questions/1295584/most-efficient-way-to-create-a-zero-filled-javascript-array
-                  // See speed comparison entry circa 2020
-                  let n = ourReadableStreamBuffer.chunkSize() - ourReadableStreamBuffer.size();
-                  //let a = new Array(n);
-                  //for (let i=0; i<n; ++i) a[i] = 0;
-                  let a = Buffer.alloc(n, 0);
-                  console.log("adding " + n + " elements ...");
-                  ourReadableStreamBuffer.put(a);
-                  console.log("ourReadableStreamBuffer.size(): " + ourReadableStreamBuffer.size());
+                  console.log( "mainWindow: ourReadableStreamBuffer.size()" + ourReadableStreamBuffer.size() + " is less than chunkSize " + ourReadableStreamBuffer.chunkSize() );
+                  if ( ourReadableStreamBuffer.size() < 1 ) {
+                    console.log("... looks like we got some dribble ... probably a CCC firmware DEV TODO ");
+                  } else {
+                    console.log ( "Appending zero data to push data to chart...");
+                    // BTW
+                    // https://stackoverflow.com/questions/1295584/most-efficient-way-to-create-a-zero-filled-javascript-array
+                    // See speed comparison entry circa 2020
+                    let n = ourReadableStreamBuffer.chunkSize() - ourReadableStreamBuffer.size();
+                    //let a = new Array(n);
+                    //for (let i=0; i<n; ++i) a[i] = 0;
+                    let a = Buffer.alloc(n, 0);
+                    console.log("adding " + n + " elements ...");
+                    ourReadableStreamBuffer.put(a);
+                    console.log("ourReadableStreamBuffer.size(): " + ourReadableStreamBuffer.size());
+                  }
                 }
               }, 500);
             //}

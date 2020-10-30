@@ -304,7 +304,7 @@ function DataChart({
   // Option in place here:
   // Highlight the chart when new data is added, allowing the last update to
   // fade out within 1000 ms - such that if no new data, chart background
-  // fades out 
+  // fades out
   this.flashColorTimeoutId;
 
   this.UpdateChartBuffer = function(newBuffer) {
@@ -315,7 +315,7 @@ function DataChart({
     this.flashColorTimeoutId = setTimeout( function() {
       $('#' + parentElementIdName).removeClass("flash-color", 1000);
     }, 1000);
-    newBuffer.copy(this.chartBuffer, 0, 0, 4096);
+    newBuffer.copy(this.chartBuffer, 0, 0, 4096); // was 4096
     freshData = true;
   }
 
