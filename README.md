@@ -49,7 +49,7 @@ Much of which comes from excellent information available on the web, and is note
 ### Revisions
 
 - **0.0.9** - alpha
-  - Incremented revision since previous version was packaged for Mac and Win releases 
+  - Incremented revision since previous version was packaged for Mac and Win releases
   - Adds structure id information UI and updated UTR output matching it for data-capture focused UI/UX
   -
 
@@ -289,6 +289,11 @@ just meaning how much the UI update buffer has to be decimated to
 keep pace easily with graph updates and without buffer overflow.  
 There are probably other code mods as well that could clean up
 (make more efficient) the UI updates and buffer processing.
+
+See:
+- https://bocoup.com/blog/d3js-and-canvas
+- https://medium.com/@xoor/implementing-charts-that-scale-with-d3-and-canvas-3e14bbe70f37
+- https://www.freecodecamp.org/news/d3-and-canvas-in-3-steps-8505c8b27444/
 
 
 1. Add a data frame parser to the UI as a start too.  Currently,
