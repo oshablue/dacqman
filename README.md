@@ -11,9 +11,14 @@ Dacqman is demo software sketch(es) aka DevKit for the HDL-0108-RSCPT OshaBlue 8
 
 ### Website (additional/related info)
 
-http://oshablue.com/bsides/
+https://oshablue.com/doc/?s=dacqman
 
-and search for or select: HDL-0108-RSCPT related items
+https://oshablue.com/doc/?s=hdl-0108-rscpt
+
+https://oshablue.com/doc/?s=hdl-0104-rs104
+
+Other search keys: RS8, RS104
+
 
 ### What is Dacqman for and What is its Status?
 
@@ -154,21 +159,102 @@ for reference.
 
 #### Windows
 
-No data.  This App worked out of the box.  You mileage may vary.
-Let me know.  I'll test too, coming up ...
+##### Drivers and General
+
+Some driver information is listed at: https://oshablue.com/doc/windows-10-fresh-atom-ide-apio/
+and beyond that some documented OS-specific driver set up and sequencing is needed.
+
+It may be that the FTDI CDM Windows driver files and/or setup package are not
+needed as of this writing on Win 10 Home/Pro as Windows Update may grab them.
+
+In testing here, the driver versions matched (Windows Update versus manually
+  run the FTDI driver setup package or the select the files available in the
+  FTDI driver file package from their website).
+
+On both a real Win 10 Pro and VM (Fusion on Mac OS X) Win 10 Home the command
+`npm install -g windows-build-tools` successfully installed and built both
+VS 2017 Build Tools (shows in Start Menu, requires Visual Studio Installer to
+  fully remove) and the Windows SDK 10 - both are needed to build eg node-ftdi.
+  See node-gyp documentation and also windows-build-tools docs.  This is discussed
+  in other sections of this readme.  However, the importance of the driver and baud
+  rate information, as noted in the next subsection matter a lot.
+
+However, on one Win 10 Home system on a compact (Wintel Pro) fanless solid state system,
+the app simply did not run. Well, it loads, tried standard window-build-tools,
+tried manually installing a VS 2017 C++ dev and Win 10 SDK as well as using the
+windows-build-tools like `npm --vs2015 install -g windows-build-tools` to install
+VS2015. In any/all cases, once the app loaded it immediately halted/broke with an
+error about not being able to load/find the ftdi.node file that clearly existed
+in the location shown in the errors, including debugging stepwise to watch the
+search process.  Similar issues working with creating the settings file in C:\Users\Me\AppData\Roaming\dacqman\ -- haven't yet figured this one out. Will see if
+perhaps a packaged Win exe works on this system.  Seems like some kind of access
+error, though no explicit permission error is shown and installation permissions
+and git-bash user levels (eg Run As Admin... or not) were carefully checked
+and repeated.  So this is TBD.  Caveat.
+
+##### Baud Rate (Aliasing)
+
+On these Win 10 Pro/Home systems where the `npm start` at least runs, baud rate
+aliasing is required.
+
+Without it, for example, opening the data VCP at 2000000 works but the data is
+corrupted - you'll see spikes and such throughout.  Verified several times, comparing
+Mac OS X versus Windows using plain serial terminal (CoolTerm) and all sorts of tests.
+
+Could not see any activity on the TXDEN/ZT485E !RE or DE pins/signals on the
+USB-COM485-PLUS2 itself.  Just corrupted data.  Verified by using the CCC/RS104
+test ramp output.  Shows there fundamentally.
+
+The Fix: Use Baud Rate aliasing as noted in FTDI's documents about this. Search for it.
+
+The method here, since the driver was already installed:
+
+Run As Admin => git-bash
+`cd C:\Windows\System32\DriverStore\FileRepository\ftdiport.inf_amd_yada_yada`
+`nano ftdiport.inf`
+Locate the key `[FtdiPort.NT.HW.AddKey]`
+and locate the long line that contains Hex coded values for each of the standard
+baud rates.
+Look for the sequence (shown here in 64-bit format):
+9C,80,00,00 and then the next sequence of 4 bytes is what we need to edit.
+So, we are changing: 4E,C0,00,00 which means => C04E (is the actual 2-byte 16-bit sequence)
+where bits 15 and 14 are the sub-integer divisor, here they are 11 (the highest
+  two bits of the C0), and bits 13:0 are the divisor, in this case 04E.
+We change this to read:
+01,00,00,00 which means => 0001
+Which sets the sub-integer divisor to zero and the divisor to 1.
+This "1" is a special case that actually selects 2Mbps (2000000).
+Save the file.
+Using Windows Explorer, right-click this inf file and "Install" - should update
+the reg keys or whatever.
+This will effectively mean that when the user, in a standard Win COM port API
+or interface selects the baud rate of 38400 the driver will actual set up the
+chip on this channel (this VCP instance) to 2000000 or 2Mbps baud rate.
+This, obviously matters a lot in the code.
+On Mac, previous attempts to use baud rate aliasing were not successful - however
+they are apparently not needed either.  On Windows, at least the tested Win 10
+platforms, this is critical.  The spikes/lost samples etc went away after doing
+this, and of course updating the code to use 38400 as the baud rate.
+
+It's probably possible to create a simple custom .inf file included in the file
+package that can be used to load the drivers - and would contain this custom
+aliased baud rate.
 
 
-### Development Environment
+### Development Environment Setup Summary - Windows
 
-Initial steps, if not already done :
+Initial steps, if not already done: TODO let's clean this up:
 - [With a live Internet connection...]
 - Install notepad++ (search for it, use the installer)
 - Install Atom IDE
 - Install nvm-windows (search for it, use the installer)
 - Open a git-bash terminal window
 - git clone the repository & cd into it (there may be some retained built node-modules - delete ./node-modules so you can build them fresh for Windows)
-- nvm use 10.18.0 (see Windows packaging notes below for remaining items and notes about node versions) (if you haven't already done so)
+- nvm use 10.18.0 (see Windows packaging notes below for remaining items and notes about node versions) (if you haven't already done so) (may need an nvm install 10.18.0 first)
 - npm install
+  - You may need: `npm install -g windows-build-tools` to complete the install (because it builds stuff)
+    (for example, right-click the git-bash icon and Run As Administrator) (perhaps consider exiting bash
+    after this to restart as non-administrator until needed again)
 - npm start
 
 
@@ -289,11 +375,6 @@ just meaning how much the UI update buffer has to be decimated to
 keep pace easily with graph updates and without buffer overflow.  
 There are probably other code mods as well that could clean up
 (make more efficient) the UI updates and buffer processing.
-
-See:
-- https://bocoup.com/blog/d3js-and-canvas
-- https://medium.com/@xoor/implementing-charts-that-scale-with-d3-and-canvas-3e14bbe70f37
-- https://www.freecodecamp.org/news/d3-and-canvas-in-3-steps-8505c8b27444/
 
 
 1. Add a data frame parser to the UI as a start too.  Currently,
@@ -551,6 +632,45 @@ zero or letter B (at the time of this writing) should show up both in the VCP se
 App here as well as in the FTDI Device section.  The code at this writing will use the VCP
 interface to talk to the control port.
 
+
+#### RS104
+
+RS104 uses VCPs in the code implementation for both ports, not the async fifo style as the
+HDL-0104-RSCPT ("RS8") uses for its data port.
+
+##### Mac OS X
+
+When the USB-COM485-PLUS2 is connected to Mac OS X (10.14.6),
+`sudo kextstat | grep FTDI` shows that `com.apple.driver.AppleUSBFTDI (6.0.0)`
+is loaded.  And this handles the comms to/from the hardware just fine so far.
+Even at 2Mbps.
+
+
+##### Windows (10)
+
+Had previously installed libusbK for use with the Lattice Semi programmer cable
+or similar emulation for testing device programming from Windows.  
+See https://oshablue.com/doc/windows-10-fresh-atom-ide-apio/.  
+This grabs the connected USB-COM485-PLUS2 when it shows up.  So if you have this installed,
+you need to uninstall it or deactivate it.  Verify with Device Manager.  
+
+You can use the Zadig tool to deactivate the libusbk driver that gets loaded when this
+RS485 USB converter device is connected to your machine.  Download and run it.
+Select List All Devices to locate the connected USB-COM485-PLUS2 device.  It will
+show that libusbk is currently loaded.  And will offer to Replace it with WinUSB
+or something else of your choosing.  You would click Replace.  However, this might
+not get the FTDI drivers loaded.
+
+In this fresh Win 10 test scenario, did also use the FTDI VCP driver Setup package to install
+the FTDI drivers, it apparently installs both VCP and D2XX drivers.
+
+Then in Device Manager, right-click the libusbk device and click uninstall, making
+sure to check "delete driver".  Then when you disconnect and reconnect the adapter,
+it should load now the FTDI drivers you installed, and you should see two COM ports
+in the device manager's device tree.
+
+And if you need libusbk again for Lattice programming, you can use Zadig again
+to select and install the driver for that particular cable/device.
 
 
 

@@ -770,9 +770,20 @@ var openDataPortVcp = function(portHash) {
 
   var comName = getVcpPortNameFromPortInfoHash(portHash);
 
+  // Please see Readme and elsewhere for discussion about Windows,
+  // incl Win 10 Home/Pro and the need for baud rate aliasing
+  let thisBaud = 2000000; // For Mac OS X at this moment we can use the direct 2Mbps baud rate
+  // But for windows, we need to alias for reliable data
+  // Directions for baud rate aliasing and related choices are in the Readme
+  // At this time, we alias to 38400, a standard rate. Aliased to 2Mbps of course.
+  if ( process.platform == "win32") {
+    thisBaud = 38400;
+  }
+
+
   var settings = {
     autoOpen: false,
-    baudRate: 2000000, //2000000, //1000000 // 1Mbps works too if f/w is updated to match
+    baudRate: thisBaud, //2000000, //2000000, //1000000 // 1Mbps works too if f/w is updated to match
     databits: 8,
     stopbits: 1,
     parity  : 'none',
