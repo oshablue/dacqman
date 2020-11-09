@@ -772,6 +772,12 @@ var openDataPortVcp = function(portHash) {
 
   // Please see Readme and elsewhere for discussion about Windows,
   // incl Win 10 Home/Pro and the need for baud rate aliasing
+  // BTW see elsewhere notes here and in CCC FW regarding how
+  // Targeting this baud on the CCC FW was updated, and one slightly faster
+  // (within tolerance probably) clock on one board masked an issue of the
+  // real symbol pulse width being -4.5% while on the slower board it was
+  // more like -5.5% creating spikes in the data and corrupted SOF[1] typically,
+  // causing loss of WF streaming sync / appropriate snipping out of the WFs 
   let thisBaud = 2000000; // For Mac OS X at this moment we can use the direct 2Mbps baud rate
   // But for windows, we need to alias for reliable data
   // Directions for baud rate aliasing and related choices are in the Readme

@@ -1970,6 +1970,7 @@ class CaptureDataFileOutput {
 
           return new Promise ( (resolve, reject ) => {
 
+            //console.log(di);
             //console.log(`di.scan: ${di.scan}, di.chan: ${di.chan}`);
 
             // Only start storing data after the first channel 1 is found
@@ -2012,6 +2013,27 @@ class CaptureDataFileOutput {
                       var chartOut = Buffer.alloc( (stop - start) );
                       this.inDataBuffer.copy(chartOut, 0, start, stop); // base 0, start at beginning of new buffer, start at start, stop is not inclusive
                       MainWindowUpdateChart( di.chan, chartOut );
+                      //console.log(chartOut);
+
+                      // TODO add warning if buffer length is longer than expected
+                      // WF length - because in practice, we have seen that variability
+                      // however slight can shift randomly the UART baud for example
+                      // just enough that a few bits are lost thus creating spikes in
+                      // data and interestingly creating 2nd byte of SOF issues
+                      // That cause the missing of the parsed out SOF and thus a whole
+                      // 8k sample buffer is clipped out and pushed to the chart
+                      // Symptoms: you see an SOF spike at the end of the WF, if
+                      // the SOF at the start is omitted from the WF pushed to the chart
+                      // It turned out in this case to be a hardware different in about
+                      // 4.5% vs 5.5% difference from target baud. CCC baud clocking
+                      // has since been updated to get very close to the 2Mbps.
+                      // However this is relevant in dev because on one board, baud clk
+                      // was close enough that symbols just fit into the baud variability
+                      // allowance creating constistently good data streams while on the
+                      // other board, a very slight variation in the clock revealed the issue
+                      // in the baud clock being generally too slow. The faster board,
+                      // however slight in the difference, within clock tolerance on the
+                      // board, masked the issue.
 
                       // Scale and place into waveform record formatted buffer
                       // for file output per capture output options and customization
