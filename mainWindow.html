@@ -683,6 +683,10 @@
           //   screen plotting to catch up
           while((chunk = ourReadableStreamBuffer.read()) !== null) {
 
+            // TODO UI switch/checkbox to allow debug UI to do enable/disable such
+            // functionality
+            //console.log(chunk);
+
             // The channel to graph in the single waveform chart
             // NEXT: Move to UI for single-channel focused selection
             // Base 0
