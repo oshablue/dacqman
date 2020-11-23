@@ -319,6 +319,28 @@ li.active > a.collapsible-header i.sidenav-dd-expand {
 }
 
 
+#btnControlPortStatus > i {
+  vertical-align: top;
+  font-size: 1.5rem;
+}
+button.expanded > i {
+  -ms-transform: rotate(90deg); /* IE 9 */
+  -webkit-transform: rotate(90deg); /* Chrome, Safari, Opera */
+  transform: rotate(90deg);
+}
+
+
+#hardware-id-container.row {
+  margin-bottom: 4px;
+  border: #84fdfd 1px dotted;
+  padding: 5px 0px 6px 0px;
+  box-shadow: 0px 0px 2px 2px turquoise inset;
+  background-color: gainsboro;
+}
+ #hardware-id-container button {
+   height: 20px;
+   line-height: 20px;
+ }
 
 
 

@@ -50,162 +50,163 @@ var time;
 
 
 
+function vcpFind() {
+  SerialPort.list((err, ports) => {
+    console.log('ports', ports);
+    if (err) {
+      document.getElementById('vcp_error').textContent = err.message
+      return
+    } else {
+      document.getElementById('vcp_error').textContent = 'No VCP errors, so far.'
+    }
 
-SerialPort.list((err, ports) => {
-  console.log('ports', ports);
-  if (err) {
-    document.getElementById('vcp_error').textContent = err.message
-    return
-  } else {
-    document.getElementById('vcp_error').textContent = 'No VCP errors, so far.'
-  }
+    if (ports.length === 0) {
+      document.getElementById('vcp_error').textContent = 'No serial ports discovered'
+    }
 
-  if (ports.length === 0) {
-    document.getElementById('vcp_error').textContent = 'No serial ports discovered'
-  }
-
-  var headers = Object.keys(ports[0])
-  headers.push("selectthisone")
-  const table = createTable(headers)
-  tableHTML = ''
-  table.on('data', data => tableHTML += data)
-  table.on('end', () => document.getElementById('vcp_ports').innerHTML = tableHTML)
-  ports.forEach(function(port){
-    var p = {}
-    Object.keys(port).forEach(function eachKey(key) {
-      p[key] = port[key]
+    var headers = Object.keys(ports[0])
+    headers.push("selectthisone")
+    const table = createTable(headers)
+    tableHTML = ''
+    table.on('data', data => tableHTML += data)
+    table.on('end', () => document.getElementById('vcp_ports').innerHTML = tableHTML)
+    ports.forEach(function(port){
+      var p = {}
+      Object.keys(port).forEach(function eachKey(key) {
+        p[key] = port[key]
+      })
+      p.selectthisone = "<button id=\"b1\" name=\"" + port["comName"] + "\" onclick=\"serialSelect(this)\">selectme</button>"
+      table.write(p)
     })
-    p.selectthisone = "<button id=\"b1\" name=\"" + port["comName"] + "\" onclick=\"serialSelect(this)\">selectme</button>"
-    table.write(p)
+    table.end();
   })
-  table.end();
-})
-
+} // function vcpFind
 
 
 
 
 
 // List devices via D2XX FTDI (node ftdi)
-Ftdi.find( function(err, devices) {
-  console.log(devices.length + " FTDI (D2XX) Devices Found.");
-  if (err) {
-    document.getElementById('ftdi_error').textContent = err.message
-    //return
-  } else {
-    document.getElementById('ftdi_error').textContent = 'No FTDI errors, so far.'
-  }
-  if (devices.length === 0) {
-    document.getElementById('ftdi_error').innerText = 'No FTDI ports (via non-VCP) found.'
-  }
-
-  var headers;
-  if ( devices.length > 0 ) {
-    var fd = new Ftdi.FtdiDevice(devices[0]);
-    headers = Object.keys(fd.deviceSettings);
-  } else {
-    headers = Object.keys(new Ftdi.FtdiDevice({ locationId: 0, serialNumber: 0}).deviceSettings);
-  }
-  headers.push("UseForData");
-  headers.push("UseForControl");
-  table = createTable(headers);
-  tableHTML = ''
-  table.on('data', data => tableHTML += data)
-  table.on('end', () => document.getElementById('ftdi_ports').innerHTML = tableHTML)
-
-  // Now see if we can set some defaults
-  // If two consecutive FTDI devices have serialNumber the same, except first is A and 2nd is B in last digit
-  // and vendor and product ID are the same - then A is Data and B is control
-  // If we see this once, then stop.
-  // If there is a 2nd occurence, leave it to the user to correct this, in the event
-  // there are two similar devices connected to the PC
-  // TODO we are assuming sort order gives ports as A then B
-  // To sort on Keys, see:
-  // https://stackoverflow.com/questions/16648076/sort-array-on-key-value
-  var i;
-  devices.forEach( function(d) {
-    d["UseForDataChecked"] = '';
-    d["UseForControlChecked"] = '';
-  });
-  for ( i = 0; i < devices.length; i++) {
-    if ( i + 1 >= devices.length ) {
-      break;
+function ftdiFind() {
+  Ftdi.find( function(err, devices) {
+    console.log(devices.length + " FTDI (D2XX) Devices Found.");
+    if (err) {
+      document.getElementById('ftdi_error').textContent = err.message
+      //return
+    } else {
+      document.getElementById('ftdi_error').textContent = 'No FTDI errors, so far.'
     }
-    var d1 = devices[i];
-    var d2 = devices[i+1];
-    var sn1 = d1["serialNumber"];
-    var sn2 = d2["serialNumber"];
-    console.log("FTDI sn1: " + sn1);
-    console.log("FTDI sn2: " + sn2);
-    if ( d1["vendorId"] === d2["vendorId"] && d1["productId"] === d2["productId"] ) {
-      console.log("Same device vendorId and productId");
-      if ( sn1.substr(0, sn1.length - 2) === sn2.substr(0, sn2.length - 2) ) {
-        console.log("Same device serial number base");
-        if ( sn1.substr(sn1.length - 1, 1) === 'A' && sn2.substr(sn2.length - 1, 1) === 'B' ) {
-          console.log("Devices have correct A/B sequence for suffixes");
-          // DOM isn't ready yet if we place after table generation
-          // and then use ID selectors in jquery - there are ways around this
-          // for now, this if faster in dev
-          devices[i].UseForDataChecked = "checked";
-          devices[i+1].UseForControlChecked = "checked";
+    if (devices.length === 0) {
+      document.getElementById('ftdi_error').innerText = 'No FTDI ports (via non-VCP) found.'
+    }
+
+    var headers;
+    if ( devices.length > 0 ) {
+      var fd = new Ftdi.FtdiDevice(devices[0]);
+      headers = Object.keys(fd.deviceSettings);
+    } else {
+      headers = Object.keys(new Ftdi.FtdiDevice({ locationId: 0, serialNumber: 0}).deviceSettings);
+    }
+    headers.push("UseForData");
+    headers.push("UseForControl");
+    table = createTable(headers);
+    tableHTML = ''
+    table.on('data', data => tableHTML += data)
+    table.on('end', () => document.getElementById('ftdi_ports').innerHTML = tableHTML)
+
+    // Now see if we can set some defaults
+    // If two consecutive FTDI devices have serialNumber the same, except first is A and 2nd is B in last digit
+    // and vendor and product ID are the same - then A is Data and B is control
+    // If we see this once, then stop.
+    // If there is a 2nd occurence, leave it to the user to correct this, in the event
+    // there are two similar devices connected to the PC
+    // TODO we are assuming sort order gives ports as A then B
+    // To sort on Keys, see:
+    // https://stackoverflow.com/questions/16648076/sort-array-on-key-value
+    var i;
+    devices.forEach( function(d) {
+      d["UseForDataChecked"] = '';
+      d["UseForControlChecked"] = '';
+    });
+    for ( i = 0; i < devices.length; i++) {
+      if ( i + 1 >= devices.length ) {
+        break;
+      }
+      var d1 = devices[i];
+      var d2 = devices[i+1];
+      var sn1 = d1["serialNumber"];
+      var sn2 = d2["serialNumber"];
+      console.log("FTDI sn1: " + sn1);
+      console.log("FTDI sn2: " + sn2);
+      if ( d1["vendorId"] === d2["vendorId"] && d1["productId"] === d2["productId"] ) {
+        console.log("Same device vendorId and productId");
+        if ( sn1.substr(0, sn1.length - 2) === sn2.substr(0, sn2.length - 2) ) {
+          console.log("Same device serial number base");
+          if ( sn1.substr(sn1.length - 1, 1) === 'A' && sn2.substr(sn2.length - 1, 1) === 'B' ) {
+            console.log("Devices have correct A/B sequence for suffixes");
+            // DOM isn't ready yet if we place after table generation
+            // and then use ID selectors in jquery - there are ways around this
+            // for now, this if faster in dev
+            devices[i].UseForDataChecked = "checked";
+            devices[i+1].UseForControlChecked = "checked";
+          }
         }
       }
     }
-  }
 
 
-  devices.forEach ( function(d) {
-    var fd = new Ftdi.FtdiDevice(d);
-    console.log(fd.deviceSettings.description);
-    //console.log(JSON.stringify(fd));
+    devices.forEach ( function(d) {
+      var fd = new Ftdi.FtdiDevice(d);
+      console.log(fd.deviceSettings.description);
+      //console.log(JSON.stringify(fd));
 
-    /*if ( (headers.length - 2) < Object.keys(fd.deviceSettings).length ) {
-      console.log("re set headers for ftdi table")
-      headers = Object.keys(fd.deviceSettings);
-      headers.push("UseForData");
-      headers.push("UseForControl");
-      table = createTable(headers);
-      tableHTML = ''
-      table.on('data', data => tableHTML += data)
-      table.on('end', () => document.getElementById('ftdi_ports').innerHTML = tableHTML)
-    }*/
+      /*if ( (headers.length - 2) < Object.keys(fd.deviceSettings).length ) {
+        console.log("re set headers for ftdi table")
+        headers = Object.keys(fd.deviceSettings);
+        headers.push("UseForData");
+        headers.push("UseForControl");
+        table = createTable(headers);
+        tableHTML = ''
+        table.on('data', data => tableHTML += data)
+        table.on('end', () => document.getElementById('ftdi_ports').innerHTML = tableHTML)
+      }*/
 
-    var p = {}
-    Object.keys(fd.deviceSettings).forEach(function eachKey(key) {
-      p[key] = (fd.deviceSettings[key]).toString();
+      var p = {}
+      Object.keys(fd.deviceSettings).forEach(function eachKey(key) {
+        p[key] = (fd.deviceSettings[key]).toString();
+      })
+      //p.UseForData = `<button id="${p["locationId"]}" tag="${p["serialNumber"]}" name="${p["description"]}" onclick="serialSelect(this)">Data</button>`;
+      // Per materializecss docs:
+      // Match the label for attribute to the input's id value to get the toggling effect
+      console.log(d["UseForDataChecked"]);
+      p.UseForData = `<p><label for="UseForData${p["locationId"]}"><input type="checkbox" id="UseForData${p["locationId"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForDataChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Data</span></label></p>`;
+      p.UseForControl = `<p><label for="UseForControl${p["locationId"]}"><input type="checkbox" id="UseForControl${p["locationId"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForControlChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Control</span></label></p>`;
+
+      table.write(p)
+    });
+    table.end();
+
+
+
+
+
+    /*var headers = Object.keys(ports[0])
+    headers.push("selectthisone")
+    const table = createTable(headers)
+    tableHTML = ''
+    table.on('data', data => tableHTML += data)
+    table.on('end', () => document.getElementById('vcp_ports').innerHTML = tableHTML)
+    ports.forEach(function(port){
+      var p = {}
+      Object.keys(port).forEach(function eachKey(key) {
+        p[key] = port[key]
+      })
+      p.selectthisone = "<button id=\"b1\" name=\"" + port["comName"] + "\" onclick=\"serialSelect(this)\">selectme</button>"
+      table.write(p)
     })
-    //p.UseForData = `<button id="${p["locationId"]}" tag="${p["serialNumber"]}" name="${p["description"]}" onclick="serialSelect(this)">Data</button>`;
-    // Per materializecss docs:
-    // Match the label for attribute to the input's id value to get the toggling effect
-    console.log(d["UseForDataChecked"]);
-    p.UseForData = `<p><label for="UseForData${p["locationId"]}"><input type="checkbox" id="UseForData${p["locationId"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForDataChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Data</span></label></p>`;
-    p.UseForControl = `<p><label for="UseForControl${p["locationId"]}"><input type="checkbox" id="UseForControl${p["locationId"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForControlChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Control</span></label></p>`;
-
-    table.write(p)
+    table.end();*/
   });
-  table.end();
-
-
-
-
-
-  /*var headers = Object.keys(ports[0])
-  headers.push("selectthisone")
-  const table = createTable(headers)
-  tableHTML = ''
-  table.on('data', data => tableHTML += data)
-  table.on('end', () => document.getElementById('vcp_ports').innerHTML = tableHTML)
-  ports.forEach(function(port){
-    var p = {}
-    Object.keys(port).forEach(function eachKey(key) {
-      p[key] = port[key]
-    })
-    p.selectthisone = "<button id=\"b1\" name=\"" + port["comName"] + "\" onclick=\"serialSelect(this)\">selectme</button>"
-    table.write(p)
-  })
-  table.end();*/
-});
-
+} // function ftdiFind
 
 
 
@@ -477,9 +478,11 @@ var btnControlPortClick = function(button) {
   //} else {
     if ( $('#activeControlPort').is(":visible") ) {
       $('#activeControlPort').hide("slow");
+      $(button).removeClass("expanded");
       return;
     }
     $('#activeControlPort').show("slow");
+    $(button).addClass("expanded");
   //}
 
 
@@ -777,7 +780,7 @@ var openDataPortVcp = function(portHash) {
   // (within tolerance probably) clock on one board masked an issue of the
   // real symbol pulse width being -4.5% while on the slower board it was
   // more like -5.5% creating spikes in the data and corrupted SOF[1] typically,
-  // causing loss of WF streaming sync / appropriate snipping out of the WFs 
+  // causing loss of WF streaming sync / appropriate snipping out of the WFs
   let thisBaud = 2000000; // For Mac OS X at this moment we can use the direct 2Mbps baud rate
   // But for windows, we need to alias for reliable data
   // Directions for baud rate aliasing and related choices are in the Readme
@@ -1302,7 +1305,9 @@ var getSelectedControlPortInfoHash = function() {
 
 
 // Dual-port device style port opening
-var beginSerialComms = function(button) {
+// Make not anonymous declaration - moving mainWindow JS to external file
+//var beginSerialComms = function(button) {
+function beginSerialComms(button) {
   // make hash for port ID for data and call that function
   //var dataPortHash = checkboxToPortHash($("[id^=UseForData][type=checkbox]:checked"));
   //openDataPort(dataPortHash);
@@ -2188,4 +2193,6 @@ module.exports = {
   btnDataPortClick: btnDataPortClick,
   btnControlPortClick: btnControlPortClick,
   cancelCustomControlButtonCommand: cancelCustomControlButtonCommand,
+  vcpFind: vcpFind,
+  ftdiFind: ftdiFind,
 };
