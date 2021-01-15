@@ -789,7 +789,6 @@ var openDataPortVcp = function(portHash) {
     thisBaud = 38400;
   }
 
-
   var settings = {
     autoOpen: false,
     baudRate: thisBaud, //2000000, //2000000, //1000000 // 1Mbps works too if f/w is updated to match
