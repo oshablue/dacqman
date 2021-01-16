@@ -1,6 +1,6 @@
 {
   "name": "dacqman",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "Data Acquisition and Management Tool especially for HDL-0108-RSCPT (OshaBlue LLC) 8-Channel Ultrasonic NDT scanning hardware",
   "main": "main.js",
   "repository": "https://github.com/oshablue/dacqman.git",
@@ -17,11 +17,17 @@
   "author": "OshaBlue LLC / nisch s.",
   "license": "MIT",
   "dependencies": {
+    "audio-generator": "^2.1.2",
+    "audio-speaker": "^1.5.0",
     "csv": "^5.3.2",
     "data-table": "^2.0.0",
+    "envelope-generator": "^3.0.0",
     "ftdi": "file:./third-party-custom/node-ftdi",
+    "node-gyp": "^7.1.2",
+    "nodesynth": "^0.6.0",
     "serialport": "^6.1.0",
-    "strftime": "^0.10.0"
+    "strftime": "^0.10.0",
+    "web-audio-api": "^0.2.2"
   },
   "devDependencies": {
     "chai": "^4.2.0",

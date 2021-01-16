@@ -15,6 +15,11 @@ const { dialog } = require('electron').remote; // is remote needed?
 const ul = document.querySelector('ul');
 const fs = require('fs');
 
+var audioFdbk = require('./audioFdbk.js');
+/*this.setTimeout(function(){
+  audioFdbk.playOpen();
+}, 1000);*/
+
 
 // https://stackoverflow.com/questions/36980201/how-to-reset-nodejs-stream
 
@@ -212,6 +217,10 @@ var resetReadableStream = function(chunkMultiple) {
 
 
         if ( prefs.interface === 'dataCaptureFocused' ) {
+
+          // <TESTING>
+            audioFdbk.playData(chunk);
+          // </TESTING>
 
           if ( captureDataFileOutputBatch ) {
 
@@ -598,6 +607,11 @@ let  loadCustomCommandsPromise = (prefs) => {
 
 
 $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQuery functionality for this)
+
+  setTimeout(function(){
+    audioFdbk.playOpen();
+  }, 1000);
+
 
   sprend.vcpFind();
   sprend.ftdiFind();
@@ -989,7 +1003,7 @@ var parseAndShowCustomTextInputsAsRangeSliders = function(customCommandsJson) {
     var range = $(document.createElement("p"))
       .text(ti.label)
       .addClass("range-field")
-      .addClass("col s6")                           // 2 per row 
+      .addClass("col s6")                           // 2 per row
       .append($('<input />', { type: 'range'
         , class: 'control-range'
         , id: 'range' + ti.label.replace(/\s/g, '')

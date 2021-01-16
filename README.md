@@ -51,7 +51,39 @@ clean coding and coding best practice.  That's an important caveat.
 
 Much of which comes from excellent information available on the web, and is noted as such within the code.  Much appreciation for the examples and solutions out there.
 
+
+### Node.js Version(s) ###
+
+Curently, locked to 10.18.0 as the tested max version.
+Per https://stackoverflow.com/questions/29349684/how-can-i-specify-the-required-node-js-version-in-package-json
+we could lock the node version with something like:
+`{ "engines" : { "node" : "=10.18.0" } }`
+in package.json.
+
+However, see notes below, some testing was done, up until and including revision 0.0.10
+of DacqMan, using node version 12.13.1 - all functional up until working with
+for example nodesynth.
+
+Desire to include for example nodesynth etc without customizing that codebase
+means falling back to node 10.18.0 until further dev/changes, etc.
+
+Seems to still rebuild/install ok on darwin and win32.
+
+
+
 ### Revisions
+
+- **0.0.11** - alpha
+  - Testing integration of eg speaker, nodesynth, maybe dsp.js
+  - May need to use with node 10.18.0
+    - Yes nodesynth eg builds now - but need to rebuild everything again
+      - Delete node_modules and rerun npm install
+
+- **0.0.10** - alpha
+  - Preliminary support for HDL-0108-RSCPT (RS8), HDL-0104-RS104 (RS104), and DL0100A1 (Flagship, Early HW, Exclusively Licensed by Ownership Private Partner) including ADMM ADMPlex prototype/proof/testing commands
+  - Attempted RS104 and master branch merge
+  - Re-partitioned code for baby step improved dev cleanliness
+  - Mac OS X: Using node 12.13.1
 
 - **0.0.9** - alpha
   - Incremented revision since previous version was packaged for Mac and Win releases
