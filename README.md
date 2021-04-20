@@ -7,7 +7,9 @@ Electron App (Experimental) for R&D/Experimental Ultrasound Hardware
 
 ### Description
 
-Dacqman is demo software sketch(es) aka DevKit for the HDL-0108-RSCPT OshaBlue 8-Channel Rapid Scan Ultrasound Embeddable Hardware Prototype
+Dacqman is demo software sketch(es) aka DevKit for 
+- the HDL-0108-RSCPT (RS8) OshaBlue 8-Channel Rapid Scan Ultrasound Embeddable Hardware Prototype
+- the HDL-0104-RS104 (RS104) 4-Channel device, similar to the RS8 but with several key application-specific advantages, depending on needs
 
 ### Website (additional/related info)
 
@@ -23,7 +25,7 @@ Other search keys: RS8, RS104
 ### What is Dacqman for and What is its Status?
 
 Data acquisition and manager, an experimental and demo tool, especially for use with the OshaBlue
-HDL-0108-RSCPT 8-channel ultrasound (UT) hardware R&D (for NDT) platform.
+HDL-0108-RSCPT 8-channel or HDL-0104-RS104 4-Channel ultrasound (UT) hardware R&D (for NDT) platform.
 
 Please note, this is a DevKit sort of rapid sketch.  Nothing clean about it.  The intent is just to show how to use some
 commands with the hardware, and as a hardware Q/A tool.  It is not a finished piece of software.  Much of the commentary
@@ -72,6 +74,10 @@ Seems to still rebuild/install ok on darwin and win32.
 
 
 ### Revisions
+
+- **0.0.12** - alpha
+  - Testing/demo integration with a 4-module add-on SPI multiplexer board showing basic commands
+  - Added more comments about Windows (10) FTDI VCP baud rate aliasing.
 
 - **0.0.11** - alpha
   - Testing integration of eg speaker, nodesynth, maybe dsp.js
@@ -226,39 +232,74 @@ and repeated.  So this is TBD.  Caveat.
 
 ##### Baud Rate (Aliasing)
 
+*WARNING #1:* This means that with other devices, like other USB-COM adapters that cause the system to load on enumeration the same FTDI driver as is used here, if you try to use the aliased baud rate (38400) after the change described in this section, it will map to 2Mbps baud rate (as below) - so if you really need a true 38400 rate on some device... *caution* ... and ... you can just modify this back.  There are of course other solutions too.  However, with signed-driver-only enabled on Windows, either way, this process gets a little more interesting as of this writing and experience at the moment.  You might want to put a README.txt file on the Desktop of your Windows computer to remind unsuspecting users that baud rate aliasing is implemented at the moment.
+
+*WARNING #2:* This section also discusses bypassing some security temporarily to make the change. May or may not be necessary. Please be careful and understand the risks of doing this. If you're not sure, don't do it. 
+
 On these Win 10 Pro/Home systems where the `npm start` at least runs, baud rate
-aliasing is required.
+aliasing is required to get the 2Mbps rate that the hardware uses by default.
 
 Without it, for example, opening the data VCP at 2000000 works but the data is
-corrupted - you'll see spikes and such throughout.  Verified several times, comparing
-Mac OS X versus Windows using plain serial terminal (CoolTerm) and all sorts of tests.
+corrupted - you'll see spikes and such throughout - or as it turns out if you're using a DacqMan variant that already has the buad rate set to 38400, you'll get nothing apparently.  Verified several times, comparing Mac OS X versus Windows using plain serial terminal (CoolTerm) and all sorts of tests.  Mac OS X does not need this change so far, again, as of this writing.
 
-Could not see any activity on the TXDEN/ZT485E !RE or DE pins/signals on the
+For the Win 10 test, without using aliasing, could not see any activity on the TXDEN/ZT485E !RE or DE pins/signals on the
 USB-COM485-PLUS2 itself.  Just corrupted data.  Verified by using the CCC/RS104
 test ramp output.  Shows there fundamentally.
 
-The Fix: Use Baud Rate aliasing as noted in FTDI's documents about this. Search for it.
+The Fix: Use Baud Rate aliasing as noted in FTDI's documents about this. Search for the App Note on it.
+
+You can use Device Manager and your existing COM/LPT devices listing (Properties => Driver) to see what driver is loaded for this hardware's COM port adapter. If it is an FTDI driver, check the version so you can tell if it is recent or not (you may not need to update it).  If it is not an FTDI driver then you might need to install the FTDI driver package.  Just good to know what you have now.
+
+You can download the FTDI driver package from ftdichip.com => Drivers => VCP => Windows 10.  These are signed drivers: yay and also not yay. Potentially not yay because since we are editing the ftdiport.inf file to alias a baud rate (see below), that means we alter a driver package file and thus the hash used as a part of the driver signing gets broken and thus if Windows is up to date and running in a normal secure mode, it probably will not proceed with the installation.  Though, installation on another Windows test system worked fine without the need for a signed driver - or even with the signing broken.  Security update patches, or even the UEFI (maybe?) secure boot implementation may have effected this more recently.
+
+The fix for Windows blocking the installation of the modified ftdiport.inf file recently (Apr2021) was to temporarily boot Win10 into Troubleshooting mode where driver signing is disabled.  Method:
+1. Hold down shift and select restart from the power menu
+2. Select Troubleshooting
+3. At the advanced settings (or whatever) window type the number 7 (or whateever) to select the option to boot with driver signing checks disabled.  (BTW this seemed to have potentially created other issues at software runtime which is kind of cool in terms of security if true - they went away after a normal reboot)
+4. Then go through the process to modify the ftdiport.inf file to setup the needed baud rate aliasing, and then use device manager to first uninstall any installed FTDI device driver for those USB COM ports (for both ports used by the hardware - maybe any others if you have other devices installed) and then Update Driver => Select/Browse manually and select your modified ftdiport.inf file (or the directory that contains it) that is living along side its other driver files (as downloaded or previously installed).
+5. Test the software and then reboot normally (normal driver mode) to make sure things still work.
+
+BTW one way to do this, if an FTDI driver is not yet installed or even maybe if one already is, is to Device Manager => COM Ports => for each of these two (or any as necessary) Uninstall Device then use the Downloaded FTDI CDM / WHQL driver package (not the Setup package but the package that contains the individual driver files), unzip and simply modify the ftdiport.inf file as noted below for the baud rate aliasing, and then select that when you Device Manager => COM Ports as needed => Update driver (manually/select files/directory).  The driver files then get copied to the system directory as needed.  Again, caveat about signing as noted above.
+
+FTDI does offer App Note guides if you want to sign the driver package again after changes using your own properly rooted (and accepted by Microsoft) SSL certificate. You need the Windows DDK too most likely.
+
+Details on the ftdiport.inf file change:
 
 The method here, since the driver was already installed:
 
 Run As Admin => git-bash
-`cd C:\Windows\System32\DriverStore\FileRepository\ftdiport.inf_amd_yada_yada`
+
+`cd C:\Windows\System32\DriverStore\FileRepository\ftdiport.inf_amdyaa_yada_yada`
+
+or, if you need to escape the filepath use like:
+
+`cd C:\Windows\\System32\\DriverStore\\FileRepository\\ftdiport.inf_etc`
+
+Then edit the file, like with:
+
 `nano ftdiport.inf`
+
 Locate the key `[FtdiPort.NT.HW.AddKey]`
 and locate the long line that contains Hex coded values for each of the standard
 baud rates.
+
 Look for the sequence (shown here in 64-bit format):
 9C,80,00,00 and then the next sequence of 4 bytes is what we need to edit.
+
 So, we are changing: 4E,C0,00,00 which means => C04E (is the actual 2-byte 16-bit sequence)
 where bits 15 and 14 are the sub-integer divisor, here they are 11 (the highest
   two bits of the C0), and bits 13:0 are the divisor, in this case 04E.
+
 We change this to read:
 01,00,00,00 which means => 0001
 Which sets the sub-integer divisor to zero and the divisor to 1.
 This "1" is a special case that actually selects 2Mbps (2000000).
+
 Save the file.
+
 Using Windows Explorer, right-click this inf file and "Install" - should update
-the reg keys or whatever.
+the reg keys or whatever. Unless you run into driver signing issues, and then see above.
+
 This will effectively mean that when the user, in a standard Win COM port API
 or interface selects the baud rate of 38400 the driver will actual set up the
 chip on this channel (this VCP instance) to 2000000 or 2Mbps baud rate.

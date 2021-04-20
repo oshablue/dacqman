@@ -320,17 +320,19 @@
         },
         "description": "Get a basic ADC sample from the re-purposed programming pin (after program, pin is re-purposed). Currently RB6 or PGC.  Currently pin 5 in the programming header. 10-bit max of 1023.  Please see cautions and notes regarding implementation in the MCU code.",
         "returnDataTo" : "log"
-      },
+      }
 
-      {
-        "title": "Get N2E Voltage - Activate Bridge Relay Attenuated",
-        "command": {
-          "type": "hexCsvBytes",
-          "value": "0x53, 0xD9, 0x09, 0xC1, 0x50"
-        },
-        "description": "arg2 = (N2E = 0x01) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
-        "returnDataTo" : "log"
-      },
+    ]
+  },
+
+
+
+
+
+  {
+    "name" : "ADMM Bridge Relay Ctrl",
+
+    "buttons": [
 
       {
         "title": "Activate Bridge Relay (W/JP=NC => Bridge Open/Off)",
@@ -350,35 +352,29 @@
         },
         "description": "arg1 = (RLY_CMD=0x0B)|(BRIDGE_BIT = 0x20)  and arg2 = specific relay if used",
         "returnDataTo" : "log"
-      },
+      }
+
+    ]
+
+  },
+
+
+
+
+
+
+  {
+    "name" : "ADMM Anomalous Commands",
+
+    "buttons": [
 
       {
-        "title": "Do ADC Cmd: SELFOCAL",
+        "title": "Get N2E Voltage - Activate Bridge Relay Attenuated",
         "command": {
           "type": "hexCsvBytes",
-          "value": "0x53, 0xD9, 0x0A, 0x05, 0x50"
+          "value": "0x53, 0xD9, 0x09, 0xC1, 0x50"
         },
-        "description": "arg2 is the command SELFOCAL (self offset calibration)",
-        "returnDataTo" : "log"
-      },
-
-      {
-        "title": "Do ADC Cmd: SYSOCAL",
-        "command": {
-          "type": "hexCsvBytes",
-          "value": "0x53, 0xD9, 0x0A, 0x06, 0x50"
-        },
-        "description": "arg2 is the command SYSOCAL (system offset calibration)",
-        "returnDataTo" : "log"
-      },
-
-      {
-        "title": "Do ADC Cmd: SYSGCAL",
-        "command": {
-          "type": "hexCsvBytes",
-          "value": "0x53, 0xD9, 0x0A, 0x07, 0x50"
-        },
-        "description": "arg2 is the command SYSGCAL (system gain calibration)",
+        "description": "arg2 = (N2E = 0x01) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
         "returnDataTo" : "log"
       },
 
@@ -410,23 +406,150 @@
         },
         "description": "arg2 = (N2W = 0x03) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
         "returnDataTo" : "log"
+      }
+
+    ]
+
+  },
+
+
+
+
+
+
+
+  {
+    "name" : "ADMM Calibration and ADC Direct",
+
+    "buttons": [
+
+      {
+        "title": "Do ADC Cmd: SELFOCAL",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x0A, 0x05, 0x50"
+        },
+        "description": "arg2 is the command SELFOCAL (self offset calibration)",
+        "returnDataTo" : "log"
       },
+
+      {
+        "title": "Do ADC Cmd: SYSOCAL",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x0A, 0x06, 0x50"
+        },
+        "description": "arg2 is the command SYSOCAL (system offset calibration)",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Do ADC Cmd: SYSGCAL",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x0A, 0x07, 0x50"
+        },
+        "description": "arg2 is the command SYSGCAL (system gain calibration)",
+        "returnDataTo" : "log"
+      }
+
+    ]
+
+  },
+
+
+
+
+
+
+
+
+
+  {
+    "name" : "ADMM Real Measurements Voltage",
+
+    "buttons": [
+
+      {
+        "title": "Get N2E Voltage - Inactive Bridge Relay No Attenuation",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x01, 0x50"
+        },
+        "description": "arg2 = (N2E = 0x01) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get N2S Voltage - Inactive Bridge Relay No Attenuation",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x02, 0x50"
+        },
+        "description": "arg2 = (N2S = 0x02) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get N2W Voltage - Inactive Bridge Relay No Attenuation",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x03, 0x50"
+        },
+        "description": "arg2 = (N2W = 0x03) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get N2E Voltage - Inactive Bridge Relay w Attenuation",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x41, 0x50"
+        },
+        "description": "arg2 = (N2E = 0x01) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get N2S Voltage - Inactive Bridge Relay w Attenuation",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x42, 0x50"
+        },
+        "description": "arg2 = (N2S = 0x02) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get N2W Voltage - Inactive Bridge Relay w Attenuation",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x43, 0x50"
+        },
+        "description": "arg2 = (N2W = 0x03) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
+        "returnDataTo" : "log"
+      }
+
+    ]
+
+  },
+
+
+
+
+
+
+
+  {
+    "name" : "ADMM Real Measurements Current",
+
+    "buttons": [
 
       {
         "title": "Get E2S DC Current - Activate Bridge Relay No Attenuation",
         "command": {
           "type": "hexCsvBytes",
           "value": "0x53, 0xD9, 0x09, 0x86, 0x50"
-        },
-        "description": "arg2 = (E2SDC = 0x06) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
-        "returnDataTo" : "log"
-      },
-
-      {
-        "title": "Get E2S DC Current - Bridge and Current Meas. Relays Inactive",
-        "command": {
-          "type": "hexCsvBytes",
-          "value": "0x53, 0xD9, 0x09, 0x08, 0x50"
         },
         "description": "arg2 = (E2SDC = 0x06) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
         "returnDataTo" : "log"
@@ -440,6 +563,33 @@
         },
         "description": "arg2 = (E2SACRMS = 0x07) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
         "returnDataTo" : "log"
+      }
+
+    ]
+
+  },
+
+
+
+
+
+
+
+
+
+  {
+    "name" : "ADMM Cal Measurements Current",
+
+    "buttons": [
+
+      {
+        "title": "Get E2S DC Current - Bridge and Current Meas. Relays Inactive",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x08, 0x50"
+        },
+        "description": "For offset or zero calibration purposes ... arg2 = (E2SDC = 0x06) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
+        "returnDataTo" : "log"
       },
 
       {
@@ -448,9 +598,26 @@
           "type": "hexCsvBytes",
           "value": "0x53, 0xD9, 0x09, 0x09, 0x50"
         },
-        "description": "arg2 = (E2SACRMS = 0x07) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
+        "description": "For offset or zero calibration purposes ... arg2 = (E2SACRMS = 0x07) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
         "returnDataTo" : "log"
-      },
+      }
+
+    ]
+
+  },
+
+
+
+
+
+
+
+
+
+  {
+    "name" : "ADMM Initialize and Select",
+
+    "buttons": [
 
       {
         "title": "Initialize DMM",
@@ -458,7 +625,7 @@
           "type": "hexCsvBytes",
           "value": "0x53, 0xD9, 0x02, 0x00, 0x50"
         },
-        "description": "arg2 = (E2SACRMS = 0x07) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
+        "description": "Select ADMM First! arg2 = (E2SACRMS = 0x07) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
         "returnDataTo" : "log"
       },
 
@@ -513,6 +680,7 @@
       }
 
     ]
+
   },
 
 
