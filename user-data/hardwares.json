@@ -1,6 +1,11 @@
 {
   "fileinfo" :{
-    "description" : "Identify and list functional data for different hardware."
+    "description" : "Identify and list functional data for different hardware.",
+    "dataPortTypes" : [
+      "FTDI",
+      "VCP",
+      "SameAsControl"
+    ]
   },
 
   "hardwares" : [
@@ -11,7 +16,9 @@
       "numberOfChannels" : 8,
       "waveformLengthSamples" : 4095,
       "waveformBytesPerSample" : 1,
-      "comPortDeviceIdTextTypicallyContains" : "",
+      "numberOfMatchingComPorts" : 2,
+      "comPortDeviceIdTextTypicallyContains" : "USB <-> Serial Converter",
+      "dataPortType" : "FTDI",
       "comments" : [
         "Blank comPortDeviceIdTextTypicallyContains is because it is implemented as deafult"
       ]
@@ -23,9 +30,25 @@
       "numberOfChannels" : 4,
       "waveformLengthSamples" : 4095,
       "waveformBytesPerSample" : 1,
+      "numberOfMatchingComPorts" : 2,
       "comPortDeviceIdTextTypicallyContains" : "COM485",
+      "dataPortType" : "VCP",
       "comments" : [
         "None yet"
+      ]
+    },
+
+    {
+      "fullname" : "DL-Series-by-Radio-USB-Adapter",
+      "shortname" : "DL",
+      "numberOfChannels" : 8,
+      "waveformLengthSamples" : 2500,
+      "waveformBytesPerSample" : 1,
+      "numberOfMatchingComPorts" : 1,
+      "comPortDeviceIdTextTypicallyContains" : "USB UART",
+      "dataPortType" : "SameAsControl",
+      "comments" : [
+        ""
       ]
     }
 

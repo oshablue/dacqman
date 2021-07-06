@@ -112,7 +112,9 @@ function ftdiFind() {
     table = createTable(headers);
     tableHTML = ''
     table.on('data', data => tableHTML += data)
-    table.on('end', () => document.getElementById('ftdi_ports').innerHTML = tableHTML)
+    table.on('end', () => {
+      document.getElementById('ftdi_ports').innerHTML = tableHTML;
+    });
 
     // Now see if we can set some defaults
     // If two consecutive FTDI devices have serialNumber the same, except first is A and 2nd is B in last digit
@@ -128,6 +130,12 @@ function ftdiFind() {
       d["UseForDataChecked"] = '';
       d["UseForControlChecked"] = '';
     });
+
+    // setTimeout with an implied time of zero puts his on the queue such that the innerHTML from the 
+    // create table code above completes prior to executing this function - a function that uses that 
+    // html table to determine whats up
+    //setTimeout(guessAndSetHardwareIdentity);
+
     for ( i = 0; i < devices.length; i++) {
       if ( i + 1 >= devices.length ) {
         break;
@@ -186,26 +194,11 @@ function ftdiFind() {
     });
     table.end();
 
-
-
-
-
-    /*var headers = Object.keys(ports[0])
-    headers.push("selectthisone")
-    const table = createTable(headers)
-    tableHTML = ''
-    table.on('data', data => tableHTML += data)
-    table.on('end', () => document.getElementById('vcp_ports').innerHTML = tableHTML)
-    ports.forEach(function(port){
-      var p = {}
-      Object.keys(port).forEach(function eachKey(key) {
-        p[key] = port[key]
-      })
-      p.selectthisone = "<button id=\"b1\" name=\"" + port["comName"] + "\" onclick=\"serialSelect(this)\">selectme</button>"
-      table.write(p)
-    })
-    table.end();*/
+    
   });
+
+
+
 } // function ftdiFind
 
 
@@ -499,12 +492,35 @@ var btnControlPortClick = function(button) {
 var sofFound = false;
 var srcIndexStart = 0;
 var openDataPort = function(portHash) {
+
+  if ( hw ) {
+
+    if (hw.dataPortType.includes("VCP")) {
+      openDataPortVcp(portHash);
+    } 
+    else
+    if (hw.dataPortType.includes("FTDI")) {
+      openDataPortFtdi(portHash);
+    }
+    else 
+    if (hw.dataPortType.includes("SameAsControl")) {
+      // We use only the control port
+      console.log("openDataPort: Skipping opening the data port, as it is the SameAsControl in hardwares.json and by selection");
+    }
+
+  } else {
+
+    console.warn("hw variable identifying the hardware characteristics is not defined; using Vcp vs Ftdi port driver based on assumption of hardware-id text containing RS104 or not.");
+    
     if ( $("#hardware-id").text().includes("RS104") ) {
       openDataPortVcp(portHash);
     } else {
       openDataPortFtdi(portHash);
     }
-}
+
+  }
+
+} // end of: openDataPort(portHash)
 
 
 
@@ -575,6 +591,7 @@ var openDataPortFtdi = function(portHash) {
     // TODO checkbox for run test on open
     //$("#serialPortGoButton").addClass("lighten-5");
     //$("#serialPortGoButton").removeClass("waves-light");
+    // TODO we can now DRY below as it is now used twice - also in singular serial port open control
     $("#serialPortGoButton").addClass("red");
     $("#btnDataPortStatus").removeClass('hide blue-grey').addClass('green'); // TODO-TBD Used to have the pulse class set, removed for UI overlays TODO could make this conditional
     $("#btnListeningForData").removeClass('hide disabled').addClass('pulse');
@@ -951,9 +968,10 @@ var openDataPortVcp = function(portHash) {
 
 
 var getVcpPortNameFromPortInfoHash = function (infoHash) {
+
   var serialNumberLessAorB = infoHash.serialNumber.substr(0, infoHash.serialNumber.length - 1);
   var serialNumberWithAorB = infoHash.serialNumber;
-  var suffix = infoHash.serialNumber.substr(infoHash.serialNumber.length - 2, 1);
+  var suffix = infoHash.serialNumber.substr(infoHash.serialNumber.length - 1, 1); // 5/29/21 why was this 2?
   console.log("getVcpPortNameFromPortInfoHash: base serial number: " + serialNumberLessAorB + " with suffix found to be: " + suffix);
 
   // Another Windows scenario:
@@ -1008,10 +1026,6 @@ var openControlPort = function(portHash) {
   //console.log("However, there are wrapper/driver errors and this is not reliable.");
   //console.log("Thus, we are now using and require VCP access to the control port.");
 
-
-
-
-
   // When using VCP driver access (serial port, etc.) for control port:
   //*
 
@@ -1026,6 +1040,7 @@ var openControlPort = function(portHash) {
   // digit corresponds to A or B in the serialNumber for the FTDI device listing.
 
   var comName = getVcpPortNameFromPortInfoHash(portHash);
+  //var byteCount = 0;
 
   var settings = {
     autoOpen: false,
@@ -1034,45 +1049,77 @@ var openControlPort = function(portHash) {
     stopbits: 1,
     parity  : 'none',
   };
+
   cport = new SerialPort(comName, settings, function (err) {
     if ( err ) {
       return console.log('sprenderer: openControlPort: error on create new VCP style control port: ', err.message)
     }
   });
+  
   cport.on('error', function(err) {
     console.log('cport.on error: ', err);
     // TODO -- UI error panel/log/indicator, etc.
   });
+  
   cport.on('close', function(err) {
     console.log('cport.on close');
     $("#btnControlPortStatus").removeClass("green").addClass('blue-grey');
     $("#controlPortOpenBtn").prop('disabled', false);
     $("#controlPortCloseBtn").prop('disabled', true);
+
+    // TODO - hardware update complete for DL force retrofit
+    mainWindowUpdateChartData(null); // should cancel requestAnimationFrame
   });
+  
   cport.on('open', function() {
     console.log('cport.on open');
     $("#btnControlPortStatus").removeClass('hide blue-grey').addClass('green');
     $("#activeControlPortName").text(getSelectedControlPortInfoHash().description);
     $("#controlPortOpenBtn").prop('disabled', true);
     $("#controlPortCloseBtn").prop('disabled', false);
+
+    // When serial port is for both data and control aka a single port 
+    if (hw.dataPortType.includes("SameAsControl")) {
+      console.log("openControlPort: singular serial port (same one for data and control), enabling all control port functions.");
+      $("#serialPortGoButton").addClass("red");
+      $("#btnDataPortStatus").removeClass('hide blue-grey').addClass('green'); // TODO-TBD Used to have the pulse class set, removed for UI overlays TODO could make this conditional
+      $("#btnListeningForData").removeClass('hide disabled').addClass('pulse');
+      $("#active_ports_ui_status_indicators").removeClass('hide');
+      $("#active_ports_ui_buttons").removeClass('hide');
+      $("#btnSilenceIndicators").removeClass('disabled');
+    }
+
+    // TODO - update for hardware ID - adding this here just to force display of updated data from the 
+    // DL retrofit
+    mainWindowUpdateChartData(null); // init the loop for requestAnimationFrame
   });
+  
   cport.on('data', function (data) {
+
     console.log ("cport.on data");
-    //console.log(data);
-    console.log("Same data parsed as ASCII chars: ");
+    console.log(data);
     var retD = hexBufToAscii(data);
-    console.log(retD);
-    showControlPortOutput(retD);
+      console.log(retD);
+    //byteCount += data.length;
+    //console.log(byteCount);
+    if ( hw && hw.dataPortType.includes("SameAsControl") ) {
+
+      ourReadableStreamBuffer.put(data);
+
+    } else {
+    
+      console.log("Same data parsed as ASCII chars: ");
+      var retD = hexBufToAscii(data);
+      console.log(retD);
+      showControlPortOutput(retD);
+
+    }
+
   });
+
   cport.open()
 
   //*/ // Above section: when using VCP driver access for control port
-
-
-
-
-
-
 
   // When using FTDI device wrapper for the Control Port, use section next below:
   /*
@@ -1151,7 +1198,7 @@ var openControlPort = function(portHash) {
   });
   */
 
-}
+} // end of: openControlPort()
 
 
 
@@ -1220,22 +1267,46 @@ var controlPortOpen = function() {
 
 var serialCheckbox = function (checkbox) {
 
+  guessAndSetHardwareIdentity();
+
+  console.log(hw)
+
   // Check that one data and one control port are selected
   var nDataChecked = $("[id^=UseForData][type=checkbox]:checked").length;
   var nControlChecked = $("[id^=UseForControl][type=checkbox]:checked").length;
 
+  var enableConnect = false;
+
+  // TODO we should move the functionality for auto-checked data/control boxes to this position here 
+
+
+  // Currently, if these were already checked in the first device enumeration (ftdiFind)...
   if ( nDataChecked === 1 && nControlChecked === 1 ) {
+
+    enablePorts = true;
+
+  } else {
+
+    // For only DL hardware connected, these won't be checked, so check them here 
+    // and yeah for now only do this if 2 other checkboxes aren't already checked above 
+    // TODO This is clunky and needs to be refactored yet again ...
+    if ( hw && hw.numberOfMatchingComPorts === 1) {
+      var tr = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains(" + hw.comPortDeviceIdTextTypicallyContains + ")").closest("tr");
+      $(tr).find("input").prop("checked", "checked"); // check both boxes
+      enablePorts = true;
+    }
+
+  }
+
+  if ( enablePorts ) {
 
     console.log( "Ok, one data and one control port selected.");
     // Now populate/show/enable the "Go" button to open ports and prep
     var h = `<button id="serialPortGoButton" class="waves-effect waves-light btn-large" onclick="beginSerialComms(this)"><i class="material-icons left">device_hub</i>Connect to Ports and Begin Listening for Data</button>`;
     $('#ports_go_button').html(h).removeClass('hide');
-
-    // If both are checked, assume the hardware identity ... for now ...
-    guessAndSetHardwareIdentity();
-
+  
   } else {
-
+  
     // If nothing found, indicate the situation
     // Was: or optionally:
     //$('#ports_go_button').addClass('hide');
@@ -1246,32 +1317,55 @@ var serialCheckbox = function (checkbox) {
       .css( "line-height", "18px" )
       .css( "pointer-events", "none")       // Make it act like a disabled button
       .text("Ports couldn't be auto-selected. If you see them listed, you can select them manually... Or Plug-In/Re-Plug and Reload?");
+  
   }
 
 } // end of: serialCheckbox
 
 
 
-
-
-
+// Already included above:
+//const fs = require('fs');
+const hardwareOptions = require("./user-data/hardwares.json").hardwares;
+var hwTxt = "Undetermined"; // TOOD this is probably the wrong place for this - probably a hardware class would be good right?
+var hw;
 
 var guessAndSetHardwareIdentity = function() {
 
-  console.log("Guessing hardware ID: ");
-  // TODO put in I dunno some config or param place - extract basically
-  var descrips = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains('COM485')");
-  var hw = "Undetermined";
-  if ( descrips.length === 2 ) {
-    // Assume HDL-0104-RS104
-    console.log("Found 2x *COM485* in the device descriptions ... assuming RS104");
-    hw = "HDL-0104-RS104 (\"RS104\")";
-  } else {
-    // Assume HDL-0108-RSCPT
-    console.log("Did not find 2x *COM485* in the device descriptions ... assuming HDL-0108-RSCPT");
-    hw = "HDL-0108-RSCPT";
+  console.log("Guessing hardware ID (using last one in hardwares.json list that matches): ");
+  var hwCount = 0;
+
+  hardwareOptions.forEach(function (h) {
+    var txt = h.comPortDeviceIdTextTypicallyContains
+    var descrips = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains(" + txt + ")");
+    console.log(`Looking for ${txt}...`);
+    if ( descrips.length === h.numberOfMatchingComPorts ) {
+      console.log("Found " + h.numberOfMatchingComPorts + " of " + txt + " in the device descriptions ... assuming " + h.shortname);
+      hwTxt = `${h.fullname} (${h.shortname})`;
+      hw = h;
+      hwCount++;
+    } else {
+      console.log(`... none found in quantity ${h.numberOfMatchingComPorts}`);
+    }
+  });
+
+  if ( hwCount > 1 ) {
+    console.warn(`On guessing at connected hardware, there was more than 1 match. Maybe you have multiple devices connected, or other USB devices connected. At this time, this behavior is undefined. Last match is shown as HARDWARE IS: but the checkboxes will be set an HDL 4 or 8 channel series if present. This is one among many TODOs`);
   }
-  $("#hardware-id").text(hw);
+  
+  // TODO put in I dunno some config or param place - extract basically
+  // var descrips = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains('COM485')");
+  // var hw = "Undetermined";
+  // if ( descrips.length === 2 ) {
+  //   // Assume HDL-0104-RS104
+  //   console.log("Found 2x *COM485* in the device descriptions ... assuming RS104");
+  //   hw = "HDL-0104-RS104 (\"RS104\")";
+  // } else {
+  //   // Assume HDL-0108-RSCPT
+  //   console.log("Did not find 2x *COM485* in the device descriptions ... assuming HDL-0108-RSCPT");
+  //   hw = "HDL-0108-RSCPT";
+  // }
+  $("#hardware-id").text(hwTxt);
 
 } // end of: guessAndSetHardwareIdentity
 

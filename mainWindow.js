@@ -48,7 +48,7 @@ const { UserInterface : YouFace } = require('./userInterface.js');
 // Otherwise, 40000000 loads up just fine.  It's just in the algo portion
 // snapshot from the time that things break
 const defaultHardwareWaveformSampleFrequencyHz = 25000000; //40000000;
-const defaultHardwareWaveformLengthSamples = 4095;
+const defaultHardwareWaveformLengthSamples = 2500; // 4095; // TODO need to implement hardware-dependent size
 const defaultHardwareWaveformBytesPerSample = 1;
 const defWfLenB = defaultHardwareWaveformLengthSamples
                   * defaultHardwareWaveformBytesPerSample;
@@ -771,7 +771,8 @@ function loadButtons(customCommandsJson) {
       .prop('title', b.description)
       .click(function () {
         //alert(b.command.type + ': ' + b.command.value)
-        serialSendData(b.command, b.returnDataTo);
+        //serialSendData(b.command, b.returnDataTo);
+        controlPortSendData(b.command, b.returnDataTo, b);
       });
     $('#serialButtonsFromFileDiv').append(newb);
   });

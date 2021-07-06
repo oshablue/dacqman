@@ -13,13 +13,257 @@
 
 
     {
-      "title": "Get WF (P+Aq from RAM/Defaults)",
+      "title": "Setup Cont PAQ Ch1",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xF5, 0x01, 0x01, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Do Cont PAQ (Only Once - need setInterval)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xF6, 0x01, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Get WF Ch1 (P+Aq from RAM/Defaults)",
       "command": {
         "type": "hexCsvBytes",
         "value": "0x53, 0xC4, 0x01, 0x00, 0x50"
       },
       "description": "Pulse and Acquire using default settings or settings stored in RAM",
-      "returnDataTo" : "chart"
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Get WF Ch3 (P+Aq from RAM/Defaults)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x03, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Get WF Ch8 (P+Aq from RAM/Defaults)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x08, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Do Single Acquire",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC2, 0x00, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Get DMA WF",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC3, 0x00, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set AI CH1",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC9, 0x01, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set TX CH0 (Off)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC8, 0x00, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set Damping",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xCE, 0x01, 0x00, 0x50"
+      },
+      "description": "Set damping level relays on/off level 0x01",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set VPulse On 1",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC5, 0x01, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set VPulse On 2",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC5, 0x02, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set VPulse Off",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC6, 0x00, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set TX CH1",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC8, 0x01, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set TX CH2",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC8, 0x02, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
     },
 
 
@@ -194,6 +438,112 @@
 
 
     {
+      "title": "Cross-Chan Get WF (P+Aq XChan 1=>2 Rx Gain 8, Tx Gain 0, Rx Delay 20)",
+      "command": {
+        "type": "hexCsvBytesChained",
+        "chainedCmdDelayMs" : "1500",
+        "chainedCmdTimeoutMs" : "1000",
+        "chainedCmdCompleteChar" : "0x0D",
+        "value": [
+          "0x53, 0xCA, 0x14, 0x00, 0x50",
+          "0x53, 0xC5, 0x00, 0x00, 0x50",
+          "0x53, 0xC7, 0x00, 0x00, 0x50",
+          "0x53, 0xC8, 0x01, 0x00, 0x50",
+          "0x53, 0xC9, 0x02, 0x00, 0x50",
+          "0x53, 0xF4, 0x07, 0x00, 0x50",
+          "0x53, 0xC4, 0x00, 0x00, 0x50",
+          "0x53, 0xC3, 0x00, 0x00, 0x50"
+        ],
+        "description-summary" : "Command chain/sequence as implemented in UT software style Send Settings and PAC, without pulse shaping and duration controls.",
+        "description-detail" : [
+          "1. Set Rx Delay [~usec]",
+          "2. (TODO - This one takes a while to execute) Set Tx Gain (Pulse Voltage, if implemented on the hardware, typically ignored by the firmware if not implemented on the hardware)",
+          "3. Init Pulse Control Cmd",
+          "4. Tx Chan Select (base 1)",
+          "5. Rx Chan Select (base 1)",
+          "6. Rx Gain [x3dB steps]",
+          "7. Pulse and Acquire Cmd (called with arg1 = 0 to P+Aq from the RAM-stored settings just sent to the device)",
+          "8. Get current DMA waveforms (the P+Aq command is sent with arguments that only cause the capture, not the sending of the resulting WF)"
+        ]
+      },
+      "description": "Pulse and Acquire setting the Tx and Rx channels, and the Tx and Rx gains, oh and Rx delay too",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "Get WF Same Chan Ch 1 with NO Damping Rx Gain 0",
+      "command": {
+        "type": "hexCsvBytesChained",
+        "chainedCmdDelayMs" : "1500",
+        "chainedCmdTimeoutMs" : "1000",
+        "chainedCmdCompleteChar" : "0x0D",
+        "value": [
+          "0x53, 0xCA, 0x0A, 0x00, 0x50",
+          "0x53, 0xC5, 0x00, 0x00, 0x50",
+          "0x53, 0xC7, 0x00, 0x00, 0x50",
+          "0x53, 0xC8, 0x01, 0x00, 0x50",
+          "0x53, 0xC9, 0x01, 0x00, 0x50",
+          "0x53, 0xF4, 0x00, 0x00, 0x50",
+          "0x53, 0xCE, 0x00, 0x00, 0x50",
+          "0x53, 0xC4, 0x00, 0x00, 0x50",
+          "0x53, 0xC3, 0x00, 0x00, 0x50"
+        ],
+        "description-summary" : "Command chain/sequence as implemented in UT software style Send Settings and PAC, without pulse shaping and duration controls.",
+        "description-detail" : [
+          "1. Set Rx Delay [~usec]",
+          "2. (TODO - This one takes a while to execute) Set Tx Gain (Pulse Voltage, if implemented on the hardware, typically ignored by the firmware if not implemented on the hardware)",
+          "3. Init Pulse Control Cmd",
+          "4. Tx Chan Select (base 1)",
+          "5. Rx Chan Select (base 1)",
+          "6. Rx Gain [x3dB steps]",
+          "7. Set Damping 0x01",
+          "8. Pulse and Acquire Cmd (called with arg1 = 0 to P+Aq from the RAM-stored settings just sent to the device)",
+          "9. Get current DMA waveforms (the P+Aq command is sent with arguments that only cause the capture, not the sending of the resulting WF)"
+        ]
+      },
+      "description": "Pulse and Acquire setting the Tx and Rx channels, and the Tx and Rx gains, oh and Rx delay too",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "Get WF Same Chan Ch 1 with Damping 0x03 Rx Gain 0",
+      "command": {
+        "type": "hexCsvBytesChained",
+        "chainedCmdDelayMs" : "1500",
+        "chainedCmdTimeoutMs" : "1000",
+        "chainedCmdCompleteChar" : "0x0D",
+        "value": [
+          "0x53, 0xCA, 0x0A, 0x00, 0x50",
+          "0x53, 0xC5, 0x00, 0x00, 0x50",
+          "0x53, 0xC7, 0x00, 0x00, 0x50",
+          "0x53, 0xC8, 0x01, 0x00, 0x50",
+          "0x53, 0xC9, 0x01, 0x00, 0x50",
+          "0x53, 0xF4, 0x00, 0x00, 0x50",
+          "0x53, 0xCE, 0x03, 0x00, 0x50",
+          "0x53, 0xC4, 0x00, 0x00, 0x50",
+          "0x53, 0xC3, 0x00, 0x00, 0x50"
+        ],
+        "description-summary" : "Command chain/sequence as implemented in UT software style Send Settings and PAC, without pulse shaping and duration controls.",
+        "description-detail" : [
+          "1. Set Rx Delay [~usec]",
+          "2. (TODO - This one takes a while to execute) Set Tx Gain (Pulse Voltage, if implemented on the hardware, typically ignored by the firmware if not implemented on the hardware)",
+          "3. Init Pulse Control Cmd",
+          "4. Tx Chan Select (base 1)",
+          "5. Rx Chan Select (base 1)",
+          "6. Rx Gain [x3dB steps]",
+          "7. Set Damping 0x01",
+          "8. Pulse and Acquire Cmd (called with arg1 = 0 to P+Aq from the RAM-stored settings just sent to the device)",
+          "9. Get current DMA waveforms (the P+Aq command is sent with arguments that only cause the capture, not the sending of the resulting WF)"
+        ]
+      },
+      "description": "Pulse and Acquire setting the Tx and Rx channels, and the Tx and Rx gains, oh and Rx delay too",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
       "title": "EEPROM Write Sample Values",
       "command": {
         "type": "hexCsvBytesChained",
@@ -249,7 +599,51 @@
       },
       "description": "Read all EEPROM Values",
       "returnDataTo" : "log"
-    },    
+    },  
+    
+    
+    {
+      "title": "Initialize DMM",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xD9, 0x02, 0x00, 0x50"
+      },
+      "description": "Select ADMM First! arg2 = (E2SACRMS = 0x07) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Do ADC Cmd: SELFOCAL",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xD9, 0x0A, 0x05, 0x50"
+      },
+      "description": "arg2 is the command SELFOCAL (self offset calibration)",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Do ADC Cmd: SYSOCAL",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xD9, 0x0A, 0x06, 0x50"
+      },
+      "description": "arg2 is the command SYSOCAL (system offset calibration)",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Do ADC Cmd: SYSGCAL",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xD9, 0x0A, 0x07, 0x50"
+      },
+      "description": "arg2 is the command SYSGCAL (system gain calibration)",
+      "returnDataTo" : "log"
+    },
 
 
     {
@@ -324,19 +718,22 @@
 
 
     {
-      "title": "ADMM: IDC (DC Current): E-S (N/A:Atten)",
+      "title": "ADMM: IDC (DC Current): E-S (N/A:Atten; Active Bridge Relay to Open Bridge)",
       "command": {
         "type": "hexCsvBytes",
-        "value": "0x53, 0xD9, 0x09, 0x06, 0x50"
+        "value": "0x53, 0xD9, 0x09, 0x86, 0x50"
       },
       "description": "ADMM accessory command: Get the DC current reading from East-to-South, <i>i.e.</i> Structure to Unprotected Coupon",
       "returnDataTo" : "log"
     },
+
+
+
     {
-      "title": "ADMM: IAC-RMS (AC RMS Current): E-S (N/A:Atten)",
+      "title": "ADMM: IAC-RMS (AC RMS Current): E-S (N/A:Atten; Active Bridge Relay to Open Bridge)",
       "command": {
         "type": "hexCsvBytes",
-        "value": "0x53, 0xD9, 0x09, 0x07, 0x50"
+        "value": "0x53, 0xD9, 0x09, 0x87, 0x50"
       },
       "description": "ADMM accessory command: Get the DC current reading from East-to-South, <i>i.e.</i> Structure to Unprotected Coupon",
       "returnDataTo" : "log"
