@@ -207,7 +207,7 @@
 
 
 
-  {
+{
 
   "name" : "Rx Gain",
 
@@ -242,8 +242,624 @@
 
 
 
+{
 
-  {
+  "name" : "IF2C Tx Ch (DL0100A1)",
+
+  "buttons" : [
+
+    {
+      "title": "IF2C Tx Chan 1 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x01, 0x01, 0x50"
+      },
+      "description": "Tx Chan 1 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx Chan 2 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x01, 0x02, 0x50"
+      },
+      "description": "Tx Chan 2 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx Chan 3 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x01, 0x03, 0x50"
+      },
+      "description": "Tx Chan 3 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx Chan 4 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x01, 0x04, 0x50"
+      },
+      "description": "Tx Chan 4 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx Chan 5 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x01, 0x05, 0x50"
+      },
+      "description": "Tx Chan 5 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx Chan 6 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x01, 0x06, 0x50"
+      },
+      "description": "Tx Chan 6 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx Chan 7 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x01, 0x07, 0x50"
+      },
+      "description": "Tx Chan 7 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx Chan 8 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x01, 0x08, 0x50"
+      },
+      "description": "Tx Chan 8 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx All Chans Off (No Shunt)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x04, 0x00, 0x50"
+      },
+      "description": "Tx Chans (All) Off on the IF2C board",
+      "returnDataTo" : "chart"
+    }
+
+  ]
+},
+
+
+
+
+
+
+
+
+
+
+
+
+{
+
+  "name" : "IF2C Rx Ch (DL0100A1)",
+
+  "buttons" : [
+  
+    {
+      "title": "IF2C Rx Chan 1 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x10, 0x01, 0x50"
+      },
+      "description": "Rx Chan 1 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Rx Chan 2 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x10, 0x02, 0x50"
+      },
+      "description": "Rx Chan 1 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Rx Chan 3 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x10, 0x03, 0x50"
+      },
+      "description": "Rx Chan 3 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Rx Chan 4 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x10, 0x04, 0x50"
+      },
+      "description": "Rx Chan 4 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Rx Chan 5 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x10, 0x05, 0x50"
+      },
+      "description": "Rx Chan 5 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Rx Chan 6 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x10, 0x06, 0x50"
+      },
+      "description": "Rx Chan 6 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Rx Chan 7 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x10, 0x07, 0x50"
+      },
+      "description": "Rx Chan 7 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Rx Chan 8 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x10, 0x08, 0x50"
+      },
+      "description": "Rx Chan 8 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Rx All Chans Off",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x20, 0x00, 0x50"
+      },
+      "description": "Rx Chans (All) Off on the IF2C board",
+      "returnDataTo" : "chart"
+    }
+
+  ]
+},
+
+
+
+
+
+
+
+
+
+
+
+{
+
+  "name" : "Set RAM Store Ch 2 Rx Gain 8 Steps (DL0100A1)",
+
+  "buttons" : [
+
+    {
+      "title": "Set Tx Ch 1",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC8, 0x01, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Ch 1",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC9, 0x01, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Tx Ch 2",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC8, 0x02, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Ch 2",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC9, 0x02, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Tx Ch 8",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC8, 0x08, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Ch 8",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC9, 0x08, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Gain 0",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xF4, 0x00, 0x00, 0x50"
+      },
+      "description": "Restore Rx gain to default",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Gain 8",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xF4, 0x08, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Gain 10",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xF4, 0x0A, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Gain 12",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xF4, 0x0C, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Gain 15",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xF4, 0x0F, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Delay 10",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xCA, 0x0A, 0x00, 0x50"
+      },
+      "description": "40 us approx delay for eg cross chan",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Delay 40",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xCA, 0x28, 0x00, 0x50"
+      },
+      "description": "40 us approx delay for eg cross chan",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Delay 60",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xCA, 0x3c, 0x00, 0x50"
+      },
+      "description": "60 us approx delay for eg cross chan",
+      "returnDataTo" : "log"
+    },
+
+    {
+      "title": "Set VPulse On 0",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC5, 0x00, 0x00, 0x50"
+      },
+      "description": "Set Tx Gain (Voltage) to 0x00 (Default)",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set VPulse On 1",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC5, 0x01, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set VPulse On 2",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC5, 0x02, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set VPulse On 3",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC5, 0x03, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set VPulse On 4",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC5, 0x04, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set VPulse On 5",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC5, 0x06, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Set VPulse On 6",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC5, 0x06, 0x00, 0x50"
+      },
+      "description": "Pulse and Acquire using default settings or settings stored in RAM",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "Store Chan Settings to Volatile",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xE3, 0x00, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    }
+
+
+  ]
+},
+
+
+
+
+
+
+
+
+
+
+
+
+{
+
+  "name" : "PAQ Chan Cmds (DL0100A1)",
+
+  "buttons" : [
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 1 => 2) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x12, 0x00, 0x50"
+      },
+      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 1 => 1) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x11, 0x00, 0x50"
+      },
+      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 1 => 8) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x18, 0x00, 0x50"
+      },
+      "description": "Ch 8 Rx for XChan Iso Checks ... Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+    
+    
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE - from RAM - Chans as is - No WF)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x00, 0x00, 0x50"
+      },
+      "description": "The general PAQ command for PAQ from settings as is (RAM)? arg1 = 0x00 = as is ...",
+      "returnDataTo" : "log"
+    }
+
+
+
+  ]
+},
+
+
+
+
+
+
+
+
+{
 
   "name" : "PAQ Mode",
 
@@ -676,6 +1292,16 @@
           "value": "0x53, 0xDC, 0x01, 0x00, 0x50"
         },
         "description": "arg2 = channel",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "ADMM: All Relays Off",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x0b, 0x00, 0x50"
+        },
+        "description": "ADMM accessory command: De-energize all relays",
         "returnDataTo" : "log"
       }
 

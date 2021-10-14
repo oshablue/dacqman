@@ -315,7 +315,7 @@ function DataChart({
     this.flashColorTimeoutId = setTimeout( function() {
       $('#' + parentElementIdName).removeClass("flash-color", 1000);
     }, 1000);
-    newBuffer.copy(this.chartBuffer, 0, 0, 2400); // TODO hardware dependent --  4096); // was 4096
+    newBuffer.copy(this.chartBuffer, 0, 0, 4096); // was testing for DLITE at 2400 // TODO hardware dependent --  4096); // was 4096
     freshData = true;
   }
 
