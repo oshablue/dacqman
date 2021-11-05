@@ -725,7 +725,7 @@
       "title": "Set VPulse On 5",
       "command": {
         "type": "hexCsvBytes",
-        "value": "0x53, 0xC5, 0x06, 0x00, 0x50"
+        "value": "0x53, 0xC5, 0x06ƒ, 0x00, 0x50"
       },
       "description": "Pulse and Acquire using default settings or settings stored in RAM",
       "returnDataTo" : "chart",

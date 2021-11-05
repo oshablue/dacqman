@@ -233,7 +233,7 @@ var serialOpenByName = function (name) {
   //port = new SerialPort(name, { autoOpen: false, baudRate: 3000000 }, function (err) {
   var settings = {
     autoOpen: false,
-    baudRate: 57600, //9600, //57600, //921600, //57600,
+    baudRate: 57600, //9600, //57600, //921600, //57600, F
     databits: 8,
     stopbits: 1,
     parity  : 'none',
@@ -1042,13 +1042,18 @@ var openControlPort = function(portHash) {
   var comName = getVcpPortNameFromPortInfoHash(portHash);
   //var byteCount = 0;
 
+  console.log("openControlPort: " + "opening hardware from hardwareOptions (hardwares.json): " + JSON.stringify(hw));
+
   var settings = {
     autoOpen: false,
-    baudRate: 57600, //9600, //57600, //921600, //57600,
+    //baudRate: 912600, //57600, //9600, //57600, //921600, //57600, // Q3 2021 GXN from Customer set to 912600
+    baudRate: hw.controlPortBaudRate,
     databits: 8,
     stopbits: 1,
     parity  : 'none',
   };
+
+  console.log("openControlPort: " + JSON.stringify(settings));
 
   cport = new SerialPort(comName, settings, function (err) {
     if ( err ) {

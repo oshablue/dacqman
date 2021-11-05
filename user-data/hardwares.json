@@ -17,10 +17,14 @@
       "waveformLengthSamples" : 4095,
       "waveformBytesPerSample" : 1,
       "numberOfMatchingComPorts" : 2,
+      "controlPortBaudRate" : 57600,
       "comPortDeviceIdTextTypicallyContains" : "USB <-> Serial Converter",
-      "dataPortType" : "FTDI",
+      "dataPortType" : "ftdiFIFO",
       "comments" : [
-        "Blank comPortDeviceIdTextTypicallyContains is because it is implemented as deafult"
+        "Blank comPortDeviceIdTextTypicallyContains is because it is implemented as deafult",
+        "controlPortBaudRate always applies to VCP - Control Ports are always VCP",
+        "dataPortType here is the FIFO that requires the FTDI USB driver, unless OSs miraculously also begin to implement this special case",
+        "thus no dataPortBaudRate is given in this hardware description"
       ]
     },
 
@@ -31,10 +35,12 @@
       "waveformLengthSamples" : 4095,
       "waveformBytesPerSample" : 1,
       "numberOfMatchingComPorts" : 2,
+      "controlPortBaudRate" : 57600,
+      "dataPortBaudRate" : 2000000,
       "comPortDeviceIdTextTypicallyContains" : "COM485",
       "dataPortType" : "VCP",
       "comments" : [
-        "None yet"
+        "dataPortBaudRate is given as 2000000 because this port is also a VCP port and as of Q4 2021 Windows and Mac OS X FTDI USB Serial drivers support this high baud rate"
       ]
     },
 
@@ -47,8 +53,25 @@
       "numberOfMatchingComPorts" : 1,
       "comPortDeviceIdTextTypicallyContains" : "USB UART",
       "dataPortType" : "SameAsControl",
+      "controlPortBaudRate" : 57600,
       "comments" : [
-        ""
+        "controlPort and dataPort are the same and thus only the one baud rate kvp is supplied in this hardware description"
+      ]
+    },
+
+    {
+      "fullname" : "DL-Series-by-USB-TTLSerial-Adapter",
+      "shortname" : "DL",
+      "numberOfChannels" : 8,
+      "waveformLengthSamples" : 2500,
+      "waveformBytesPerSample" : 1,
+      "numberOfMatchingComPorts" : 1,
+      "comPortDeviceIdTextTypicallyContains" : "TTL232R-3V3",
+      "dataPortType" : "SameAsControl",
+      "controlPortBaudRate" : 912600,
+      "comments" : [
+        "controlPort and dataPort are the same and thus only the one baud rate kvp is supplied in this hardware description",
+        "controlPortBaudRate: GXN testing work with customer configuration uses 921600, standard default is 57600"
       ]
     }
 

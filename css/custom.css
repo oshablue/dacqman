@@ -35,6 +35,7 @@ header, main, footer {
   font-size: 3em;
 }
 
+
 .container-buttons {
   padding: 2px;
   /*border: 1px dotted steelblue;*/
@@ -490,6 +491,20 @@ path {
     stroke-width: 1;
     shape-rendering: crispEdges;
 }
+
+.axis-grid-major line {
+  fill: none;
+    stroke: grey;
+    stroke-width: 0.5;
+    shape-rendering: crispEdges;
+}
+.axis-grid-minor line {
+  fill: none;
+    stroke: grey;
+    stroke-width: 0.2;
+    shape-rendering: crispEdges;
+}
+
 /* Style the lines by removing the fill and applying a stroke */
 .line {
     fill: none;
@@ -507,7 +522,7 @@ path {
   display: inline-block;
   position: relative;
   width: 100%;
-  /*height: 100%;*/
+  height: 560px; /* this relates to chart height when set to 500px instead of 300px and is explicitly set here until a better solution */
   padding-bottom: 33%; /* aspect ratio - update for graph init dims */
   vertical-align: top;
   /*overflow: hidden;*/

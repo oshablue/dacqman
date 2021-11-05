@@ -34,7 +34,8 @@
 function DataChart({
   parentElementIdName = 'chart',
   chartBuffer = Buffer.alloc(4095,64),
-  title = ""
+  title = "",
+  dataLen = 4095
 } = {}) {
   // Default params for ES >= 6 or 2015
 
@@ -43,12 +44,13 @@ function DataChart({
   this.chartBuffer = chartBuffer;
   var doRenderLoops = false;
   var freshData = false;
+  this.dataLen = 4095;
 
   //console.log("New bigWfDataChart for id name: " + this.parentElementIdName);
   //console.log(this.chartBuffer.length);
 
 
-  var chartHeight = 300
+  var chartHeight = 500 // was 300 
   var chartWidth = 900
   var _margin = 20
   var margin = {top: _margin, right: _margin, bottom: _margin, left: _margin}
@@ -72,7 +74,8 @@ function DataChart({
 
 
   // The number of datapoints
-  var n = 4095;
+  //var n = 4095;
+  var n = dataLen;
 
   //
   var xScale = d3.scaleLinear()
@@ -84,6 +87,10 @@ function DataChart({
   var yScale = d3.scaleLinear()
       .domain([0, yInputMaxVal]) // input
       .range([height, 0]); // output
+
+  // Y Axis Grid Setup
+  //var yAxisGrid = d3.axisLeft(y).tickSize(-chartWidth).tickFormat('').ticks(10);
+
 
   // d3 line generator
   var line = d3.line()
@@ -98,9 +105,9 @@ function DataChart({
   var j;
   var big;
   var little;
-  for ( j = 0; j < 4095; j++ ) {
-    big = 126 * Math.sin(2*3.14159/4095*j*4) + 127;
-    little = 2 * Math.sin(2*3.14159/4095*j*800+2);
+  for ( j = 0; j < n; j++ ) {
+    big = 126 * Math.sin(2*3.14159/n*j*4) + 127;
+    little = 2 * Math.sin(2*3.14159/n*j*800+2);
     dataset.push(big + little);
   }
 
@@ -141,7 +148,16 @@ function DataChart({
       .attr("transform", "translate(0," + height + ")")
       .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
 
+  
   // Y-axis in a group tag
+  svg.append("g")
+      .attr("class", "y axis-grid-minor")
+      .call(d3.axisLeft(yScale).tickSize(-chartWidth).tickFormat('').ticks(255/5));
+  svg.append("g")
+      .attr("class", "y axis-grid-major")
+      .call(d3.axisLeft(yScale).tickSize(-chartWidth).tickFormat('').ticks(10));
+  
+
   svg.append("g")
       .attr("class", "y axis")
       .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
@@ -315,7 +331,7 @@ function DataChart({
     this.flashColorTimeoutId = setTimeout( function() {
       $('#' + parentElementIdName).removeClass("flash-color", 1000);
     }, 1000);
-    newBuffer.copy(this.chartBuffer, 0, 0, 4096); // was testing for DLITE at 2400 // TODO hardware dependent --  4096); // was 4096
+    newBuffer.copy(this.chartBuffer, 0, 0, this.dataLen); // was testing for DLITE at 2400 // TODO hardware dependent --  4096); // was 4096
     freshData = true;
   }
 

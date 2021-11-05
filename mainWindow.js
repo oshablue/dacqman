@@ -48,7 +48,7 @@ const { UserInterface : YouFace } = require('./userInterface.js');
 // Otherwise, 40000000 loads up just fine.  It's just in the algo portion
 // snapshot from the time that things break
 const defaultHardwareWaveformSampleFrequencyHz = 25000000; //40000000;
-const defaultHardwareWaveformLengthSamples = 2500; // 4095; // TODO need to implement hardware-dependent size
+const defaultHardwareWaveformLengthSamples = 2500; //4095; //2500; // 4095; // TODO need to implement hardware-dependent size
 const defaultHardwareWaveformBytesPerSample = 1;
 const defWfLenB = defaultHardwareWaveformLengthSamples
                   * defaultHardwareWaveformBytesPerSample;
@@ -653,7 +653,8 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
   // Initialize after DOM load to send the right chart ele parent
   singleWfChart = new SingleWfDataChart({
     parentElementIdName: "chart",
-    chartBuffer: singleChartBuf
+    chartBuffer: singleChartBuf,
+    dataLen: defWfLenB
   });
 
 
