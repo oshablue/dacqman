@@ -425,12 +425,221 @@ Refs:
 
 
 
+## Plugins and Libraries
+
+REQUIREMENT(S):
+- Note that this will now require on eg MacOS so far at least, the .NET Core (5.0?)
+
+
+First draft attempt, will try using electron-edge-js to wrap dlls, as this is most recently updated repo for edge in electron.
+
+Concept will be a framework dependent dll wrap, if we get to that level of need. Try first with .Net Core 5.0 (current, though 3.1 is LTS). Run depends on installing the plaftorm-apropriate .NET Core installation on the OS.  Or assuming the framework (Windows ?) is already installed. Not yet sure if 5.0 will work yet.
+
+Will include a dummy loop back plugin that takes the output waveform data hook and also feeds back info to the UI reference item(s).
+
+Windows: Folder contains the exe and dlls needed, right at the parent level. Calling js wrapper probably "compiled" into resources/app.asar
+MacOs: dacqman.app/Contents/Resources/app/ contains all the directories
+
+References:
+- https://github.com/agracio/electron-edge-js
+- https://stackoverflow.com/questions/42779709/use-net-dll-in-electron
+- https://dotnet.microsoft.com/download
+- Use the tutorial here for creating dll on MacOs using Visual Studio Code
+  - https://docs.microsoft.com/en-us/dotnet/core/tutorials/library-with-visual-studio-code?pivots=dotnet-5-0
+  - And creating the tests for TDD:
+    - https://docs.microsoft.com/en-us/dotnet/core/tutorials/testing-library-with-visual-studio-code?pivots=dotnet-5-0
+
+
+
+### Building the DLL (dummy/test) on MacOS
+
+In this case, we download and install the .NET Core SDK to build the dll, not just the runtime (?)
+Visual Studio for Mac is NOT installed (yet?)
+
+dotnet new sln
+dotnet new classlib -o StringLibrary
+dotnet sln add StringLibrary/StringLibrary.csproj
+
+Class1.cs code:
+```
+using System;
+
+namespace UtilityLibraries
+{
+    public static class StringLibrary
+    {
+        public static bool StartsWithUpper(this string str)
+        {
+            if (string.IsNullOrWhiteSpace(str))
+                return false;
+
+            char ch = str[0];
+            return char.IsUpper(ch);
+        }
+    }
+}
+```
+
+dotnet build
+
+Then proceed with the console app to work with the library
+
+dotnet new console -o ShowCase
+dotnet sln add ShowCase/ShowCase.csproj
+
+ShowCase/Program.cs
+```
+using System;
+using UtilityLibraries;
+
+class Program
+{
+    static void Main(string[] args)
+    {
+        int row = 0;
+
+        do
+        {
+            if (row == 0 || row >= 25)
+                ResetConsole();
+
+            string input = Console.ReadLine();
+            if (string.IsNullOrEmpty(input)) break;
+            Console.WriteLine($"Input: {input} {"Begins with uppercase? ",30}: " +
+                              $"{(input.StartsWithUpper() ? "Yes" : "No")}{Environment.NewLine}");
+            row += 3;
+        } while (true);
+        return;
+
+        // Declare a ResetConsole local method
+        void ResetConsole()
+        {
+            if (row > 0)
+            {
+                Console.WriteLine("Press any key to continue...");
+                Console.ReadKey();
+            }
+            Console.Clear();
+            Console.WriteLine($"{Environment.NewLine}Press <Enter> only to exit; otherwise, enter a string and press <Enter>:{Environment.NewLine}");
+            row = 3;
+        }
+    }
+}
+```
+
+
+dotnet add ShowCase/ShowCase.csproj reference StringLibrary/StringLibrary.csproj
+
+dotnet run --project ShowCase/ShowCase.csproj
+
+
+### Building the tests
+
+dotnet new mstest -o StringLibraryTest
+dotnet sln add StringLibraryTest/StringLibraryTest.csproj
+dotnet add StringLibraryTest/StringLibraryTest.csproj reference StringLibrary/StringLibrary.csproj
+
+StringLibraryTest/UnitTest1.cs
+```
+using System;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using UtilityLibraries;
+
+namespace StringLibraryTest
+{
+    [TestClass]
+    public class UnitTest1
+    {
+        [TestMethod]
+        public void TestStartsWithUpper()
+        {
+            // Tests that we expect to return true.
+            string[] words = { "Alphabet", "Zebra", "ABC", "Αθήνα", "Москва" };
+            foreach (var word in words)
+            {
+                bool result = word.StartsWithUpper();
+                Assert.IsTrue(result,
+                       String.Format("Expected for '{0}': true; Actual: {1}",
+                                     word, result));
+            }
+        }
+
+        [TestMethod]
+        public void TestDoesNotStartWithUpper()
+        {
+            // Tests that we expect to return false.
+            string[] words = { "alphabet", "zebra", "abc", "αυτοκινητοβιομηχανία", "государство",
+                               "1234", ".", ";", " " };
+            foreach (var word in words)
+            {
+                bool result = word.StartsWithUpper();
+                Assert.IsFalse(result,
+                       String.Format("Expected for '{0}': false; Actual: {1}",
+                                     word, result));
+            }
+        }
+
+        [TestMethod]
+        public void DirectCallWithNullOrEmpty()
+        {
+            // Tests that we expect to return false.
+            string[] words = { string.Empty, null };
+            foreach (var word in words)
+            {
+                bool result = StringLibrary.StartsWithUpper(word);
+                Assert.IsFalse(result,
+                       String.Format("Expected for '{0}': false; Actual: {1}",
+                                     word == null ? "<null>" : word, result));
+            }
+        }
+    }
+}
+```
+
+
+Run tests:
+dotnet test StringLibraryTest/StringLibraryTest.csproj
+
+change the data to see failures
+rerun tests
+
+npm install electron-edge-js (crash and burn - can't find mono - but most docs seem to suggest not necessary)
+
+in any case, for PKG_CONFIG_PATH (even for finding an old mono installation? in /Library/Frameworks - is this left over from previous work?)
+install homebrew from srew.sh...
+follow feedback about unshallowing ... (from previous installations...)
+(still in process at the moment - as predicted)
+
+aha - yes from old mono installations, the installer is finding these - so use:
+- https://www.minicreo.com/mac-uninstaller/uninstall-mono-framework-mac.html#how-to-uninstall-Mono-Framework-mac-p1
+  and
+- https://github.com/agracio/electron-edge-js/issues/102
+```
+sudo rm -rf /Library/Frameworks/Mono.framework
+sudo pkgutil --forget com.xamarin.mono-MDK.pkg
+sudo rm /etc/paths.d/mono-commands
+```
+
+And now the npm install process is working
+To be sure, trying  (on macos) (again, previously .NET 5.0 was installed - we'll see if this works ...):
+nvm use 12.13.1
+npm install electron-edge-js (without forcing EDGE_USE_CORECLR=1 which didn't seem to be working)
+(building now correctly, not trying to find mono-2)
+(no errors - output roughly matches issue above for author success)
+
+will try to clone separately the test repo and run it
+git clone https://github.com/zenb/electron-edge-js-quick-start.git
+cd [dir]
+nvm use 12.13.1
+npm install (enjoy small snacks)
+follow the Build instructions (using the dotnet cmd - worked)
+UI loads and runs but:
+edge.initializeClrFunc is not a function
 
 
 
 
-
-
+---
 
 ## Wish List / TODO
 

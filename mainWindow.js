@@ -14,12 +14,14 @@ const {ipcRenderer } = electron;
 const { dialog } = require('electron').remote; // is remote needed?
 const ul = document.querySelector('ul');
 const fs = require('fs');
+const path = require('path');
 
 var audioFdbk = require('./audioFdbk.js');
 /*this.setTimeout(function(){
   audioFdbk.playOpen();
 }, 1000);*/
 
+//const edge = require('electron-edge-js');
 
 // https://stackoverflow.com/questions/36980201/how-to-reset-nodejs-stream
 
@@ -38,6 +40,15 @@ const SingleWfDataChart = require('./bigWfDataChart.js');
 
 var YourFace = null;
 const { UserInterface : YouFace } = require('./userInterface.js');
+
+const plugins = require('./plugins.js');
+setTimeout( () => {
+  plugins.pluginPushDataSet(Buffer.alloc(12, 0x5C, Uint8Array));
+}, 5000);
+
+
+
+
 
 // 40000000 corresponds correctly to default HDL hardware sample rate
 // However, this breaks legacy software in the old file format verification version

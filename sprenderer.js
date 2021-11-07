@@ -1282,6 +1282,8 @@ var serialCheckbox = function (checkbox) {
 
   var enableConnect = false;
 
+  var enablePorts = false;
+
   // TODO we should move the functionality for auto-checked data/control boxes to this position here 
 
 
