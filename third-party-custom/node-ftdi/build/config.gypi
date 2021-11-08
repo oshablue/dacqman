@@ -104,7 +104,6 @@
     "git_tag_version": "true",
     "cert": "",
     "registry": "https://registry.npmjs.org/",
-    "noproxy": "",
     "fetch_retries": "2",
     "versions": "",
     "message": "%s",

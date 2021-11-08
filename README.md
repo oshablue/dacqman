@@ -456,9 +456,16 @@ References:
 In this case, we download and install the .NET Core SDK to build the dll, not just the runtime (?)
 Visual Studio for Mac is NOT installed (yet?)
 
+(
+  Add: for Side-by-Side (SBS) .Net Core 2.1.202 latest / and also obsolete / not supported EOL
+  global.json to specify the sdk as 2.1.202
+)
+
 dotnet new sln
 dotnet new classlib -o StringLibrary
 dotnet sln add StringLibrary/StringLibrary.csproj
+
+(SBS change the TargetFramework in this file to netcoreapp2.0 from standard to create a core app)
 
 Class1.cs code:
 ```
@@ -482,10 +489,14 @@ namespace UtilityLibraries
 
 dotnet build
 
+verify the build output is core app (if you opted for SBS above)
+
 Then proceed with the console app to work with the library
 
 dotnet new console -o ShowCase
 dotnet sln add ShowCase/ShowCase.csproj
+
+(SBS test in dacqman from the tested build in electron edge js quick start - just copy the dll over to dacqman with name indicating 21202 coreapp 2)
 
 ShowCase/Program.cs
 ```
@@ -622,7 +633,7 @@ sudo rm /etc/paths.d/mono-commands
 
 And now the npm install process is working
 To be sure, trying  (on macos) (again, previously .NET 5.0 was installed - we'll see if this works ...):
-nvm use 12.13.1
+nvm use 12.13.1 (or 10.18.0 - see above - though not officially supported pair of electron + node for electron-edge-js)
 npm install electron-edge-js (without forcing EDGE_USE_CORECLR=1 which didn't seem to be working)
 (building now correctly, not trying to find mono-2)
 (no errors - output roughly matches issue above for author success)
@@ -635,6 +646,77 @@ npm install (enjoy small snacks)
 follow the Build instructions (using the dotnet cmd - worked)
 UI loads and runs but:
 edge.initializeClrFunc is not a function
+ok - so clr is just not getting loading or something 
+actually reving all files in the src for this to use GUIDs from the output during creating the .Net5 StringLibrary test and to match framework 5.0 since that is what we're actually using - deleting the build outputs for .net core 2.0
+(without accurate GUIDs - MSBuild / dotnet build doesn't work - just says nothing to restore)
+ok - still not finding it - ah - directory is manually set in the code main.js etc to look in app.asar.unpacked - but that doesn't apply here -
+so, change to just plain old accurate project directory - and now yes it loads
+
+now the show-stopping game-changer lingo-wielder: CLR complains and crashes on static init issue - not allowed - ok - here is the incompatibility we've all been waiting for: looks like the electron-edge-js readme is (well surprise surprise) is reasonably accurate in compatibility with .Net Core 1.0 - 2.0 and etc so it would seem not compat with .Net5 as per documentations and FAQs / forums on this, as the particular call has been disallowed in more recent .NET (Core?).
+
+However, not wishing to commit or uninstall and then re-install a different version of dotnet at this time - so will try:
+- Leaving the electron-edge-js built into the app for Windows dev/users using this in their wrapper for their plugins
+  - don't know yet if this will work
+- Using ffi(-napi) for macos dll access testing
+  - don't know if this will work for the dotnet test stringlibrary
+
+
+OK ok i relent. So right, would need the dylib on mac built - and would need C exposures anyway - so the C# dll probably wouldn't work anyway.
+
+https://dotnet.microsoft.com/download/dotnet/2.0
+
+Trying to install .Net Core 2.nnn side by side right now to use with electron-edge-js
+dotnet --version still gives 5.0.402
+
+
+```
+.../dacqman $ dotnet --list-sdks
+2.1.202 [/usr/local/share/dotnet/sdk]
+3.1.406 [/usr/local/share/dotnet/sdk]
+5.0.103 [/usr/local/share/dotnet/sdk]
+5.0.402 [/usr/local/share/dotnet/sdk]
+```
+
+ok - testing rebuild the test library
+srctest/
+global.json
+```
+{
+  "sdk": {
+    "version": "2.1.202"
+  }
+}
+```
+dotnet --version => 2.1.202 (good)
+
+https://stackoverflow.com/questions/42779709/use-net-dll-in-electron
+https://docs.microsoft.com/en-us/archive/msdn-magazine/2016/may/the-working-programmer-how-to-be-mean-getting-the-edge-js
+https://github.com/tjanczuk/edge/blob/master/samples/Sample105.cs
+https://github.com/agracio/edge-js/blob/master/samples/105_add7_dll.js
+
+
+
+
+
+
+
+
+
+
+### RECAP
+
+#### macos
+- to use the dotnet (.NET5 downloaded and installed) and electron-edge-js in this case (as of this writing 11/8/21) make sure leftover old mono framework installations are removed (see link method above)
+  - TBD: Likely we want a macos install version that omits this framework? if no plugins being used and we don't want to have to install dotnet - though packaged system should not matter
+  - TBD: Will this version work for windows includes?
+- TBD: Will ffi(-napi) work with our c# test library? trying ffi
+
+
+
+
+
+
+
 
 
 
