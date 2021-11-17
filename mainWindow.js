@@ -41,12 +41,19 @@ const SingleWfDataChart = require('./bigWfDataChart.js');
 var YourFace = null;
 const { UserInterface : YouFace } = require('./userInterface.js');
 
-const plugins = require('./plugins.js');
+
+// <PLUGINS>
+
+var plugins = require('./plugins.js');
+// Testing: // TODO move to unit testing
 setTimeout( () => {
-  plugins.pluginPushDataSet(Buffer.alloc(12, 0x5C, Uint8Array));
-}, 5000);
+  plugins.pluginPushDataSet({
+    chan: 1, 
+    wf: Buffer.alloc(12, 0x5C, Uint8Array)
+  });
+}, 3000);
 
-
+// </PLUGINS>
 
 
 

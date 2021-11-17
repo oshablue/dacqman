@@ -1956,9 +1956,10 @@ setupFileCaptureCustomBatches = ( outputDirectory, numberOfWaveformsPerFile ) =>
     directory: outputDirectory,
     numberOfWaveformsPerFile: numberOfWaveformsPerFile,
     numberOfSamplesPerWaveform : defaultHardwareWaveformLengthSamples,  // Same as below
-    numberOfBytesPerSample: defaultHardwareWaveformBytesPerSample,       // From mainWindow
+    numberOfBytesPerSample: defaultHardwareWaveformBytesPerSample,       // From mainWindow (defined)
     waveformSampleFrequencyHz: defaultHardwareWaveformSampleFrequencyHz,   // Same as comment above
-    structureIdInfoInputEle: YouFace.GetStructureIdInfoInput()
+    structureIdInfoInputEle: YouFace.GetStructureIdInfoInput(),
+    plugins : plugins                                                     // From mainWindow (defined)
   });
 
   return new Promise ((resolve, reject) => {

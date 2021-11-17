@@ -140,7 +140,8 @@ class CaptureDataFileOutput {
     numberOfSamplesPerWaveform = 4095,      // Default HDL-0108-nnnnn WF return length at the time of writing this
     numberOfBytesPerSample = 1,             // Same comment as above
     waveformSampleFrequencyHz = 40000000,    // Default HDL-0108/4-nnnnn WF is 40MHz
-    structureIdInfoInputEle = null
+    structureIdInfoInputEle = null,
+    plugins = null
 
   } = {}) {
 
@@ -172,6 +173,9 @@ class CaptureDataFileOutput {
     this.prefs = null;
     this.customCaptureOptionsJson = null;
     this.readyToCapture = false;
+
+    this.plugins = plugins;
+    //console.log(JSON.stringify(plugins));
 
     this.fileCounter = 0;
     this.currentSeriesIndex = null;
@@ -226,6 +230,24 @@ class CaptureDataFileOutput {
     this.NumberOfChannels = () => {
       return this.maxChannelNum;
     }
+
+    //
+    // <PLUGINS>
+    // Plugin Initialization here for data processing plugins in this mode 
+
+    CaptDataEmitter.once('captureDataNumberOfChannelsSet', (dataIsNumChans) => {  // emitted on initializeFileWritingTransducerData
+      console.log("Num Channels Set (Event Rcvd). Pushing init to plugins: " + dataIsNumChans);
+      plugins.pluginPushInit({
+        msgType: "initRawWaveformProcessing",
+        numChannels: dataIsNumChans,
+        returnDataElementBaseName: 'chartThickness'
+      });
+     });
+
+    // </PLUGINS>
+    //
+    //
+
 
 
 
@@ -2014,6 +2036,15 @@ class CaptureDataFileOutput {
                       this.inDataBuffer.copy(chartOut, 0, start, stop); // base 0, start at beginning of new buffer, start at start, stop is not inclusive
                       MainWindowUpdateChart( di.chan, chartOut );
                       //console.log(chartOut);
+
+                      // <PLUGINS>
+                      if ( plugins ) {
+                        plugins.pluginPushDataSet({
+                          chan: di.chan,
+                          wf: chartOut
+                        });
+                      }
+                      // </PLUGINS>
 
                       // TODO add warning if buffer length is longer than expected
                       // WF length - because in practice, we have seen that variability

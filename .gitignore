@@ -5,6 +5,9 @@ release-builds-external-win32/
 private-doc-no-repo/
 sample-output-files/
 
+## eg for excluding from the repo custom plugin wrappers
+*nogit*
+
 ##
 ## OB NKS
 ## Below added from dotnet new gitignore - added due to building 
