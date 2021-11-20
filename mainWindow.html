@@ -226,13 +226,43 @@
     *********************************************** -->
     <!-- Could add 2 levels of grid containment to this card section -->
     <!-- DL0100A1 DLITE-0100A1 set display style below to block or similar to show the buttons-example.json section -->
-    <div id="activeSerialPortStuff" class="card teal lighten-4" style="display:block;"><!--"display:block;">-->
+    <div id="activeSerialPortStuff" class="card teal lighten-4" style="display:block;"> <!--"display:block;">-->
       <div class="card-content">
+        <div id="container-buttons" class="container-buttons">
+
+          <!-- COLLAPSIBLE HEADER TODO -->
+          <!-- can change this id now if coordinate with startup mainWindows.js startup behavior -->
+          <ul class="collapsible collapsible-accordion">
+            <li> <!-- class="active"> --><!-- active = open on start? -->
+              <a class="collapsible-header" title="eg for single port devices like DL-Series GXN etc.">Commands from file (eg buttons-example.json, always visible)
+                <i class="material-icons medium sidenav-dd-expand">play_arrow</i>
+              </a>
+              <div class="collapsible-body">
+              <!-- COLLAPSIBLE CONTENT -->
+
+                <div class="card-action">
+                  <div id="serialButtonsFromFileDiv" class="row"></div>
+                </div>
+
+              <!-- CLOSING COLLAPSIBLE FOOTER -->
+              </div><!-- collapsible-body -->
+            </li><!-- collapsible li -->
+          </ul><!-- collapsible ul -->
+
+        </div><!-- /container-buttons -->
+      </div><!-- /card-content-->
+    </div><!-- /card -->
+
+    <!-- PRIOR STUFF -->
+        <!-- Prior active serial port basic controls - was at the top -->
+        <!--
         <span class="card-title">Selected Serial Port:&nbsp;
           <span id="activePort"></span>
         </span>
         <br>
-        <div class="container-buttons">
+        -->
+        <!--<div class="container-buttons">-->
+          <!--
           Available controls:
           <div class="card-action">
             <p>Standard Buttons</p>
@@ -243,14 +273,16 @@
             <span id="serialTestWriteSpan">
               <button name="serialTestWrite" id="serialTestWrite" onclick="serialTestWrite()">Test Write</button></span>
           </div>
-          <div class="card-action">
+          -->
+          <!--<div class="card-action">
             <p>Custom Buttons Loaded From File:</p>
             <div id="serialButtonsFromFileDiv"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
+            -->
+          <!--</div>--><!-- /card-action -->
+        <!--</div>--><!-- /container-buttons -->
+      <!--</div>
+    </div>-->
+    <!-- /PRIOR STUFF -->
 
 
 
@@ -356,6 +388,7 @@
                 <div class="card-content white-text">
                   <span class="card-title">
                     <span class="chart-title">Waveform Display</span>
+                    <span id="chartProcessedWfInfo" class="chart-title" style="float:right">Processed WF Info</span> <!-- <PLUGIN /> -->
                   </span>
                   <div id="chart"></div>
                   <div class="card-action">

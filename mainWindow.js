@@ -717,21 +717,29 @@ var setupMultipaneCharts = function (parentEle, nChans, chartDivClasses) {
   for ( i = 0; i < nChans; i++ ) {
     var buf = Buffer.alloc(4095, 127);
     var idName = "divMultipaneChart" + i;
+    var idChartProcessedWfInfoName = "chartProcessedWfInfo" + i;
     var dChartBlock = $(document.createElement("div"))
       //.addClass("col s12 m6 l4")
       .addClass(divClasses)
       ;
     var dHeader = $(document.createElement("div"))
       .addClass("divMultiChartTitleArea")
+      //.text("Channel " + (i+1))
+      ;
+    var dHeaderPrefixSpan = $(document.createElement("span"))
       .text("Channel " + (i+1))
+      ;
+    var dHeaderUpdatedDataSpan = $(document.createElement("span")) // <PLUGIN /> //
+      .attr("id", idChartProcessedWfInfoName)
+      .attr("style", "float:right")
+      .text("Processed WF Info " + (i+1))
       ;
     var d = $(document.createElement("div"))
       .addClass("multipaneChart") // col s12 m6 l4")
       .attr("id", idName)
       ;
 
-
-    $(dChartBlock).append(dHeader).append(d);
+    $(dChartBlock).append(dHeader).append(dHeaderPrefixSpan).append(dHeaderUpdatedDataSpan).append(d);
     $(parentEle).append(dChartBlock);
 
     multiWfBufs.push(buf);
@@ -803,6 +811,55 @@ function loadButtons(customCommandsJson) {
   // At current development, textInputs is at the top level
   // while controlGroups have buttons children
   //var controlGroups = require(cp_path).controlGroups;
+
+
+
+  // <SLIDERS>
+  // Add text input to range slider switch and header in collapsible
+  var collVariableInputNodes = $($.parseHTML(
+      '<ul class="collapsible collapsible-accordion">'
+    + '  <li class="active">'
+    + '   <a class="collapsible-header">Custom Control Range Sliders/Text inputs Loaded From File'
+    + '      <i class="material-icons medium sidenav-dd-expand">play_arrow</i>'
+    + '   </a>'
+    + '   <div id="divCustomControlVariableInputs" class="collapsible-body"></div>'
+    + '  </li>'
+    + '</ul>'
+  ));
+
+  var swChk = $('<input />', { type: 'checkbox' });
+  var swSpLev = $(document.createElement("span"))
+  .addClass("lever");
+  var swLbl = $(document.createElement("label"))
+  .append("Text Inputs")
+  .append(swChk)
+  .append(swSpLev)
+  .append("Range Sliders")
+  ;
+  var switchRangeOrTextInput = $(document.createElement("div"))
+  .addClass("switch")
+  .append(swLbl)
+  ;
+  var textInputControlTitle = $(document.createElement("p"))
+  .text("Custom Control Text Inputs Loaded From File")
+  .addClass("custom-control-section")
+  .append(switchRangeOrTextInput)
+  ;
+
+  $(collVariableInputNodes).find('.collapsible-body').append(textInputControlTitle);
+  $('#controlPortButtonsFromFileDiv')
+  //.append(textInputControlTitle)
+  .append(collVariableInputNodes);
+  ;
+
+  $(".switch").find("input[type=checkbox]").on("change",function() {
+  var boolShowAsRangeSlider = $(this).prop('checked');
+  showCustomControlsAsRangeSliders(boolShowAsRangeSlider, customCommandsJson);
+  });
+  // </SLIDERS>
+
+
+
   var controlGroups = customCommandsJson.controlGroups;
   if ( !controlGroups) {
     console.log("No control groups in customCommandsJson ... returning");
@@ -811,7 +868,7 @@ function loadButtons(customCommandsJson) {
 
   var collButtonNodes = $($.parseHTML(
         '<ul class="collapsible collapsible-accordion">'
-      + '  <li class="active">'
+      + '  <li>' // class="active">' // uncomment => active = uncollapsed
       + '   <a class="collapsible-header">Custom Control Buttons Loaded From File'
       + '      <i class="material-icons medium sidenav-dd-expand">play_arrow</i>'
       + '   </a>'
@@ -903,49 +960,9 @@ function loadButtons(customCommandsJson) {
 
   // End of buttons added to control groups added to the div
 
-  // Add text input to range slider switch and header
-  // in collapsible
+  // <SLIDERS> was here </SLIDERS>
 
-  var collVariableInputNodes = $($.parseHTML(
-        '<ul class="collapsible collapsible-accordion">'
-      + '  <li class="active">'
-      + '   <a class="collapsible-header">Custom Control Range Sliders/Text inputs Loaded From File'
-      + '      <i class="material-icons medium sidenav-dd-expand">play_arrow</i>'
-      + '   </a>'
-      + '   <div id="divCustomControlVariableInputs" class="collapsible-body"></div>'
-      + '  </li>'
-      + '</ul>'
-    ));
-
-  var swChk = $('<input />', { type: 'checkbox' });
-  var swSpLev = $(document.createElement("span"))
-    .addClass("lever");
-  var swLbl = $(document.createElement("label"))
-    .append("Text Inputs")
-    .append(swChk)
-    .append(swSpLev)
-    .append("Range Sliders")
-    ;
-  var switchRangeOrTextInput = $(document.createElement("div"))
-    .addClass("switch")
-    .append(swLbl)
-    ;
-  var textInputControlTitle = $(document.createElement("p"))
-    .text("Custom Control Text Inputs Loaded From File")
-    .addClass("custom-control-section")
-    .append(switchRangeOrTextInput)
-    ;
-
-  $(collVariableInputNodes).find('.collapsible-body').append(textInputControlTitle);
-  $('#controlPortButtonsFromFileDiv')
-    //.append(textInputControlTitle)
-    .append(collVariableInputNodes);
-    ;
-
-  $(".switch").find("input[type=checkbox]").on("change",function() {
-    var boolShowAsRangeSlider = $(this).prop('checked');
-    showCustomControlsAsRangeSliders(boolShowAsRangeSlider, customCommandsJson);
-  });
+  
 
   parseAndShowCustomTextInputsAsButtonsAndTextInputs(customCommandsJson);
 

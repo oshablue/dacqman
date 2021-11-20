@@ -240,7 +240,7 @@ class CaptureDataFileOutput {
       plugins.pluginPushInit({
         msgType: "initRawWaveformProcessing",
         numChannels: dataIsNumChans,
-        returnDataElementBaseName: 'chartThickness'
+        returnDataElementBaseName: 'chartProcessedWfInfo'
       });
      });
 

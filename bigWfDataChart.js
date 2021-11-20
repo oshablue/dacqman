@@ -49,8 +49,8 @@ function DataChart({
   //console.log("New bigWfDataChart for id name: " + this.parentElementIdName);
   //console.log(this.chartBuffer.length);
 
-
-  var chartHeight = 500 // was 300 
+  // For tall graphs, use for 500 chartHeight below, with the .svg-container-tall class instead of .svg-container class
+  var chartHeight = 300 //500 // was 300 // The larger height chart aka 500 goes along with the 560px width change in the custom.css until better implemented
   var chartWidth = 900
   var _margin = 20
   var margin = {top: _margin, right: _margin, bottom: _margin, left: _margin}
@@ -268,7 +268,7 @@ function DataChart({
   var renderChart = function() {
 
     try {
-      //console.log("doRenderLoops: " + doRenderLoops);
+      console.log("doRenderLoops: " + doRenderLoops);
       if ( doRenderLoops === true ) {
         reqId = requestAnimationFrame(renderChart);
         //console.log("reqId for " + parentElementIdName + ": " + reqId);
