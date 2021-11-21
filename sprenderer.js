@@ -1262,6 +1262,13 @@ var controlPortClose = function() {
 
 var controlPortOpen = function() {
   openControlPortThatIsChecked();
+  console.warn("WARNING: sprenderer.js controlPortOpen() just called openControlPortThatIsChecked() without setTimeout. Is this working correctly?");
+  // TODO: But this isn't called for RS104
+  // Is it for RS8? (RS108)
+  // In customized code one user found this helpful in the real world:
+  // console.warn("PREFS");
+  // console.log(prefs);
+  // setTimeout( function() { openControlPortThatIsChecked() }, 1000 );
 }
 
 

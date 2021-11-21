@@ -28,6 +28,7 @@ Wrappers with "child" in the name are not loaded.
 
 - Unpack the user-data or ensure using __dirname or whatever handles that for customized example from user needed for their implementation - verify with them
 - Maybe add a generic stop call for Plugins for STOP button click etc.
+- Cutomizer using eletron-edge-js 12.18.5
 
 ## Flow
 
