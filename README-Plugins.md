@@ -24,6 +24,17 @@ Wrappers with "child" in the name are not loaded.
     - If you plugins require additional files, e.g. in the ./user-data/ then it is suggested to keep those directories also out of the asar package (placed rather into unpacked) and add those. Unless you are using the preferences override to set a custom user-data directory for files, if that feature is available.
 3. DacqMan checks the plugins directory for .js wrappers and loads them on startup.
 
+
+#### Bundled
+
+Where to locate the directory to add plugins to the packaged/bundled app.
+
+##### MacOs
+dacqman.app > (Show Package Contents) Contents > Resources > app.asar.unpacked > plugins
+
+##### Win
+
+
 ## TODO 
 
 - Unpack the user-data or ensure using __dirname or whatever handles that for customized example from user needed for their implementation - verify with them

@@ -124,7 +124,7 @@ let timeoutMs = 4096 * 1.0/sr * 1000;
 
 var playData = function(data) {
 
-  console.log(isReady);
+  //console.log(isReady);
 
   if ( !isReady ) { return; }
   isReady = false; // wait until write data

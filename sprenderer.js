@@ -1020,7 +1020,7 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
 // ok or now includes VCP implementation as well for control port
 var openControlPort = function(portHash) {
 
-  console.log("openControlPort: " + JSON.stringify(portHash));
+  console.log("openControlPort: portHash: " + JSON.stringify(portHash));
 
   //console.log("Prior, openControlPort used the FTDI device to open the control port.");
   //console.log("However, there are wrapper/driver errors and this is not reliable.");
@@ -1053,7 +1053,7 @@ var openControlPort = function(portHash) {
     parity  : 'none',
   };
 
-  console.log("openControlPort: " + JSON.stringify(settings));
+  console.log("openControlPort: settings: " + JSON.stringify(settings));
 
   cport = new SerialPort(comName, settings, function (err) {
     if ( err ) {
@@ -1096,7 +1096,14 @@ var openControlPort = function(portHash) {
 
     // TODO - update for hardware ID - adding this here just to force display of updated data from the 
     // DL retrofit
-    mainWindowUpdateChartData(null); // init the loop for requestAnimationFrame
+    // If hardware uses only a single com port for both control and data like the DL-Family, then 
+    // the cport item here should call this.  But if the hardware uses a data port and a control port 
+    // then only the dport open should call this - otherwise this calls the init twice starting and then stopping 
+    // the graph updates.
+    if (hw.dataPortType.includes("SameAsControl")) {
+      mainWindowUpdateChartData(null); // init the loop for requestAnimationFrame
+    }
+
   });
   
   cport.on('data', function (data) {
@@ -1261,6 +1268,8 @@ var controlPortClose = function() {
 
 
 var controlPortOpen = function() {
+  // [0.0.12] This is only called from the custom control button "Open"
+  // with the custom controls loaded standard buttons and generic send tool section
   openControlPortThatIsChecked();
   console.warn("WARNING: sprenderer.js controlPortOpen() just called openControlPortThatIsChecked() without setTimeout. Is this working correctly?");
   // TODO: But this isn't called for RS104
@@ -1423,7 +1432,11 @@ function beginSerialComms(button) {
   // make hash for control port (serial) ID and call that function
   //var controlPortHash = checkboxToPortHash($("[id^=UseForControl][type=checkbox]:checked"));
   //openControlPort(controlPortHash);
-  openControlPortThatIsChecked();
+  //openControlPortThatIsChecked();
+  // vvvv
+  // User report: this was necessary: (not sure of conditions)
+  console.log(`openControlPortThatIsChecked() via setTimeout with delay ${prefs.delayControlPortOpenMs}`);
+  setTimeout( function() { openControlPortThatIsChecked() }, prefs.delayControlPortOpenMs );
 
 
   // Then collapse the selection window ...

@@ -268,7 +268,7 @@ function DataChart({
   var renderChart = function() {
 
     try {
-      console.log("doRenderLoops: " + doRenderLoops);
+      //console.log("doRenderLoops: " + doRenderLoops);
       if ( doRenderLoops === true ) {
         reqId = requestAnimationFrame(renderChart);
         //console.log("reqId for " + parentElementIdName + ": " + reqId);

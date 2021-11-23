@@ -166,7 +166,7 @@ var resetReadableStream = function(chunkMultiple) {
 
   ourReadableStreamBuffer.on('readable', function(data) {
 
-    console.log("ourReadableStreamBuffer.(on).readable");
+    //console.log("ourReadableStreamBuffer.(on).readable");
 
     try {
 

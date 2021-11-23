@@ -23,6 +23,9 @@ const fs    = require('fs');
 // If this wrapper calls a child wrapper (or child rapper) that actually implements 
 // the edge-cs-wrapped dll, then this require is only needed in that file.
 var edge = require('electron-edge-js');
+var edgeFp = path.dirname(require.resolve('electron-edge-js/package.json'));
+console.log(edgeFp);
+var edge = require(edgeFp);
 
 // May be required in the wrapper if the wrapper calls a child process.
 const { fork } = require('child_process');
@@ -32,7 +35,10 @@ const libName = "StringLibrary";                // Actuall filename without exte
 
 // If any additional files needed, define here and implement the check that they are present
 const optionsFilename = 'optionsFilename.js';
-const optionsSubdir = 'user-data';
+const optionsSubdir = ''; // 'user-data'; // leave blank for options file in same dir as wrapper
+// Above: Prior customization user-data was used as the subdir. However we can bring all into the plugins
+// directory. Since this wrapper lives in the plugins directory, __dirname will return the appropriate 
+// plugins directory, so no need to join user-data or plugins here, just leave blank.
 
 // If any additional child wrappers needed, define them, and maybe implement presence checking
 const childWrapperFilename = 'childWrapper.js';
