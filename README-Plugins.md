@@ -30,16 +30,18 @@ Wrappers with "child" in the name are not loaded.
 Where to locate the directory to add plugins to the packaged/bundled app.
 
 ##### MacOs
-dacqman.app > (Show Package Contents) Contents > Resources > app.asar.unpacked > plugins
+Packaged, Packed: dacqman.app > (Show Package Contents) Contents > Resources > app.asar.unpacked > plugins
+
 
 ##### Win
-
+Packaged, Not Packed: dacqman-win32-x64 > resources > app > plugins
 
 ## TODO 
 
 - Unpack the user-data or ensure using __dirname or whatever handles that for customized example from user needed for their implementation - verify with them
 - Maybe add a generic stop call for Plugins for STOP button click etc.
-- Cutomizer using eletron-edge-js 12.18.5
+- Customizer using eletron-edge-js 12.18.5
+- If looks like multiple plugins or options will become useful, update directory structure such that plugin files like wrapper(s) dll(s) live in a plugins/subdir isolating each plugin fileset into its own subdir.
 
 ## Flow
 

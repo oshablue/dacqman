@@ -1,1 +1,0 @@
-cmd_Release/ftdi.node := c++ -bundle -undefined dynamic_lookup -Wl,-no_pie -Wl,-search_paths_first -mmacosx-version-min=10.7 -arch x86_64 -L./Release -stdlib=libc++  -o Release/ftdi.node Release/obj.target/ftdi/src/ftdi_device.o Release/obj.target/ftdi/src/ftdi_driver.o -lftd2xx

@@ -75,6 +75,26 @@ Seems to still rebuild/install ok on darwin and win32.
 
 ### Revisions
 
+- **0.0.13** - alpha
+  - Working towards a release candidate but need to release a rickety version now
+  - Plugins architecture drafted - functional packaged, unpacked on Win with edge_native test wrappers and dlls
+  - Note the package.json npm install script now explicitly only rebuilds ftdi and serialport. Other modules seem not to need rebuild (yet). And rebuilding electron-edge-js is not yet unbroken but works as a native package so far on Win (edge_native) and minimally on Mac (test netcoreapp, dev only)
+  - hardwares.json integration for setting up and attempting auto-recognition (rudimentary) and applying settings for data format (needs further work, esp with additional USB-serial devices on the system)
+  - Updated UI ordering of controls for easier single-port hardware testing and in capture mode, sliders closer to the top for usability
+  - Pref for port pre-open delay (control)
+  - Change scripts for packaging to (a) package-packed-[os: win/mac/linux] (which packs everything but plugins via --asar.unpackDir=plugins) and (b) package-unpacked-[os: win/mac] (which doesn't pack)
+  - Windows: Now uses 2000000 baud rate on Windows (real rate) for RS104 eg since baud rate aliasing is no longer required for the FTDI driver 2.12.36.4 (7/5/2021)
+
+  - Tests - only plugin in plugin dir is dummy wrapper .js no data handling, no dll - test with no plugins for operation ok and custom set of parent/child wrappers, options file, and 4x dlls added (1 parent, 3 dependents) and check for functional with live RS104 data, packaged = exe + resources (Win) or .app (Macos), packed = --asar.unpackDir=plugins, unpacked = no asar for the app.  After fresh rimraf node_modules and npm install only
+    - Windows 10 Pro - VS2017 Build Tools, VS2019, VS2022, VC++ Redist 2015 among others, USB over Ethernet remote
+      - dev (npm start): -/+ plugins: PASS/PASS
+      - packaged, unpacked: -/+ plugins: PASS/PASS
+      - packaged, packed:   -/+ plugins: FAIL/TODO - need to update path locating for require electron-edge-js for plugins dir at least
+    - Macos: OS X:  Catalina 10.15.7
+      - dev (npm start): -/+ plugins: PASS/PASS
+      - packaged, unpacked: -/+ plugins: PASS/PASS
+      - packaged, packed:   -/+ plugins: FAIL/TODO
+
 - **0.0.12** - alpha
   - Testing/demo integration with a 4-module add-on SPI multiplexer board showing basic commands
   - Added more comments about Windows (10) FTDI VCP baud rate aliasing.
@@ -86,7 +106,7 @@ Seems to still rebuild/install ok on darwin and win32.
       - Delete node_modules and rerun npm install
 
 - **0.0.10** - alpha
-  - Preliminary support for HDL-0108-RSCPT (RS8), HDL-0104-RS104 (RS104), and DL0100A1 (Flagship, Early HW, Exclusively Licensed by Ownership Private Partner) including ADMM ADMPlex prototype/proof/testing commands
+  - Preliminary support for HDL-0108-RSCPT (RS8), HDL-0104-RS104 (RS104), and DL0100A1 (Flagship, Early HW) including ADMM ADMPlex prototype/proof/testing commands
   - Attempted RS104 and master branch merge
   - Re-partitioned code for baby step improved dev cleanliness
   - Mac OS X: Using node 12.13.1

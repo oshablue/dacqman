@@ -803,7 +803,8 @@ var openDataPortVcp = function(portHash) {
   // Directions for baud rate aliasing and related choices are in the Readme
   // At this time, we alias to 38400, a standard rate. Aliased to 2Mbps of course.
   if ( process.platform == "win32") {
-    thisBaud = 38400;
+    //thisBaud = 38400;
+    thisBaud = 2000000; // Rememba why?
   }
 
   var settings = {
@@ -1313,11 +1314,13 @@ var serialCheckbox = function (checkbox) {
     // For only DL hardware connected, these won't be checked, so check them here 
     // and yeah for now only do this if 2 other checkboxes aren't already checked above 
     // TODO This is clunky and needs to be refactored yet again ...
-    if ( hw && hw.numberOfMatchingComPorts === 1) {
-      var tr = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains(" + hw.comPortDeviceIdTextTypicallyContains + ")").closest("tr");
-      $(tr).find("input").prop("checked", "checked"); // check both boxes
-      enablePorts = true;
-    }
+    // Issue: if there are multiple serial devices and you uncheck an active one that you don't 
+    // want then this rechecks it anyway - for any device
+    // if ( hw && hw.numberOfMatchingComPorts === 1) {
+    //   var tr = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains(" + hw.comPortDeviceIdTextTypicallyContains + ")").closest("tr");
+    //   $(tr).find("input").prop("checked", "checked"); // check both boxes
+    //   enablePorts = true;
+    // }
 
   }
 
@@ -1357,7 +1360,8 @@ var guessAndSetHardwareIdentity = function() {
 
   console.log("Guessing hardware ID (using last one in hardwares.json list that matches): ");
   var hwCount = 0;
-
+  var hws = [];
+  var hwTxts = [];
   hardwareOptions.forEach(function (h) {
     var txt = h.comPortDeviceIdTextTypicallyContains
     var descrips = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains(" + txt + ")");
@@ -1365,7 +1369,9 @@ var guessAndSetHardwareIdentity = function() {
     if ( descrips.length === h.numberOfMatchingComPorts ) {
       console.log("Found " + h.numberOfMatchingComPorts + " of " + txt + " in the device descriptions ... assuming " + h.shortname);
       hwTxt = `${h.fullname} (${h.shortname})`;
+      hwTxts.push(hwTxt); // TODO
       hw = h;
+      hws.push(h); // TODO
       hwCount++;
     } else {
       console.log(`... none found in quantity ${h.numberOfMatchingComPorts}`);
@@ -1374,6 +1380,11 @@ var guessAndSetHardwareIdentity = function() {
 
   if ( hwCount > 1 ) {
     console.warn(`On guessing at connected hardware, there was more than 1 match. Maybe you have multiple devices connected, or other USB devices connected. At this time, this behavior is undefined. Last match is shown as HARDWARE IS: but the checkboxes will be set an HDL 4 or 8 channel series if present. This is one among many TODOs`);
+  
+    // TODO TEMP: Select the first one matched instead
+    console.warn("TODO: Actually, currently selecting the first match");
+     $("#hardware-id").text(hwTxts[0]);
+     hw = hws[0];
   }
   
   // TODO put in I dunno some config or param place - extract basically
@@ -1388,7 +1399,13 @@ var guessAndSetHardwareIdentity = function() {
   //   console.log("Did not find 2x *COM485* in the device descriptions ... assuming HDL-0108-RSCPT");
   //   hw = "HDL-0108-RSCPT";
   // }
-  $("#hardware-id").text(hwTxt);
+  
+  // TODO 
+  if ( hwCount == 1) {
+    $("#hardware-id").text(hwTxt);
+  }
+
+  
 
 } // end of: guessAndSetHardwareIdentity
 
