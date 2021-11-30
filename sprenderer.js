@@ -187,8 +187,13 @@ function ftdiFind() {
       // Per materializecss docs:
       // Match the label for attribute to the input's id value to get the toggling effect
       console.log(d["UseForDataChecked"]);
-      p.UseForData = `<p><label for="UseForData${p["locationId"]}"><input type="checkbox" id="UseForData${p["locationId"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForDataChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Data</span></label></p>`;
-      p.UseForControl = `<p><label for="UseForControl${p["locationId"]}"><input type="checkbox" id="UseForControl${p["locationId"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForControlChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Control</span></label></p>`;
+      // Update: On Win 10 so far, just creating an id using UseForData+locationId means that for the dual port device like the 
+      // RS104 hardware, using a network USB bridge (connect local USB device to PC running DacqMan over the LAN) 
+      // both parts of the serial device will have the same location ID which makes the materializecss checkbox 
+      // functionality break (because two checkboxes have the same ID)
+      // So, we add also the index
+      p.UseForData = `<p><label for="UseForData${p["locationId"]}${p["index"]}"><input type="checkbox" id="UseForData${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForDataChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Data</span></label></p>`;
+      p.UseForControl = `<p><label for="UseForControl${p["locationId"]}${p["index"]}"><input type="checkbox" id="UseForControl${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForControlChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Control</span></label></p>`;
 
       table.write(p)
     });
@@ -1289,6 +1294,17 @@ var controlPortOpen = function() {
 
 var serialCheckbox = function (checkbox) {
 
+  // Uncheck all other checkboxes in this column
+  // Function can be called without a param like serialCheckbox();
+  if ( checkbox ) {
+    if ( checkbox.id.indexOf("Data") > -1 ) {
+      $("[id^=UseForData][type=checkbox]").not($(checkbox)).filter(":checked").prop('checked', false);
+    }
+    if ( checkbox.id.indexOf("Control") > -1 ) {
+      $("[id^=UseForControl][type=checkbox]").not($(checkbox)).filter(":checked").prop('checked', false);
+    }
+  }
+
   guessAndSetHardwareIdentity();
 
   console.log(hw)
@@ -1309,18 +1325,20 @@ var serialCheckbox = function (checkbox) {
 
     enablePorts = true;
 
-  } else {
+  }
+  if ( nDataChecked === 0 && nControlChecked === 0 ) {
 
     // For only DL hardware connected, these won't be checked, so check them here 
     // and yeah for now only do this if 2 other checkboxes aren't already checked above 
     // TODO This is clunky and needs to be refactored yet again ...
     // Issue: if there are multiple serial devices and you uncheck an active one that you don't 
     // want then this rechecks it anyway - for any device
-    // if ( hw && hw.numberOfMatchingComPorts === 1) {
-    //   var tr = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains(" + hw.comPortDeviceIdTextTypicallyContains + ")").closest("tr");
-    //   $(tr).find("input").prop("checked", "checked"); // check both boxes
-    //   enablePorts = true;
-    // }
+    if ( hw && hw.numberOfMatchingComPorts === 1) {
+      console.log("No data and no control port checked, and, hw guessed as a match and numberOfMatchingComPorts === 1, so checking data and control for one com port.");
+      var tr = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains(" + hw.comPortDeviceIdTextTypicallyContains + ")").closest("tr");
+      $(tr).find("input").prop("checked", "checked"); // check both boxes
+      enablePorts = true;
+    }
 
   }
 
@@ -1359,14 +1377,53 @@ var hw;
 var guessAndSetHardwareIdentity = function() {
 
   console.log("Guessing hardware ID (using last one in hardwares.json list that matches): ");
+
+  // TODO CONDITIONS:
+  // Logic doesn't work correctly yet in the following example cases:
+  // - There are two different single serial port devices and control is checked for one and data is checked for the other
+  // 
+  $("#hardware-id").text("Undetermined");
+
+  // If none are checked, look at possibilities 
+  // If some are checked, use the checked values
+  var nChecked = $("[id^=ftdi_ports]").find("input:checkbox:checked").length;
+  if ( nChecked === 1 ) {
+    console.log("nChecked is === 1, returning. Would proceed if zero checked or 2 checked.");
+    return;
+  }
+  var useOnlyChecked = nChecked > 1;
+  const maxComs = 2;
+  
   var hwCount = 0;
   var hws = [];
   var hwTxts = [];
   hardwareOptions.forEach(function (h) {
     var txt = h.comPortDeviceIdTextTypicallyContains
     var descrips = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains(" + txt + ")");
+    //var rowIsChecked = descrips.closest('tr').find("input:checkbox:checked"); // even if the same row, two checks will return array of 2 input checkboxes
+    // Below is actually matching rows with checks, might not include check(s) in non-matching descrip row
+    var matchingRowsWithChecks = descrips.closest('tr').find("input:checkbox:checked").closest('tr'); // same row, length = 1
+    var checkedBoxesInMatchingRows = descrips.closest('tr').find("input:checkbox:checked");
+    // If 2 matching com ports spec'd, then there should be 2 rows matching
+    // If 1 matching com port spec'd, then there should be 1 row matching with 2 checks
+    // We are only here in the code if we have two checks overall, matching a hw spec or not
+    // 
     console.log(`Looking for ${txt}...`);
-    if ( descrips.length === h.numberOfMatchingComPorts ) {
+    //if ( descrips.length === h.numberOfMatchingComPorts ) {
+    // https://stackoverflow.com/questions/9973323/javascript-compare-3-values
+    //if ( (new Set([ descrips.length, rowIsChecked.length, h.numberOfMatchingComPorts])).size === 1 ) {
+    var pushTheHw = false;
+    // Probably these is some very pretty way to do this
+    console.log(`descrips.length: ${descrips.length}`);
+    console.log(`matchingRowsWithChecks.length: ${matchingRowsWithChecks.length}`);
+    console.log(`h.numberOfMatchingComPorts: ${h.numberOfMatchingComPorts}`);
+    if ( useOnlyChecked ) {
+      pushTheHw = (new Set([ descrips.length, matchingRowsWithChecks.length, h.numberOfMatchingComPorts])).size === 1
+        && checkedBoxesInMatchingRows.length === maxComs;
+    } else {
+      pushTheHw = descrips.length === h.numberOfMatchingComPorts;
+    }
+    if ( pushTheHw ) {
       console.log("Found " + h.numberOfMatchingComPorts + " of " + txt + " in the device descriptions ... assuming " + h.shortname);
       hwTxt = `${h.fullname} (${h.shortname})`;
       hwTxts.push(hwTxt); // TODO
