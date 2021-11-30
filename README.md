@@ -90,10 +90,10 @@ Seems to still rebuild/install ok on darwin and win32.
       - dev (npm start): -/+ plugins: PASS/PASS
       - packaged, unpacked: -/+ plugins: PASS/PASS
       - packaged, packed:   -/+ plugins: FAIL/TODO - need to update path locating for require electron-edge-js for plugins dir at least
-    - Macos: OS X:  Catalina 10.15.7
-      - dev (npm start): -/+ plugins: PASS/PASS
-      - packaged, unpacked: -/+ plugins: PASS/PASS
-      - packaged, packed:   -/+ plugins: FAIL/TODO
+    - Macos: OS X: Catalina 10.15.7
+      - dev (npm start): -/+ plugins: PASS/TODO 
+      - packaged, unpacked: -/+ plugins: FAIL/TODO - need to handle the build method and deployment for packaged - and/or ignore/disable plugins (since none for macos anyway yet)
+      - packaged, packed:   -/+ plugins: TODO/TODO
 
 - **0.0.12** - alpha
   - Testing/demo integration with a 4-module add-on SPI multiplexer board showing basic commands
