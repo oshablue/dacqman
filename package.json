@@ -1,7 +1,7 @@
 {
   "name": "dacqman",
-  "version": "0.0.13",
-  "description": "Data Acquisition and Management Tool especially for HDL-0108-RSCPT (OshaBlue LLC) 8-Channel Ultrasonic NDT scanning hardware",
+  "version": "0.0.14",
+  "description": "Data Acquisition and Management Tool (Demo/R&D) especially for OshaBlue LLC Ultrasonic NDT scanning hardware (HDL-0108-RSCPT, RS104, DL-Series)",
   "main": "main.js",
   "repository": "https://github.com/oshablue/dacqman.git",
   "scripts": {
@@ -9,7 +9,7 @@
     "install": "npm run -s rebuild-ftdi & npm run -s rebuild-serialport",
     "rebuild-ftdi": "electron-rebuild --only ftdi",
     "rebuild-serialport": "electron-rebuild --only serialport",
-    "package-pack-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --asar.unpackDir=plugins --icon=assets/icons/mac/icon.icns --prune=true --out=release-builds",
+    "package-packed-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --asar.unpackDir=plugins --icon=assets/icons/mac/icon.icns --prune=true --out=release-builds",
     "package-packed-win": "electron-packager . dacqman --overwrite --platform=win32 --arch=x64 --asar.unpackDir=plugins --icon=assets/icons/win/icon.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"DacqMan\"",
     "package-packed-linux": "electron-packager . dacqman --overwrite --asar=true --platform=linux --arch=x64 --icon=assets/icons/png/icon.png --prune=true --out=release-builds",
     "package-unpacked-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=assets/icons/mac/icon.icns --prune=true --out=release-builds",

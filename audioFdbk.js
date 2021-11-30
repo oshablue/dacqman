@@ -164,7 +164,7 @@ var playData = function(data) {
   });
 
   speaker.on('close', () => {
-    console.log('Speaker close');
+    //console.log('Speaker close');
     //isReady = true; // nope
   });
 
@@ -173,7 +173,7 @@ var playData = function(data) {
   });
 
   speaker.on('drain', () => {
-    console.log('Speaker drain');
+    //console.log('Speaker drain');
   });
 
   speaker.on('finish', () => {
@@ -247,7 +247,7 @@ var playData = function(data) {
   // This works too - sr has a nice big impact on how you hear it etc.
   speaker.write(data4, () => {
     speaker.destroy(); // close is not a function unless requiring plain old speaker
-    console.info('Speaker data written');
+    //console.info('Speaker data written');
   });
 
   // not working yet

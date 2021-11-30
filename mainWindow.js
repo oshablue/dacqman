@@ -44,14 +44,15 @@ const { UserInterface : YouFace } = require('./userInterface.js');
 
 // <PLUGINS>
 
-var plugins = require('./plugins.js');
+var plugins;
+//var plugins = require('./plugins.js');
 // Testing: // TODO move to unit testing
-setTimeout( () => {
-  plugins.pluginPushDataSet({
-    chan: 1, 
-    wf: Buffer.alloc(12, 0x5C, Uint8Array)
-  });
-}, 3000);
+// setTimeout( () => {
+//   plugins.pluginPushDataSet({
+//     chan: 1, 
+//     wf: Buffer.alloc(12, 0x5C, Uint8Array)
+//   });
+// }, 3000);
 
 // </PLUGINS>
 
@@ -650,6 +651,11 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
         accordion: true
       });
       YourFace.Load(prefs.interface, customCommandsJson.uiDataCaptureFocused);
+      if ( prefs.boolUsePlugins ) {
+        plugins = require('./plugins.js');
+      } else {
+        console.warn("prefs.boolUsePlugins = false; Skipping require (and load) plugins.");
+      }
       return;
     })
     .catch ( e => {

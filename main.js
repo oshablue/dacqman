@@ -34,8 +34,9 @@ const settingsDefaults = {
   customTransducerCalibrationFilesDirectory: './user-data/transducer-calibration-files/',
   customTransducerCalibrationFilesDirectoryPackaged: './user-data/transducer-calibration-files/',
   interfaceDefault: 'regular',
-  interface: 'dataCaptureFocused', // regular, dataCaptureFocused
-  delayControlPortOpenMs: 1000      // delay + forWhat + units {Ms, Sec, etc.} // TODO implement setter
+  interface: 'dataCaptureFocused',          // regular, dataCaptureFocused
+  delayControlPortOpenMs: 1000,             // delay + forWhat + units {Ms, Sec, etc.} // TODO implement setter
+  boolUsePlugins: true                      // true, false
 };
 // TODO on load check that at least each key exists - in the case of migrating to
 // new settings version

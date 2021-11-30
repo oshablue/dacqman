@@ -50,9 +50,13 @@ if ( fs.existsSync(plugDirPath)) {
         // functions below here so the item is not pushed as a require if not needed
         if ( filename.endsWith(".js") && (filename.toLowerCase().indexOf("child") === -1) ){
             //plugins.push(require("./plugins/" + filename));
-            var p = require(path.join(plugDirPath, filename)); // yes this looks in app.asar.unpacked when necessary
-            var Pp = p.Plugin;
-            plugins.push(new Pp());
+            try {
+                var p = require(path.join(plugDirPath, filename)); // yes this looks in app.asar.unpacked when necessary
+                var Pp = p.Plugin;
+                plugins.push(new Pp());
+            } catch (e) {
+                console.warn(`Error loading plugin ${filename} in path ${plugDirPath}: Error message: ${e}. Skipping this plugin.`);
+            }
         }
     });
     console.log(plugins);
