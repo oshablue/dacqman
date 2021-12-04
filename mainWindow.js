@@ -687,6 +687,26 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
 
   $('.sidenav').sidenav();
   $(".dropdown-trigger").dropdown();
+  
+  //$('.modal').modal();
+  // Or specifically:
+  $('#modal-hardwareSelect').modal({
+    onCloseStart: function() {
+      //console.log("modal-hardwareSelect closed");
+      //modalHardwareSelectHello();
+      modalHardwareSelectCloseStartFunction();
+      sprend.setHardwareByFullname(
+        $('#modal-hardwareSelect input:checked').closest('label').children('span').text()
+      );
+      // TODO 
+      // sprend.setHardware(this?);
+      // this is the modal div I think
+      // $('.modal-content input').filter(':checked') returns the input
+    },
+    onOpenStart: function() {
+      sprend.setupModalHardwareSelect();
+    }
+  })
 
 });
 

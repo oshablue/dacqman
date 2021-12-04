@@ -155,7 +155,7 @@
 
           <div id="hardware-id-container" class="row">
             <div class="col">
-              <button id="hardwareIdButton" class="btn-small blue lighten-2">Hardware is: <span id="hardware-id">Undetermined</span></button>
+              <button data-target="modal-hardwareSelect" id="hardwareIdButton" class="btn-small blue lighten-2 modal-trigger">Hardware is: <span id="hardware-id">Undetermined</span></button>
             </div>
           </div>
 
@@ -530,8 +530,33 @@
 
 
 
+  <!--
+  ******************************************************************************
+          MODALS
+  ******************************************************************************
+  -->
 
-
+  <!-- Modal Structure -->
+  <div id="modal-hardwareSelect" class="modal">
+    <div class="modal-content">
+      <!-- Dynamically assigned content goes here -->
+    </div>
+    <div class="modal-footer">
+      <a href="#!" class="modal-close waves-effect waves-green btn-flat">Okey Dokes</a>
+    </div>
+    <script>
+      var modalHardwareSelectHello = function() {
+        console.log("hello from modal-hardwareSelect");
+      }
+      var modalHardwareSelectToggleChecks = function(clickedLabel) {
+        console.log("toggle checks");
+        $('#modal-hardwareSelect :checkbox').not($(clickedLabel).children(':checkbox')).filter(':checked').prop('checked', false)
+      }
+      var modalHardwareSelectCloseStartFunction = function() {
+        console.log("modalHardwareSelectCloseStartFunction");
+      }
+    </script>
+  </div>
 
 
 

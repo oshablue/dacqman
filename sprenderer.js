@@ -1374,6 +1374,8 @@ const hardwareOptions = require("./user-data/hardwares.json").hardwares;
 var hwTxt = "Undetermined"; // TOOD this is probably the wrong place for this - probably a hardware class would be good right?
 var hw;
 
+
+
 var guessAndSetHardwareIdentity = function() {
 
   console.log("Guessing hardware ID (using last one in hardwares.json list that matches): ");
@@ -1466,6 +1468,75 @@ var guessAndSetHardwareIdentity = function() {
 
 } // end of: guessAndSetHardwareIdentity
 
+
+
+
+
+
+
+
+var setHardwareByFullname = function(fullname) {
+
+  console.log(`setHardwareByFullname: (try) ${fullname}`);
+
+  // Commenting so as not to change previous if failure here (?) TODO REVISIT
+  //$("#hardware-id").text("Undetermined");
+
+  if ( fullname ) {
+    hardwareOptions.forEach(function (h) {
+      if ( h.fullname === fullname ) {
+        hw = h;
+        hwTxt = `${h.fullname} (${h.shortname})`;
+        $("#hardware-id").text(hwTxt);
+      }
+    })
+  }
+
+} // end of setHardwareByFullname()
+
+
+
+
+
+
+
+
+
+
+var setupModalHardwareSelect = function() {
+  
+  let ele = $('#modal-hardwareSelect > .modal-content');
+  ele.empty();
+  ele
+    .append(
+      $('<h6>').text(`Hardwares.json options available: ${hardwareOptions.length}`)
+    )
+    ;
+
+  hardwareOptions.forEach( ho => {
+    let checkedText = null;
+    if ( typeof hw !== 'undefined' && hw ) {
+      if ( hw.fullname === ho.fullname ) {
+        checkedText = "checked"
+      }
+    }
+    let s = $('<span>').text(ho.fullname);
+    let c = $('<input />', {type: 'checkbox', checked: checkedText});
+    let l = $('<label>');
+    $(l).click( function() {
+      modalHardwareSelectToggleChecks(this); // defined in mainWindows.html; this is now the label containing the checkbox
+    })
+    l.append(c).append(s);
+    ele 
+      .append(
+        $('<p>')
+          .append( l )
+      )
+      ;
+  });
+  
+
+} // end of: setupModalHardwareSelect
 
 
 
@@ -2390,4 +2461,6 @@ module.exports = {
   cancelCustomControlButtonCommand: cancelCustomControlButtonCommand,
   vcpFind: vcpFind,
   ftdiFind: ftdiFind,
+  setupModalHardwareSelect: setupModalHardwareSelect,
+  setHardwareByFullname : setHardwareByFullname,
 };
