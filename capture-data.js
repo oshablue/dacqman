@@ -187,6 +187,12 @@ class CaptureDataFileOutput {
     this.maxChannelNum = 0;
     this.completedCurrentFileScanCount = false;
 
+    // HOOKALERT01
+    // for managedStop (managed conditions when Stop clicked)
+    this.pendingStopUntilFileCompletion = false;
+    this.deleteCaptureFileFragment = false;
+    this.managedStopType = null;
+
     this.transducerCalibrationWaveformArray = null;
     this.transducerHeaderByteArray = null;
     this.headerByteArray = null;
@@ -343,6 +349,136 @@ class CaptureDataFileOutput {
 
 
 
+
+  // HOOKALERT01
+  this.ManagedStop = () => {
+
+    console.log("managedStop type is: " + this.managedStopType);
+
+  } // End of: this.ManagedStop
+
+
+
+
+
+
+
+   // HOOKALERT01
+   // Call when a stop event, like a STOP button has happened 
+   // then this function determines what to do next, etc.
+   this.ManagedStopNow = () => {
+
+    var whatToDoNowJson = {};
+
+    return new Promise ( (resolve, reject) => {
+
+      whatToDoNowJson.stopNow = true;
+      whatToDoNowJson.stopButtonText = 'STOP';
+      whatToDoNowJson.stopButtonAddClass = 'disabled';
+      whatToDoNowJson.stopButtonRemoveClass = '';
+      whatToDoNowJson.startButtonRemoveClass = 'disabled';
+      whatToDoNowJson.structureIdInfoDisabled = false;
+
+      try {
+
+        switch ( this.managedStopType ) {
+
+          case "queueTheStopAndWaitUntilFileCompleted":
+            if ( this.pendingStopUntilFileCompletion == false ) {
+              whatToDoNowJson.stopNow = false;
+              whatToDoNowJson.stopButtonText = 'Waiting to finish file. Click again to force stop now. Partial file will be deleted!';
+              whatToDoNowJson.stopButtonAddClass = 'pulse-div orange tempUiBigButtonSmallText';
+              whatToDoNowJson.startButtonRemoveClass = ''
+              whatToDoNowJson.structureIdInfoDisabled = true;
+              this.pendingStopUntilFileCompletion = true;
+            } else {
+              // Here either the stop button has been clicked twice
+              // or the 2nd click was programmatic because the pending file completion was reached.
+              whatToDoNowJson.stopNow = true;
+              this.pendingStopUntilFileCompletion = false;
+              whatToDoNowJson.stopButtonRemoveClass = 'pulse-div orange tempUiBigButtonSmallText';
+              this.deleteCaptureFileFragment = true;
+            }
+            break;
+
+          case "stopNowAndDeletePartialFile":
+            whatToDoNowJson.stopNow = true; // just being explicit
+            this.deleteCaptureFileFragment = true;
+            break;
+
+          case "defaultDoNothing":
+            //whatToDoNowJson.stopNow = true;
+            break;
+
+          default: 
+            //whatToDoNowJson.stopNow = true;
+            break;
+        }
+
+        resolve(whatToDoNowJson);
+      }
+      catch ( e ) {
+
+        console.log(`couldnt figure out how to handle managed stop type ${e.inspect}`)
+        reject(`couldnt figure out how to handle managed stop type ${e.inspect}`);
+
+      }
+
+    }); // End of: Promise
+
+    //return whatToDoNowJson;
+
+  } // End of: this.ManagedStop
+
+
+
+
+
+
+
+
+  // HOOKALERT01
+  this.CleanUpFileFragments = () => {
+
+    return new Promise ( (resolve, reject ) => {
+
+      if ( this.deleteCaptureFileFragment == true && this.completedCurrentFileScanCount == false ) {
+
+          // then it is a fragment and delete it
+          try {
+            
+            console.log (`CleanUpFileFragments: attempting to rmSync: ${this.activeFilePath}`);
+            fs.unlinkSync(this.activeFilePath);
+
+            this.deleteCaptureFileFragment = false; // already done
+
+            CaptDataEmitter.emit('captureDataNewFile', {
+              "fp": this.activeFilePath + " (Deleted this partial file fragment)", "fn": this.fileCounter
+            });
+
+            resolve(true);
+
+          } catch (e) {
+
+            console.error(e);
+            resolve(false);   // We still resolve not reject here because if the fragment doesn't delete 
+                              // it is not the end of the world. Only small sadness. Despite user feedback.
+          }
+
+      } else {
+        resolve(true);
+      }
+
+    }); // End of: Promise 
+
+  } // End of: this.CleanUpFileFragments
+
+
+
+
+
+
+
   // was this. however this arrow notation does the same
   this.LoadCaptureOptions = () => {
 
@@ -421,6 +557,9 @@ class CaptureDataFileOutput {
       this.fileCaptureMidFixSuffix = json.midFixSuffix;
 
       json = this.customCaptureOptionsJson.additionalFileInfo;
+
+      this.managedStopType = json.managedStop.stopType;
+      CaptDataEmitter.emit('captureDataManagedStopTypeSet', this.managedStopType); // This is in constructor -- will it be heard where needed?
 
       this.captureFileOutputBytesPerWaveformSample = parseInt(json.captureFileOutputBytesPerWaveformSample.lengthBytes);
       this.timestampFormat = json.timestampFormat;
@@ -1780,6 +1919,10 @@ class CaptureDataFileOutput {
       this.scanCounter = 0;
       this.waveformCounter = 0; // TODO is this still used?
       this.completedCurrentFileScanCount = false;
+
+      // HOOKALERT01
+      this.pendingStopUntilFileCompletion = false;
+      
       // TODO what else needs to get reset?
 
       this.createCaptureWriteStreamFilePath()
@@ -2164,6 +2307,13 @@ class CaptureDataFileOutput {
               datInfos[datInfos.length - 1].chan >= this.maxChannelNum
             ) {
               this.completedCurrentFileScanCount = true;
+              //
+              // HOOKALERT01 this is where we could potentially handle managedStop function for pending Stop
+              // for the case where: queueTheStopAndWaitUntilFileCompleted
+              if ( this.pendingStopUntilFileCompletion == true ) {
+                console.log("pendingStopUntilFileCompletion is true; this.completedCurrentFileScanCount = true");
+                CaptDataEmitter.emit( 'captureDataManagedStopLastFileComplete', {});
+              }
             }
           }
 

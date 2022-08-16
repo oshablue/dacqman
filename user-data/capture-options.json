@@ -208,8 +208,15 @@
 
     "comments" : {
       "1" : "If you want to update timebase (Wfs) and sample rate in MHz (main header) to match legacy files such that these look exactly the same and don't reflect the new hardware reality, update (1): mainWindow to have the older sample rate in Hz and (2) update this file in the header section to have the legacy sample rate."
-    }
+    },
 
+    "managedStop" : {
+      "stopType" : "stopNowAndDeletePartialFile",
+      "comments" : {
+        "1" : "This is for when the STOP button is clicked in the Data Capture Focused mode. Handling end of file or partial file conditions.",
+        "2" : "stopTypes can be: defaultDoNothing OR queueTheStopAndWaitUntilFileCompleted OR stopNowAndDeletePartialFile"
+      }
+    }
 
   }
 

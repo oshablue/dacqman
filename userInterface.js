@@ -4,6 +4,8 @@
 // TODO move entire construction of the section here? Or to template?
 // TODO create object and pass parent div?
 
+const { controlPortClose } = require('./sprenderer.js');
+
 
 const captDataEmitter = require('./capture-data.js').CaptDataEmitter; // For subscribing to events
 
@@ -46,6 +48,7 @@ class UserInterface {
     // Not constructed:
     this._captureDataFileOutputDirectory = null;
     this._buttonsJson = null;
+    this._managedStopType = null;
 
 
     captDataEmitter.on('captureDataNewFile', (data) => {
@@ -71,7 +74,10 @@ class UserInterface {
       UISetupMultipaneCharts(data);
     });
 
-
+    // HOOKALERT01 
+    captDataEmitter.on('captureDataManagedStopLastFileComplete', (data) => {
+      $('#btnCaptureStop').click();
+    });
 
   } // end of constructor
 
@@ -291,24 +297,53 @@ addButtonLogicFromJson = ( jsonButtons ) => {
           // to pending progress timeout ids and thus the ability to clear
           // timeouts by id gets nulled out
           if ( jb.mapToButtonId === 'btnCaptureStop' ) {
-            cancelCustomControlButtonCommand();
-            endOfCaptureBatch();
-            $('#btnCaptureStop').addClass("disabled");
-            $('#btnCaptureStart').removeClass("disabled");
-            $('#structureIdInfo').prop('disabled', false);
+            //
+            // HOOKALERT01 -- somewhere here or within either next two commands is where we check for customCaptureOptionsJson.additionalFileInfo.managedStop.stopType 
+            //
+            // Below: defined in mainWindow.js as an sprend.function; function implemented in sprenderer.js - and now talks to the capture-data batch file output object to manageStop if necessary
+            cancelCustomControlButtonCommand()
+            .then( whatToDoNowJson => {
+              console.log(JSON.stringify(whatToDoNowJson));
+              //if ( whatToDoNowJson.stopNow == false ) {
+                $('#btnCaptureStop').text(whatToDoNowJson.stopButtonText);
+                $('#btnCaptureStop').addClass(whatToDoNowJson.stopButtonAddClass);
+                $('#btnCaptureStop').removeClass(whatToDoNowJson.stopButtonRemoveClass);
+                $('#btnCaptureStart').removeClass(whatToDoNowJson.startButtonRemoveClass);
+                $('#structureIdInfo').prop('disabled', whatToDoNowJson.structureIdInfoDisabled);
+              //} 
+              if ( whatToDoNowJson.stopNow == true ) {
+
+                endOfCaptureBatch();                // defined locally in this file, UI update only
+                
+                // Then send the command
+                var d = $('#capture_ui_directory_select').find("input").val();
+
+                // the command is implemented in sprenderer
+                controlPortSendData(jb.command, jb.returnDataTo, jb, d );
+              }
+              return whatToDoNowJson;
+            });
+            // .then( whatToDoNowJson => {
+            //   // Ok just plain old stop now
+            //   endOfCaptureBatch();                // defined locally in this file, UI update only
+            //   $('#btnCaptureStop').addClass("disabled");
+            //   $('#btnCaptureStart').removeClass("disabled");
+            //   $('#structureIdInfo').prop('disabled', false);
+            // });
           }
 
           if ( jb.mapToButtonId === 'btnCaptureStart' ) {
             $('#btnCaptureStop').removeClass("disabled");
             $('#btnCaptureStart').addClass("disabled");
             $('#structureIdInfo').prop('disabled', true);
+
+            // Then send the command
+            var d = $('#capture_ui_directory_select').find("input").val();
+
+            // the command is implemented in sprenderer
+            controlPortSendData(jb.command, jb.returnDataTo, jb, d );
           }
 
-          // Then send the command
-          var d = $('#capture_ui_directory_select').find("input").val();
-
-          // the command is implemented in sprenderer
-          controlPortSendData(jb.command, jb.returnDataTo, jb, d );
         });
     }
   });

@@ -4,7 +4,7 @@
   "textInputs": [
 
     {
-      "label": "Set Tx Channel",
+      "label": "Set Tx Channel (RS104 or RS8 - HDL Series)",
       "min" : 1,
       "max" : 8,
       "default" : 1,
@@ -17,7 +17,7 @@
     },
 
     {
-      "label": "Set Tx Voltage",
+      "label": "Set Tx Voltage (RS104 or RS8 - HDL Series)",
       "min" : 0,
       "max" : 31,
       "default" : 0,
@@ -30,7 +30,7 @@
     },
 
     {
-      "label": "Set Rx Channel",
+      "label": "Set Rx Channel (RS104 or RS8 - HDL Series)",
       "min" : 1,
       "max" : 8,
       "default" : 1,
@@ -43,7 +43,7 @@
     },
 
     {
-      "label": "Set Rx Gain",
+      "label": "Set Rx Gain (RS104 or RS8 - HDL Series)",
       "min" : 0,
       "max" : 15,
       "default" : 0,
@@ -56,7 +56,7 @@
     },
 
     {
-      "label": "Set Rx Delay",
+      "label": "Set Rx Delay (RS104 or RS8 - HDL Series)",
       "min" : 0,
       "max" : 3,
       "default" : 0,
@@ -233,6 +233,119 @@
       "description": "Set Rx Gain to 0x0F, the maximum",
       "returnDataTo" : "chart"
     }
+  ]
+},
+
+
+
+
+
+
+
+{
+
+  "name" : "DL0100A1 Misc & Test (DL0100A1)",
+
+  "buttons" : [
+
+    {
+      "title": "Get FW Rev",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x93, 0x00, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Get Device Family",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC0, 0x00, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Get Test WF",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC1, 0x00, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "Do Single Acq",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC2, 0x00, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "Get DMA WF",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC3, 0x00, 0x00, 0x50"
+      },
+      "description": "",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx Chan 6 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x01, 0x06, 0x50"
+      },
+      "description": "Tx Chan 6 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx Chan 7 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x01, 0x07, 0x50"
+      },
+      "description": "Tx Chan 7 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx Chan 8 On",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x01, 0x08, 0x50"
+      },
+      "description": "Tx Chan 8 On on the IF2C board - in prep for Ch 1 Tx to Ch 2 Tx on the main DL0100A1 if coax wired to match",
+      "returnDataTo" : "chart"
+    },
+
+
+    {
+      "title": "IF2C Tx All Chans Off (No Shunt)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xdb, 0x04, 0x00, 0x50"
+      },
+      "description": "Tx Chans (All) Off on the IF2C board",
+      "returnDataTo" : "chart"
+    }
+
   ]
 },
 
@@ -561,6 +674,50 @@
 
 
     {
+      "title": "Set Rx Gain 1",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xF4, 0x01, 0x00, 0x50"
+      },
+      "description": "Restore Rx gain to default",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Gain 2",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xF4, 0x02, 0x00, 0x50"
+      },
+      "description": "Restore Rx gain to default",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Gain 3",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xF4, 0x03, 0x00, 0x50"
+      },
+      "description": "Restore Rx gain to default",
+      "returnDataTo" : "log"
+    },
+
+
+    {
+      "title": "Set Rx Gain 4",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xF4, 0x04, 0x00, 0x50"
+      },
+      "description": "Restore Rx gain to default",
+      "returnDataTo" : "log"
+    },
+
+
+    {
       "title": "Set Rx Gain 8",
       "command": {
         "type": "hexCsvBytes",
@@ -835,6 +992,125 @@
         }
       ]
     },
+
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 8 => 8) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x88, 0x00, 0x50"
+      },
+      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 2 => 2) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x22, 0x00, 0x50"
+      },
+      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 3 => 3) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x33, 0x00, 0x50"
+      },
+      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 4 => 4) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x44, 0x00, 0x50"
+      },
+      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 5 => 5) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x55, 0x00, 0x50"
+      },
+      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 6 => 6) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x66, 0x00, 0x50"
+      },
+      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 7 => 7) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x77, 0x00, 0x50"
+      },
+      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
     
     
     {
@@ -861,7 +1137,7 @@
 
 {
 
-  "name" : "PAQ Mode",
+  "name" : "PAQ Mode (RS104)",
 
   "buttons" : [
 

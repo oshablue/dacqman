@@ -2211,8 +2211,15 @@ var closeAndCleanupFileCapture = function() {
   currentMaxCaptureFileSizeBytes = null;
   currentBytesCaptured = null;
 
+  // HOOKALERT01
+  captureDataFileOutputBatch.CleanUpFileFragments()
+  .then( res => {
+    // For custom user batch file capture
+    captureDataFileOutputBatch = null;
+  })
+  
   // For custom user batch file capture
-  captureDataFileOutputBatch = null;
+  //captureDataFileOutputBatch = null;
 
 
   // TODO -- what about including as a callback any sort of closing commands
@@ -2291,26 +2298,63 @@ var progress = function (timeleft, timetotal, element) {
 
 
 
-var cancelCustomControlButtonCommand = function() {
+//var cancelCustomControlButtonCommand = function() {
+var cancelCustomControlButtonCommand = () => {
+
   console.log ("cancelCustomControlButtonCommand");
   console.log(executingTimeoutFcns);
-  if ( executingTimeoutFcns.length > 0 ) {
-    executingTimeoutFcns.forEach( function(etf, index) {
-      clearTimeout(etf);
-      console.log("Clearing timeout execution for #" + index);
+
+  var jsonForButtons = {}; //captureDataFileOutputBatch.ManagedStopNow();
+
+  // HOOKALERT01 managedStop -- does this work? yes.
+  //captureDataFileOutputBatch.ManagedStop();
+
+  return new Promise ((resolve, reject) => {
+
+    captureDataFileOutputBatch.ManagedStopNow()
+    .then( jsonForButtons => {
+
+      if ( jsonForButtons.stopNow == true ) {
+
+        if ( executingTimeoutFcns.length > 0 ) {
+          executingTimeoutFcns.forEach( function(etf, index) {
+            clearTimeout(etf);
+            console.log("Clearing timeout execution for #" + index);
+          });
+          if ( progressTimeoutId ) {
+            clearTimeout(progressTimeoutId);
+            progressTimeoutId = null;
+            launchProgressCountdown(0);
+          }
+          showControlPortOutput("Cancel done.\r\n");
+        } else {
+          showControlPortOutput("Nothing to cancel.\r\n");
+        }
+        closeAndCleanupFileCapture(); // also calls the batch capture object to delete any fragments
+
+      }
+      return jsonForButtons;
+
+    })
+    .then( jsonForButtons => {
+
+      console.log( JSON.stringify(jsonForButtons) );
+      resolve(jsonForButtons);
+
+    })
+    .catch ( e =>  {
+
+      reject(`error ${e}`);
+
     });
-    if ( progressTimeoutId ) {
-      clearTimeout(progressTimeoutId);
-      progressTimeoutId = null;
-      launchProgressCountdown(0);
-    }
-    // if file ...close it
-    showControlPortOutput("Cancel done.\r\n");
-  } else {
-    showControlPortOutput("Nothing to cancel.\r\n");
-  }
-  closeAndCleanupFileCapture();
-}
+
+  }); // End of:  Promise
+
+  //console.log( JSON.stringify(jsonForButtons) );
+
+  //return jsonForButtons;
+
+} // End of: cancelCustomControlButtonCommand()
 
 
 

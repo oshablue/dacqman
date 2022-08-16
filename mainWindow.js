@@ -66,7 +66,7 @@ var plugins;
 // allow flawless processing with default algorithm settings
 // Otherwise, 40000000 loads up just fine.  It's just in the algo portion
 // snapshot from the time that things break
-const defaultHardwareWaveformSampleFrequencyHz = 25000000; //40000000;
+const defaultHardwareWaveformSampleFrequencyHz = 40000000; //25000000; //40000000;
 const defaultHardwareWaveformLengthSamples = 2500; //4095; //2500; // 4095; // TODO need to implement hardware-dependent size
 const defaultHardwareWaveformBytesPerSample = 1;
 const defWfLenB = defaultHardwareWaveformLengthSamples
@@ -547,7 +547,9 @@ function silenceIndicators(button) {
   $(button).addClass('disabled');
 }
 function cancelCustomControlButtonCommand() {
-  sprend.cancelCustomControlButtonCommand();
+  return new Promise ( (resolve, reject) => {
+    resolve (sprend.cancelCustomControlButtonCommand() );
+  });
 }
 
 
