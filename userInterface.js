@@ -199,7 +199,7 @@ class UserInterface {
       newParent.find(".card-content").addClass("hide");
       e1.detach().appendTo(newParent);
       e1.find(".onlyAppliesToSingleChannelDaq").addClass("hide");
-      e1.find(".range-field").removeClass("s6").addClass("s4");
+      e1.find(".range-field").removeClass("s6").addClass("s4"); // TODO works only if there are 3 items remaining
       var visibleInputs = e1.find('div.row').find('div[id^=container]:not(.hide)');
       $('#divTextInputRowZero').remove();
       var newRow = $(document.createElement('div'));
@@ -207,6 +207,8 @@ class UserInterface {
       .addClass('row')
       .prop('id', 'divTextInputRowZero');
       e1.append(newRow);
+      //e1.find('.right-align.col.s2').removeClass('s2').addClass('s6');
+      //e1.find('.left-align.col.s1').removeClass('s1').addClass('s4');
       visibleInputs.detach().appendTo(newRow);
     }
   } // End of: RefreshFormatRefinement

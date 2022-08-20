@@ -1132,15 +1132,15 @@ var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function (customCommand
   // and change below further: % 4 to % 3 (change the modulus)
   textInputs.forEach( function (ti) {
     var containerDiv = $('<div>')
-      .addClass("col s4")
+      .addClass("col s3")
       .addClass(ti.class)
       .prop('id', "container" + ti.label.replace(/\s/g, ''))
       ;
     var smallDiv = $('<div>')           // for button
-      .addClass("right-align col s6"); // col s2
+      .addClass("right-align col s8"); // col s2 // s4 for simplified DCF mode
     var smallDiv2 = $('<div>')          // for text/label
       .attr("id", "div" + ti.label.replace(/\s/g, ''))
-      .addClass("left-align col s4") // col s1
+      .addClass("left-align col s4") // col s1 // s4 for simplified DCF mode
       .addClass(ti.class);
     //var wrapTogether = $('<div>')
     //  .addClass("text-input-pair");
