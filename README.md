@@ -75,6 +75,8 @@ Seems to still rebuild/install ok on darwin and win32.
 
 ### Revisions
 
+- **0.0.15** - alpha 
+
 - **0.0.13** - alpha
   - Working towards a release candidate but need to release a rickety version now
   - Plugins architecture drafted - functional packaged, unpacked on Win with edge_native test wrappers and dlls
@@ -765,9 +767,10 @@ There are probably other code mods as well that could clean up
 relying on the error-free data streams.
 
 
+1. Long duration data capture focused mode captures (more than 15 - 20 minutes) have some kind of resource issues or OS intervention issues (when running unattended?).
 
 
-
+1. A million other things.
 
 
 
@@ -1265,5 +1268,45 @@ For managedStop in DataCaptureFocused mode
 
 TODO - Probably add title property or text subtitle warning that a could delete the latest file fragment if that mode is set in the capture-options.json for how to handle managedStop
 
+#### HOOKALERT02
+
+For hiding more control sections in the data capture focused UI, looking to expose only the minimal necessary items.
 
 
+
+
+## Modules Notes
+
+### audio-speaker / speaker: looped warning message on terminal
+
+Currently, default package (1.5.1) will dump looped error onto the terminal when running from source, coming from mpg123 and output/coreaudio.c (see the message).
+Temporarily, to work around see eg modifying the code and building it from eg:
+
+https://stackoverflow.com/questions/40822969/how-can-i-properly-end-or-destroy-a-speaker-instance-without-getting-illegal-ha
+
+And what I've done in practice is just comment out line 81 in coreaudio.c for a silent fail and then within /node_modules/speaker/ do node-gyp build and it all runs ok without that looped warning.
+
+Of course, this does not persist on a next npm install, until we move it to the 3rd party custom modules directory or similar.
+
+
+
+## Resource Usage in Long Capture Durations
+
+Refs:
+- https://seenaburns.com/debugging-electron-memory-usage/
+
+
+
+
+
+## How Stuff Works
+
+### devTools window state storage
+
+Added v0.0.15
+
+If you use the Developer => Toggle DevTools menu items, the devToolsOpen pref (true/false) in settingsStorage changes, all handled in main.js. 
+
+Then when you next start DacqMan that pref is checked, and if true, opens the devTools windows.
+
+However, if you "x" out of devTools to close the window, currently that event is not hooked, to change the stored state of devTools being open or closed. Not low hanging fruit at the moment.

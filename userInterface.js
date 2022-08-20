@@ -18,6 +18,7 @@ const captDataEmitter = require('./capture-data.js').CaptDataEmitter; // For sub
 const useRegular = 'regular';
 const useDataCaptureFocused = 'dataCaptureFocused';
 const uiDataCaptureFocusedHtmlSnippetFilepath = "./userInterfaceDataCaptureFocused.html";
+const uiInterfaceRefinementSimple = 'simple';
 
 
 
@@ -49,6 +50,8 @@ class UserInterface {
     this._captureDataFileOutputDirectory = null;
     this._buttonsJson = null;
     this._managedStopType = null;
+    this._currentUi = "";
+    this._currentUiRefinement = "";
 
 
     captDataEmitter.on('captureDataNewFile', (data) => {
@@ -135,15 +138,19 @@ class UserInterface {
 
 
 
-  SwitchInterface ( uiInterface ) {
+  SwitchInterface ( uiInterface, uiInterfaceRefinement ) {
 
     switch ( uiInterface ) {
       case useRegular:
         this._uiDataCaptureFocusedParentDiv.addClass("hide");
         this._uiRegularDivs.map(function(d){$(d).collapsible("open")});
         this._uiDataCaptureFocusedParentDiv.empty();
+        this._currentUi = useRegular;
+        this._currentUiRefinement = uiInterfaceRefinement;
         break;
       case useDataCaptureFocused:
+        this._currentUi = useDataCaptureFocused;
+        this._currentUiRefinement = uiInterfaceRefinement;
         if ( this._uiDataCaptureFocusedParentDiv.children("div").length < 1 ) {
             var json = this.buttonsJson;
             // 2nd param is callback function on completion
@@ -151,7 +158,22 @@ class UserInterface {
         }
         this._uiDataCaptureFocusedParentDiv.removeClass("hide");
         this._uiRegularDivs.map(function(d){$(d).collapsible("close")});
+
+        // HOOKALERT02
+        // Breaking protocol for just direct selection and manipulation in this mode
+        // if ( uiInterfaceRefinement && uiInterfaceRefinement == uiInterfaceRefinementSimple ) {
+        //   $('#activeSerialPortStuff').addClass("hide");
+        //   $('#singleWaveformChartAccordion').addClass("hide");
+        //   var e1 = $('#divCustomControlVariableInputs');
+        //   var newParent = $('#activeControlPort');
+        //   newParent.find(".card-content").addClass("hide");
+        //   e1.detach().appendTo(newParent);
+        //   e1.find(".onlyAppliesToSingleChannelDaq").addClass("hide");
+        //   e1.find(".range-field").removeClass("s6").addClass("s4");
+        // }
+        this.RefreshFormatRefinement();
         break;
+
       default:
         console.log(`uiInterface case: ${uiInterface} not handled.`);
     } // end of switch
@@ -159,6 +181,35 @@ class UserInterface {
   } // End of: SwitchInterface
 
 
+
+
+
+
+  RefreshFormatRefinement () {
+    // HOOKALERT02
+    // Breaking protocol for just direct selection and manipulation in this mode
+    if ( this._currentUi == useDataCaptureFocused 
+      && this._currentUiRefinement 
+      && this._currentUiRefinement == uiInterfaceRefinementSimple ) {
+      $('#activeSerialPortStuff').addClass("hide");
+      $('#singleWaveformChartAccordion').addClass("hide");
+      $('#divCardConsoleLike').addClass("hide");
+      var e1 = $('#divCustomControlVariableInputs');
+      var newParent = $('#activeControlPort');
+      newParent.find(".card-content").addClass("hide");
+      e1.detach().appendTo(newParent);
+      e1.find(".onlyAppliesToSingleChannelDaq").addClass("hide");
+      e1.find(".range-field").removeClass("s6").addClass("s4");
+      var visibleInputs = e1.find('div.row').find('div[id^=container]:not(.hide)');
+      $('#divTextInputRowZero').remove();
+      var newRow = $(document.createElement('div'));
+      newRow
+      .addClass('row')
+      .prop('id', 'divTextInputRowZero');
+      e1.append(newRow);
+      visibleInputs.detach().appendTo(newRow);
+    }
+  } // End of: RefreshFormatRefinement
 
 
 
@@ -187,10 +238,10 @@ class UserInterface {
 
 
 
-  Load ( uiInterface, buttonsJson ) {
+  Load ( uiInterface, uiInterfaceRefinement, buttonsJson ) {
 
     this.buttonsJson = buttonsJson;
-    this.SwitchInterface(uiInterface);
+    this.SwitchInterface(uiInterface, uiInterfaceRefinement);
 
   } // End of: Load
 
@@ -314,7 +365,7 @@ addButtonLogicFromJson = ( jsonButtons ) => {
               if ( whatToDoNowJson.stopNow == true ) {
 
                 endOfCaptureBatch();                // defined locally in this file, UI update only
-                
+
                 // Then send the command
                 var d = $('#capture_ui_directory_select').find("input").val();
 

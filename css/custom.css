@@ -5,6 +5,12 @@
   /*padding-left: 300px;*/
 /* } */
 
+/* html { margin-left: calc(100vw - 100%); } */ /* no good for us */
+/* pulse divs create scroll bar on/off jitter in some view aspect ratios
+ * especially with the devtools open. this seems to help a bit at this time
+ */
+html { overflow-y: scroll; }
+
 .flex-container {
   display: flex;
   flex-flow: row wrap;
@@ -131,12 +137,18 @@ p.control-group {
   font-size: 1.2em;
 }
 p.custom-control-section {
-  font-size: 1.3em;
+  font-size: 1.4em;
   font-weight: 500;
-  padding-top: 4px;
+  /*padding-top: 4px;*/
+  margin-top: 2px;
+  margin-bottom: 8px;
 }
 p.custom-control-section .switch {
   padding-left: 20px;
+}
+#divCustomControlVariableInputs .range-field {
+  font-size: 1.7em;
+  margin: 0px;
 }
 
 #active_ports_ui_buttons {
@@ -278,10 +290,10 @@ span#filesWrittenBadge.badge {
   -ms-animation: none;
   animation: none;
 }
-@-webkit-keyframes pulse {to {box-shadow: 0 0 0 45px rgba(0, 204, 123, 0);}}
-@-moz-keyframes pulse {to {box-shadow: 0 0 0 45px rgba(0, 204, 123, 0);}}
-@-ms-keyframes pulse {to {box-shadow: 0 0 0 45px rgba(0, 204, 123, 0);}}
-@keyframes pulse {to {box-shadow: 0 0 0 45px rgba(0, 204, 123, 0);}}
+@-webkit-keyframes pulse {to {box-shadow: 0 0 0 30px rgba(0, 204, 123, 0);}}
+@-moz-keyframes pulse {to {box-shadow: 0 0 0 30px rgba(0, 204, 123, 0);}}
+@-ms-keyframes pulse {to {box-shadow: 0 0 0 30px rgba(0, 204, 123, 0);}}
+@keyframes pulse {to {box-shadow: 0 0 0 30px rgba(0, 204, 123, 0);}}
 
 
 /* This is the default side nav popout/in breakpoint */
@@ -466,11 +478,32 @@ a.collapsible-header {
 }
 
 
+
+
+
 /* End: Materializecss overrides */
 
 
 
 
+/* HTML5 Customizations + Materializecss - Range */
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; /* ignore webkit defaults */
+  border: 2px solid;
+  border-color: rgb(101, 106, 255);
+  height: 24px;
+  width: 24px;
+  border-radius: 50%;
+  /*background:rgba(0, 140, 150, 0.9);*/
+  margin-top: -11px;
+}
+/* alas the bubble size 30px x 30px is hard coded into the materializecss range code */
+input[type=range]+.thumb.active .value {
+  font-size: 22px;
+  padding-left: 2px;
+  padding-top: 2px;
+  margin: 0px;
+}
 
 
 

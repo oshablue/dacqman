@@ -652,7 +652,7 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
       $('.collapsible').collapsible({
         accordion: true
       });
-      YourFace.Load(prefs.interface, customCommandsJson.uiDataCaptureFocused);
+      YourFace.Load(prefs.interface, prefs.interfaceRefinement, customCommandsJson.uiDataCaptureFocused);
       if ( prefs.boolUsePlugins ) {
         plugins = require('./plugins.js');
       } else {
@@ -868,9 +868,16 @@ function loadButtons(customCommandsJson) {
   .addClass("switch")
   .append(swLbl)
   ;
-  var textInputControlTitle = $(document.createElement("p"))
+  var spanTextInputControlTitle = $(document.createElement("span"))
+  .prop("id", "spanTextInputControlTitle")
+  .addClass("grey-text")
+  .addClass("text-darken-3")
   .text("Custom Control Text Inputs Loaded From File")
+  ;
+  var textInputControlTitle = $(document.createElement("p"))
+  //.text("Custom Control Text Inputs Loaded From File")
   .addClass("custom-control-section")
+  .append(spanTextInputControlTitle)
   .append(switchRangeOrTextInput)
   ;
 
@@ -1069,11 +1076,13 @@ var parseAndShowCustomTextInputsAsRangeSliders = function(customCommandsJson) {
       .text(ti.label)
       .addClass("range-field")
       .addClass("col s6")                           // 2 per row
+      .addClass(ti.class)
       .append($('<input />', { type: 'range'
         , class: 'control-range'
         , id: 'range' + ti.label.replace(/\s/g, '')
         , min: ti.min, max: ti.max, step: 1
         , value: ti.default
+        , title: ti.description
       }));
     $(range).on("change", function() {
       controlPortSendDataFromTextInput(this, ti.command);
@@ -1085,6 +1094,8 @@ var parseAndShowCustomTextInputsAsRangeSliders = function(customCommandsJson) {
   myAddTo.append(inputRowDiv);
 
   M.Range.init($('.control-range')); //$('input[type="range"]')); // or this
+
+  YourFace.RefreshFormatRefinement();
 
 }
 
@@ -1098,9 +1109,14 @@ var parseAndShowCustomTextInputsAsRangeSliders = function(customCommandsJson) {
 var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function (customCommandsJson) {
 
   var textInputs = loadTextInputs(customCommandsJson);
+  var textInputsTitle = customCommandsJson.sectionTitles.textInputsTitle;
 
   if ( textInputs.length < 1 ) {
     return;
+  }
+
+  if ( textInputsTitle && textInputsTitle.length > 0 ) {
+    $('#spanTextInputControlTitle').text(textInputsTitle);
   }
 
   $("div[id^='divTextInputRow']")
@@ -1115,15 +1131,21 @@ var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function (customCommand
   // To make 3 pairs per row, change below from s2 to s3
   // and change below further: % 4 to % 3 (change the modulus)
   textInputs.forEach( function (ti) {
-    var smallDiv = $('<div>')
-      .addClass("col s2 right-align");
-    var smallDiv2 = $('<div>')
+    var containerDiv = $('<div>')
+      .addClass("col s4")
+      .addClass(ti.class)
+      .prop('id', "container" + ti.label.replace(/\s/g, ''))
+      ;
+    var smallDiv = $('<div>')           // for button
+      .addClass("right-align col s6"); // col s2
+    var smallDiv2 = $('<div>')          // for text/label
       .attr("id", "div" + ti.label.replace(/\s/g, ''))
-      .addClass("col s1 left-align");
+      .addClass("left-align col s4") // col s1
+      .addClass(ti.class);
     //var wrapTogether = $('<div>')
     //  .addClass("text-input-pair");
     //console.log($(ti.label.split(" ")).last());
-    var span = $("<span>").text(ti.label.split(" ").pop()); //ti.label);
+    var span = $("<span>").text(ti.label.split(" ")); //.pop()); //ti.label); // .pop gets last element from array
     var input = $("<input type='text'>")
       .addClass("input-field")
       .prop('title', ti.description)
@@ -1131,6 +1153,7 @@ var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function (customCommand
     var button = $("<button>")
       .text(ti.label)
       .addClass("btn-small waves-effect waves-light")
+      .addClass(ti.class)
       .prop('id', "button" + ti.label.replace(/\s/g, ''))
       .click(function () {
         controlPortSendDataFromTextInput(this, ti.command);
@@ -1140,9 +1163,10 @@ var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function (customCommand
     $(label).append(input).append(span);
     var c1 = $(smallDiv).append(button);
     var c2 = $(smallDiv2).append(label);
+    var c3 = $(containerDiv).append(c1).append(c2);
     //$(wrapTogether).append(c1).append(c2);
     //$(inputRowDiv).append(wrapTogether); // c1).append(c2);
-    $(inputRowDiv).append(c1).append(c2);
+    $(inputRowDiv).append(c3); //append(c1).append(c2);
     // Create the text inputs, grouped by rows of 3
     console.log("inputCnt: " + inputCnt + " textInputs.length: " + textInputs.length );
     if ( inputCnt % 4 == 0 ) {
@@ -1158,6 +1182,8 @@ var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function (customCommand
     }
     inputCnt++;
   });
+
+  YourFace.RefreshFormatRefinement();
 
 }
 

@@ -211,7 +211,7 @@
     },
 
     "managedStop" : {
-      "stopType" : "stopNowAndDeletePartialFile",
+      "stopType" : "queueTheStopAndWaitUntilFileCompleted",
       "comments" : {
         "1" : "This is for when the STOP button is clicked in the Data Capture Focused mode. Handling end of file or partial file conditions.",
         "2" : "stopTypes can be: defaultDoNothing OR queueTheStopAndWaitUntilFileCompleted OR stopNowAndDeletePartialFile"

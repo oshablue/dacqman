@@ -5,6 +5,7 @@ const fs = require('fs');
 
 
 const SettingsStorage = require('./settingsStorage.js');
+const { ipcRenderer } = require('electron');
 
 
 const {app, BrowserWindow, Menu, ipcMain} = electron;
@@ -24,6 +25,10 @@ let addWindow;
 //
 // SETTINGS / PREFERENCES
 //
+// When adding settings, add them here, then to have the new settings integrated 
+// into the settings storage, simply close DacqMan if running and re-open.
+// Reload won't do it.  This should retain existing settings values and add the 
+// new settings keys and their default values as they are here.
 const settingsFileName = "dacqman-settings";
 const settingsDefaults = {
   windowBounds: { width: 800, height: 900 },
@@ -36,7 +41,12 @@ const settingsDefaults = {
   interfaceDefault: 'regular',
   interface: 'dataCaptureFocused',          // regular, dataCaptureFocused
   delayControlPortOpenMs: 1000,             // delay + forWhat + units {Ms, Sec, etc.} // TODO implement setter
+  // OB NKS: circa imaginary v0.0.14
   boolUsePlugins: true                      // true, false
+  // OB NKS: begin: dacqman v0.0.15 
+  , interfaceRefinement: 'simple' // ['', none, simple]
+  , customControlSettingsJson: {}               // json sub by divId and then control id
+  , devToolsOpen: false                     // restore on opening // TODO FUTURE currently Xing out of devTools doesn't update this
 };
 // TODO on load check that at least each key exists - in the case of migrating to
 // new settings version
@@ -71,6 +81,10 @@ app.on('ready', function(){
     protocol: 'file:',
     slashes: true
   }));
+
+  if ( settingsStorage.get('devToolsOpen') ) {
+    mainWindow.webContents.openDevTools();
+  }
 
   // At one point we used the mainWindow resize event to store window bounds,
   // but that was too busy - needed to implement either settimeout etc. to handle
@@ -296,6 +310,9 @@ if(process.env.NODE_ENV !== 'production'){
         accelerator: process.platform === 'darwin' ? 'Command+I' : 'Ctrl+I',
         click(item, focusedWindow){
           focusedWindow.toggleDevTools();
+          var dts = settingsStorage.get('devToolsOpen');
+          settingsStorage.set('devToolsOpen', !dts);
+          console.log(`setting:devToolsOpen was ${dts} and was now set to ${!dts}`); // this will go to terminal when running from source
         }
       },
       {
