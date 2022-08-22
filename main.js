@@ -47,6 +47,7 @@ const settingsDefaults = {
   , interfaceRefinement: 'simple' // ['', none, simple]
   , customControlSettingsJson: {}               // json sub by divId and then control id
   , devToolsOpen: false                     // restore on opening // TODO FUTURE currently Xing out of devTools doesn't update this
+  //, cssToUse: ''                            // default css/custom.css // just use any other or default to custom.css
 };
 // TODO on load check that at least each key exists - in the case of migrating to
 // new settings version

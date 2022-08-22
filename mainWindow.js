@@ -590,6 +590,53 @@ let getPrefsPromise = () => {
 
 
 
+///
+// Use longest filename ending with custom.css or otherwise use the first 
+// of whatever non-custom.css ending stylesheet is there
+let selectStylesheet = () => {
+
+  var eleHead = document.getElementsByTagName('head')[0]; //.getElementById('stylesheet');
+  var ele = $(eleHead).find('#stylesheet');
+  var files = fs.readdirSync('css/');
+  console.log(`Files: ${files}`);
+  var nonCustomFiles = [];
+  var customFiles = [];
+  if ( files ) {
+    nonCustomFiles = files.filter( function (f) {
+      return f.endsWith('custom.css') == false;
+    })
+    customFiles = files.filter( function (f) {
+      return f.endsWith('custom.css') == true;
+    })
+  }
+  console.log(`Files: ${nonCustomFiles} ${customFiles}`);
+  var longestCustom = '';
+  // get longest
+  if ( customFiles ) {
+    longestCustom = customFiles.reduce(
+      function( a, b) {
+        return a.length > b.length ? a : b;
+      }
+    )
+  }
+
+  var cssToUse = $(ele).prop('href');       // here the css/ dir prefix exists
+  console.log(`cssToUse: ${cssToUse}`);
+  if ( nonCustomFiles ) {
+    cssToUse = `css/${nonCustomFiles[0]}`;           // but here it doesn't so add it back in
+  } else {
+    if ( customFiles && longestCustom ) {
+      cssToUse = `css/${longestCustom}`;             // but here it doesn't so add it back in
+    }
+  }
+  console.log(`cssToUse: ${cssToUse}`);
+  $(ele).prop('href', cssToUse);
+
+}
+
+
+
+
 
 let  loadCustomCommandsPromise = (prefs) => {
 
@@ -632,6 +679,9 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
   setTimeout(function(){
     audioFdbk.playOpen();
   }, 1000);
+
+
+  selectStylesheet();
 
 
   sprend.vcpFind();
@@ -1110,6 +1160,18 @@ var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function (customCommand
 
   var textInputs = loadTextInputs(customCommandsJson);
   var textInputsTitle = customCommandsJson.sectionTitles.textInputsTitle;
+  var textSettingsJson = prefs.customControlSettingJson;
+
+  // textSettingsJson notes:
+  // build out the input id from:
+  // .prop('id', "input" + ti.label.replace(/\s/g,''));
+  // pull out the value from the json file
+  // put the value in the input
+  // do the same with the range sliders 
+  // maybe separate function ... ?
+  // doesn't exist - use min value or zero? esp for sliders might have only the min value
+  // TODO also 
+  // create the functions to store to file
 
   if ( textInputs.length < 1 ) {
     return;

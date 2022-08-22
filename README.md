@@ -1310,3 +1310,13 @@ If you use the Developer => Toggle DevTools menu items, the devToolsOpen pref (t
 Then when you next start DacqMan that pref is checked, and if true, opens the devTools windows.
 
 However, if you "x" out of devTools to close the window, currently that event is not hooked, to change the stored state of devTools being open or closed. Not low hanging fruit at the moment.
+
+### Stylesheets (UI look and feel)
+
+Added v0.0.15
+
+DacqMan looks on startup for anything other than *custom.css and if it finds it, it uses that.  And otherwise it uses the longest filename ending with *custom.css.
+
+So to add your customized stylesheet that will get prioritized, remove test.css from the /css directory and put in your preferred stylesheet, file named without custom.css on the end.
+
+Also, to simplify your life, just use @import 'custom.css' in your stylesheet and then you don't have to copy everything, only edit the stuff you want to override.  I think.  Right?
