@@ -44,11 +44,23 @@ const settingsDefaults = {
   // OB NKS: circa imaginary v0.0.14
   boolUsePlugins: true                      // true, false
   // OB NKS: begin: dacqman v0.0.15 
-  , interfaceRefinement: 'simple' // ['', none, simple]
-  , customControlSettingsJson: {}               // json sub by divId and then control id
+  , interfaceRefinement: 'simple'           // ['', none, simple]
+  , customControlSettingsJson: {            // json sub by divId from textInput label
+    'showAsTextInputs' : false,             // default to range sliders
+    'restoreTextInputValues' : true,        // default to restoring the text input values
+    'restoreRangeSliderValues' : false      // but not the range slider values
+  }               
   , devToolsOpen: false                     // restore on opening // TODO FUTURE currently Xing out of devTools doesn't update this
   //, cssToUse: ''                            // default css/custom.css // just use any other or default to custom.css
 };
+// HOOKALERT03
+// customControlSettingsJson:
+// {
+//   showCustomControlsAsRangeSliders: true/false
+//   otherwise, for text inputs, use the div created by the logic
+// }
+
+
 // TODO on load check that at least each key exists - in the case of migrating to
 // new settings version
 
@@ -191,6 +203,7 @@ ipcMain.on('prefs:set', (e, args) => {
   console.log("Stored to prefs: " + JSON.stringify(args));
   logToMain("Stored to prefs: " + JSON.stringify(args))
   settingsStorage.set(args.key, args.value);
+  e.returnValue = settingsStorage.getAll();
 });
 ipcMain.on('prefs:get', (e, key) => {
   console.log(`prefs:get for key ${key} is ${settingsStorage.get(key)}`);

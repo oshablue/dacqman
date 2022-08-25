@@ -697,8 +697,12 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
     .then(prefs => loadCustomCommandsPromise(prefs))
     .then( function(customCommandsJson) {
       loadButtons(customCommandsJson);
-      $(".switch").find("input[type=checkbox]").attr('checked', true);
-      showCustomControlsAsRangeSliders(true, customCommandsJson);
+      // HOOKALERT03:
+      var useRangeSilders = true;
+      prefs.customControlSettingsJson.showAsTextInputs ? useRangeSliders = false : useRangeSliders = true;
+      $(".switch").find("input[type=checkbox]").attr('checked', useRangeSliders); // true);
+      // HOOKALERT03 may want to select based on stored value for slide/txt in prefs.customControlSettingsJson
+      showCustomControlsAsRangeSliders(useRangeSliders, customCommandsJson); //true, customCommandsJson);
       $('.collapsible').collapsible({
         accordion: true
       });
@@ -711,7 +715,7 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
       return;
     })
     .catch ( e => {
-      console.log("Error loading prefs and customCommandsJson from file: " + e);
+      console.error("Error loading prefs and customCommandsJson from file: " + e);
     })
 
 
@@ -938,8 +942,13 @@ function loadButtons(customCommandsJson) {
   ;
 
   $(".switch").find("input[type=checkbox]").on("change",function() {
-  var boolShowAsRangeSlider = $(this).prop('checked');
-  showCustomControlsAsRangeSliders(boolShowAsRangeSlider, customCommandsJson);
+    var boolShowAsRangeSlider = $(this).prop('checked'); // Checked = Right side = Range Sliders
+    // HOOKALERT03:
+    var cust = prefs.customControlSettingsJson;
+    cust['showAsTextInputs'] = !boolShowAsRangeSlider;
+    setKeyAndReloadPrefs('customControlSettingsJson', cust);
+    // </ HOOKALERT03 >
+    showCustomControlsAsRangeSliders(boolShowAsRangeSlider, customCommandsJson);
   });
   // </SLIDERS>
 
@@ -1096,6 +1105,21 @@ var loadTextInputs = function (customCommandsJson) {
 
 
 
+// TODO BROKEN !!
+
+var setKeyAndReloadPrefs = function (keyToSet, valToSet) {
+  prefs = ipcRenderer.sendSync('prefs:set', { 'key': keyToSet, 'value': valToSet})
+  // .then( function () {
+  //   prefs = ipcRenderer.sendSync('prefs:getPrefs') || {};
+  //   return prefs;
+  // })
+  console.log(JSON.stringify(prefs));
+}
+
+
+
+
+
 
 
 
@@ -1135,6 +1159,11 @@ var parseAndShowCustomTextInputsAsRangeSliders = function(customCommandsJson) {
         , title: ti.description
       }));
     $(range).on("change", function() {
+      // HOOKALERT03
+      var val = $(this).find('input[id^=range]').val();
+      var idToStore = 'range' + ti.label.replace(/\s/g, ''); // TODO maybe we don't want the prefix just the label
+      console.log(`val: ${val} and idToStore: ${idToStore}`);
+      // </ HOOKALERT03 >
       controlPortSendDataFromTextInput(this, ti.command);
     });
     theRangeForm.append(range);
@@ -1160,18 +1189,8 @@ var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function (customCommand
 
   var textInputs = loadTextInputs(customCommandsJson);
   var textInputsTitle = customCommandsJson.sectionTitles.textInputsTitle;
-  var textSettingsJson = prefs.customControlSettingJson;
-
-  // textSettingsJson notes:
-  // build out the input id from:
-  // .prop('id', "input" + ti.label.replace(/\s/g,''));
-  // pull out the value from the json file
-  // put the value in the input
-  // do the same with the range sliders 
-  // maybe separate function ... ?
-  // doesn't exist - use min value or zero? esp for sliders might have only the min value
-  // TODO also 
-  // create the functions to store to file
+  // HOOKALERT03:
+  var textSettingsJson = prefs.customControlSettingsJson || {};
 
   if ( textInputs.length < 1 ) {
     return;
@@ -1192,18 +1211,24 @@ var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function (customCommand
     ;
   // To make 3 pairs per row, change below from s2 to s3
   // and change below further: % 4 to % 3 (change the modulus)
+  
   textInputs.forEach( function (ti) {
+    // HOOKALERT03:
+    var idBaseToUse = ti.label.replace(/\s/g, '') || "idBaseToUse";
+    // </HOOKALERT03 
     var containerDiv = $('<div>')
       .addClass("col s3")
       .addClass(ti.class)
-      .prop('id', "container" + ti.label.replace(/\s/g, ''))
+      .prop('id', "container" + idBaseToUse); // ti.label.replace(/\s/g, ''))
       ;
     var smallDiv = $('<div>')           // for button
-      .addClass("right-align col s8"); // col s2 // s4 for simplified DCF mode
+      .addClass("right-align col s8")
+      ; // col s2 // s4 for simplified DCF mode
     var smallDiv2 = $('<div>')          // for text/label
-      .attr("id", "div" + ti.label.replace(/\s/g, ''))
+      .attr("id", "div" + idBaseToUse) // ti.label.replace(/\s/g, ''))
       .addClass("left-align col s4") // col s1 // s4 for simplified DCF mode
-      .addClass(ti.class);
+      .addClass(ti.class)
+      ;
     //var wrapTogether = $('<div>')
     //  .addClass("text-input-pair");
     //console.log($(ti.label.split(" ")).last());
@@ -1211,14 +1236,59 @@ var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function (customCommand
     var input = $("<input type='text'>")
       .addClass("input-field")
       .prop('title', ti.description)
-      .prop('id', "input" + ti.label.replace(/\s/g,''));
+      .prop('id', "input" + idBaseToUse)
+      ; // ti.label.replace(/\s/g,''));
+    // HOOKALERT03 
+    // hopefully only stored if valid! TODO ... :)
+    if ( textSettingsJson.hasOwnProperty(idBaseToUse)  
+      && textSettingsJson.restoreTextInputValues )
+    {
+      input.val(textSettingsJson[idBaseToUse]);
+    }
+    // </HOOKALERT03
     var button = $("<button>")
       .text(ti.label)
       .addClass("btn-small waves-effect waves-light")
       .addClass(ti.class)
       .prop('id', "button" + ti.label.replace(/\s/g, ''))
       .click(function () {
-        controlPortSendDataFromTextInput(this, ti.command);
+        // HOOKALERT03 grab and store value
+        // CAUTION: There is an issue with this.  Please see README.  It was a customer request.
+        // However, it is not actually something necessarily desirable or even functional 
+        // in the real world, especially for range sliders.
+        // Go up parent stack a bit and then over and down to grab the adjacent 
+        // relevant input. Could also do with id extraction and renaming
+        // since some root id is preserved i believe
+        // This works:
+        //var val = $(this).closest('div').siblings().first().find('input').val();
+        // So however does this:
+        var inputId = "#input" + ti.label.replace(/\s/g,'');
+        var val = parseInt($(inputId).val());
+        if ( (val || val === 0) && val >= ti.min && val <= ti.max ) {
+          // val = parseInt( $(ti).val() ); // TODO
+          // TODO also sanitize and bounds
+          // Options below:
+          //var idToStore = $(this).closest('div').siblings().first().find('input').prop('id');
+          // gets like inputRxDelay or rangeRxDelay, whereas below id becomes just RxDelay
+          var idToStore = ti.label.replace(/\s/g,'');
+          console.log(`idToStore: ${idToStore} and val: ${val}`);
+          // And store the value now
+          textSettingsJson[idToStore] = val;
+          setKeyAndReloadPrefs( 'customControlSettingsJson', textSettingsJson);
+          //ipcRenderer.set('customControlSettingsJson', textSettingsJson);
+
+          // actually i think we just want the ti.label replaced to store the value 
+          // TODO now store in correct prefs json and write to settings hopefully
+          // TODO below we should really make sure the command was executed successfully and 
+          // then store the value
+          // </ HOOKALERT03 >
+          controlPortSendDataFromTextInput(this, ti.command);
+        } else {
+          alert (`Something doesn't look quite right with the value you are trying to send. 
+          The value should be an integer number and greater than or equal to ${ti.min}
+          and less than or equal to ${ti.max}.  You can always change the min max bounds in the 
+          control-port-buttons.json file.`);
+        }
       });
     var label = $("<label>")
       .attr("for", ti.label.replace(/\s/g,''));
