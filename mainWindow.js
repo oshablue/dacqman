@@ -414,7 +414,36 @@ function setPrefToInterfaceDataCaptureFocused(btn) {
   YourFace.SwitchInterface(ui);
 }
 
+function setPrefToggleRangeSliderValues(btn) {
+  // If includes Restore, then currently set to not restore the value and should be changed to restore it
+  var yesRestoreRangeValues = true;
+  btn.innerHTML.startsWith('Restore') ? yesRestoreRangeValues = true : yesRestoreRangeValues = false;
+  if ( yesRestoreRangeValues ) {
+    btn.innerHTML = btn.innerHTML.replace('Restore', 'Do not restore');
+  } else {
+    btn.innerHTML = btn.innerHTML.replace('Do not restore', 'Restore');
+  }
+  //let ui = btn.getAttribute('value');
+  var p = prefs.customControlSettingsJson;
+  p.restoreRangeSliderValues = yesRestoreRangeValues;
+  setKeyAndReloadPrefs('customControlSettingsJson', p);
+}
 
+function setPrefToggleTextInputValues(btn) {
+  //let ui = btn.getAttribute('value');
+   // If includes Restore, then currently set to not restore the value and should be changed to restore it
+   var yesRestoreTextValues = true;
+   btn.innerHTML.startsWith('Restore') ? yesRestoreTextValues = true : yesRestoreTextValues = false;
+   if ( yesRestoreTextValues ) {
+     btn.innerHTML = btn.innerHTML.replace('Restore', 'Do not restore');
+   } else {
+     btn.innerHTML = btn.innerHTML.replace('Do not restore', 'Restore');
+   }
+   //let ui = btn.getAttribute('value');
+   var p = prefs.customControlSettingsJson;
+   p.restoreTextInputValues = yesRestoreTextValues;
+   setKeyAndReloadPrefs('customControlSettingsJson', p);
+}
 
 
 
@@ -701,6 +730,17 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
       var useRangeSilders = true;
       prefs.customControlSettingsJson.showAsTextInputs ? useRangeSliders = false : useRangeSliders = true;
       $(".switch").find("input[type=checkbox]").attr('checked', useRangeSliders); // true);
+      // TODO move to menu update function - extract
+      var rsvText = "";
+      prefs.customControlSettingsJson.restoreRangeSliderValues ? 
+        rsvText = "Do not restore range slider values" :
+        rsvText = "Restore range slider values";
+      $('#aToggleRangeSliderValues').text(rsvText);
+      var tivText = "";
+      prefs.customControlSettingsJson.restoreTextInputValues ? 
+        tivText = "Do no restore text input values" :
+        tivText = "Restore text input values";
+      $('#aToggleTextInputValues').text(tivText);
       // HOOKALERT03 may want to select based on stored value for slide/txt in prefs.customControlSettingsJson
       showCustomControlsAsRangeSliders(useRangeSliders, customCommandsJson); //true, customCommandsJson);
       $('.collapsible').collapsible({
@@ -1127,6 +1167,9 @@ var parseAndShowCustomTextInputsAsRangeSliders = function(customCommandsJson) {
 
   var textInputs = loadTextInputs(customCommandsJson);
 
+  // HOOKALERT03:
+  var textSettingsJson = prefs.customControlSettingsJson || {};
+
   if ( !textInputs || textInputs.length < 1 ) {
     return;
   }
@@ -1146,6 +1189,9 @@ var parseAndShowCustomTextInputsAsRangeSliders = function(customCommandsJson) {
     .attr("action", "#");
 
   textInputs.forEach( function(ti) {
+    // HOOKALERT03:
+    var idBaseToUse = ti.label.replace(/\s/g, '') || "idBaseToUse";
+    // </HOOKALERT03 
     var range = $(document.createElement("p"))
       .text(ti.label)
       .addClass("range-field")
@@ -1153,16 +1199,30 @@ var parseAndShowCustomTextInputsAsRangeSliders = function(customCommandsJson) {
       .addClass(ti.class)
       .append($('<input />', { type: 'range'
         , class: 'control-range'
-        , id: 'range' + ti.label.replace(/\s/g, '')
+        , id: 'range' + idBaseToUse //ti.label.replace(/\s/g, '')
         , min: ti.min, max: ti.max, step: 1
         , value: ti.default
         , title: ti.description
       }));
+    // HOOKALERT03 
+    if ( textSettingsJson.hasOwnProperty(idBaseToUse)  
+    && textSettingsJson.restoreRangeSliderValues )
+    {
+      //range.val(textSettingsJson[idBaseToUse]); // NOPE
+      range.find('input[id^=range]').prop('value', textSettingsJson[idBaseToUse]); // YUP
+      // TODO ranges don't send data until they change, so restoring their value 
+      // doesn't mean the hardware has that updated data value 
+      // So we need a UI indicator that indicates value not yet sent until the value is sent 
+      // Unless, wait ...
+    }
+    // </HOOKALERT03
     $(range).on("change", function() {
       // HOOKALERT03
       var val = $(this).find('input[id^=range]').val();
-      var idToStore = 'range' + ti.label.replace(/\s/g, ''); // TODO maybe we don't want the prefix just the label
+      var idToStore = idBaseToUse; //ti.label.replace(/\s/g, ''); // TODO maybe we don't want the prefix just the label
       console.log(`val: ${val} and idToStore: ${idToStore}`);
+      textSettingsJson[idToStore] = val;
+      setKeyAndReloadPrefs( 'customControlSettingsJson', textSettingsJson);
       // </ HOOKALERT03 >
       controlPortSendDataFromTextInput(this, ti.command);
     });
@@ -1251,6 +1311,7 @@ var parseAndShowCustomTextInputsAsButtonsAndTextInputs = function (customCommand
       .addClass("btn-small waves-effect waves-light")
       .addClass(ti.class)
       .prop('id', "button" + ti.label.replace(/\s/g, ''))
+      .prop('title', ti.description)
       .click(function () {
         // HOOKALERT03 grab and store value
         // CAUTION: There is an issue with this.  Please see README.  It was a customer request.
