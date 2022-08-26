@@ -1330,7 +1330,7 @@ Also, to simplify your life, just use @import 'custom.css' in your stylesheet an
 
 ### Restore Values for Custom Loaded Text/Range Inputs
 
-There are the inputs, loaded from control-port-buttons.json, that are the text inputs (by default represented as range sliders and can be switched to text inputs).
+These are the inputs, loaded from control-port-buttons.json, that are the text inputs (by default represented as range sliders and can be switched to text inputs).
 
 Feature requested by user customer.
 
@@ -1339,9 +1339,9 @@ Note that, actually, even if DacqMan loads and restores these saved values, if t
 So for text input representation, at least the values will be populated and the user can just click the button to send them again.  Ok, no problem.
 
 For range slider inputs, restoring the values may either:
-1. Trigger an immediate send of the setting (not really desirable necessarily, or just know this and use with caution in your work flow sequencing)
-2. Do nothing, even the though the range slider is set to a value.  Because it is the change of the value on the range slider that sends the command right now.
+1. Trigger an immediate send of the setting (not really desirable necessarily, or just know this and use with caution in your work flow sequencing) [so far, in practice, this does not happen]
+2. Do nothing, even the though the range slider is set to a value.  Because it is the change of the value on the range slider that sends the command right now.  I guess like Send Now buttons or similar functionality could be added.
 
 Number 2 there can be handled also in additional code to force behavior, but again, needed functionality needs to be determined against the backdrop of safety and reliability - and also against the backdrop of expected behavior in electronics systems.  
 
-So, there is a pref for each of both text and range settings about whether or not to restore values (pending).
+So, there is a pref for each of both text and range settings about whether or not to restore values.  That pref, one for text inputs and one for range sliders is now available in the UI in the Settings gear menu panel that pops out.  The value however is always stored.  It is just its restoration that is controlled by the pref.
