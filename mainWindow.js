@@ -299,7 +299,7 @@ var resetReadableStream = function(chunkMultiple) {
 // and then user interface can decide how/when to call the chart object to
 // update its data display
 var decimate = 0;
-var decimateKick = 15;
+var decimateKick = 31; // was 15 // TODO this will become either UI item or pref probably better
 var MainWindowUpdateChart = function ( channelNumber, buf ) {
 
   // Decimate the data so we don't overwhelm the system...

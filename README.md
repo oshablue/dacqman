@@ -1345,3 +1345,12 @@ For range slider inputs, restoring the values may either:
 Number 2 there can be handled also in additional code to force behavior, but again, needed functionality needs to be determined against the backdrop of safety and reliability - and also against the backdrop of expected behavior in electronics systems.  
 
 So, there is a pref for each of both text and range settings about whether or not to restore values.  That pref, one for text inputs and one for range sliders is now available in the UI in the Settings gear menu panel that pops out.  The value however is always stored.  It is just its restoration that is controlled by the pref.
+
+
+## Tested Scenarios
+
+### Update about duration of 4-channel (RS104 hardware) continuous scan test in dataCaptureFocused mode
+
+8/9/22
+
+With the update to the decimateKick value in mainWindow.js the time for continuous scan daq so far seems without error up to 60 minutes, repeatably.  In testing, at 60 minutes, was just system sleep auto-logout.  Very quick and dirty tests.  However enough difference from previous behavior where probably would get some bogging / buffer overflows at about 20 minutes in.  This is all on a 2012 MacBook pro (10 years old), nothing special.  It out performs streaming Bluetooth from the same lappy to a BT received 5 ft away by huge margins in terms of consistency and reliability.
