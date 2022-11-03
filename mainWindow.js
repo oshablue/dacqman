@@ -135,23 +135,44 @@ var MainWindowGetNumberOfChannels = function() {
 
 var resetReadableStream = function(chunkMultiple) {
 
-  console.log("resetReadableStream");
+  console.log(`resetReadableStream`);
 
   curChanToGraphSingle = 0;
   curChanToGraphMulti = 0;
-  singleChartBuf =  Buffer.alloc(defWfLenB, 127);
+
+  let hwNow = getHardwareData(); 
+
+  let wfLenBToUse = hwNow.waveformBytesPerSample * hwNow.waveformLengthSamples; //  defWfLenB;
+  
+  singleChartBuf =  Buffer.alloc(wfLenBToUse, 127);
 
   // changing below to 20ms (and doubling the chunksize) doesn't stop the
   // crash malloc errors
   //chunkMultiple = 33; // 33 in our testing gives split between 8 chans, and no buffer overflow
-  chunkMultiple = chunkMultiple || 3; // default to 3x
+  //chunkMultiple = chunkMultiple || 3; // default to 3x // 
+  chunkMultiple = chunkMultiple || gChunkMultiple || 3; // this persists a previously set chunkMultiple
+
+  // TS ***
+  // fix to above circa Q2-Q3 2022 has been
+  // chunkMultiple = chunkMultiple || gChunkMutiple || 3;
+  // </ TS ***
+
   gChunkMultiple = chunkMultiple;
+  
   ourReadableStreamBuffer = new rsb.ReadableStreamBuffer({
     frequency: 10,       // in milliseconds // 5 or 7 was ok // 10 less crashy // less than 7ms to be faster than incoming packets of 4096
-    chunkSize: (chunkMultiple*defWfLenB), //16380, //(4095)//,     // bytes -- 4096 gives a left-ward walk -- 4095 was generally steady
+    chunkSize: (chunkMultiple*wfLenBToUse), //16380, //(4095)//,     // bytes -- 4096 gives a left-ward walk -- 4095 was generally steady
     initialSize: (100 * 1024),    // was 1000 // added these two for size management due to constant overflow
     //incrementAmount: (10 * 1024)  // zero does nothing - doesn't cap it
   });
+
+  
+
+  let msg = `resetReadableStream`;
+  msg += ` chunkMultiple: ${chunkMultiple}`;
+  msg += ` gchunkMultiple: ${gChunkMultiple}`;
+  msg += ` wfLenBToUse: ${wfLenBToUse}`;
+  console.log(msg);
 
   // Set up dumping all to file
   // Right so yeah - this will only go to the file, all of it
@@ -299,7 +320,7 @@ var resetReadableStream = function(chunkMultiple) {
 // and then user interface can decide how/when to call the chart object to
 // update its data display
 var decimate = 0;
-var decimateKick = 121; //61; seems sustainable for RS8 long term //31; for RS104 Long acquisitions (?)    // was 15 // TODO this will become either UI item or pref probably better
+var decimateKick = 31; //121; //61; seems sustainable for RS8 long term //31; for RS104 Long acquisitions (?)    // was 15 // TODO this will become either UI item or pref probably better
 var MainWindowUpdateChart = function ( channelNumber, buf ) {
 
   // Decimate the data so we don't overwhelm the system...
@@ -312,7 +333,9 @@ var MainWindowUpdateChart = function ( channelNumber, buf ) {
 
 }
 
-
+// TS -- 7ceee74 buffer / chunk data (no O/F)
+// Buffer 4095 incl ourReadableStreamBuffer
+// Buffer 2500 
 
 
 
@@ -579,6 +602,9 @@ function cancelCustomControlButtonCommand() {
   return new Promise ( (resolve, reject) => {
     resolve (sprend.cancelCustomControlButtonCommand() );
   });
+}
+function getHardwareData() {
+  return sprend.getHardwareData();
 }
 
 

@@ -2512,6 +2512,17 @@ var controlPortSendDataFromTextInput = function ( button, commandAndType) {
 
 
 
+
+var getHardwareData = function() {
+
+  return hw;
+
+} // End of: getHardwareData
+
+
+
+
+
 module.exports = {
   serialOpenByName: serialOpenByName,
   serialClose: serialClose,
@@ -2531,4 +2542,5 @@ module.exports = {
   ftdiFind: ftdiFind,
   setupModalHardwareSelect: setupModalHardwareSelect,
   setHardwareByFullname : setHardwareByFullname,
+  getHardwareData : getHardwareData,
 };
