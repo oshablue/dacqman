@@ -75,6 +75,9 @@ Seems to still rebuild/install ok on darwin and win32.
 
 ### Revisions
 
+
+- **0.0.17** - bumped from 16 with the updates that set up either RS8 (HDL-0108-RSCPT) or the RS104 (HDL-0104-RS104) based on the hardwares.json and switches between driver interfaces depending (11/3/22)
+
 - **0.0.15** - alpha 
 
 - **0.0.13** - alpha

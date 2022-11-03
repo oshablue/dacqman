@@ -192,8 +192,22 @@ function ftdiFind() {
       // both parts of the serial device will have the same location ID which makes the materializecss checkbox 
       // functionality break (because two checkboxes have the same ID)
       // So, we add also the index
-      p.UseForData = `<p><label for="UseForData${p["locationId"]}${p["index"]}"><input type="checkbox" id="UseForData${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForDataChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Data</span></label></p>`;
-      p.UseForControl = `<p><label for="UseForControl${p["locationId"]}${p["index"]}"><input type="checkbox" id="UseForControl${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForControlChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Control</span></label></p>`;
+      // HOWEVER this breaks the functionality for the RS8 (0108) because that added index 
+      // creates a location ID that doesn't work in trying to open the FTDI device instance 
+      // at least on Mac OS so far 
+      // For example: old code: locationId: 82017 (excluding the index) works to open data port FTDI (D2xx)
+      //              newer code: locationId+index: 820170 (appended index) breaks RS8 for FTDI/D2xx
+      // So we need to extract the locationId somehow correctly or store it
+      // Let's use HTML data- attribute
+      // like data-locationId is just the locationId 
+      // Then to grab this we need to update code in like: checkboxToPortHash to not grab from 
+      // id and extract - but rather to use the data-locationId and hopefully not break anything?
+      //p.UseForData = `<p><label for="UseForData${p["locationId"]}${p["index"]}"><input type="checkbox" id="UseForData${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForDataChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Data</span></label></p>`;
+      //p.UseForControl = `<p><label for="UseForControl${p["locationId"]}${p["index"]}"><input type="checkbox" id="UseForControl${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForControlChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Control</span></label></p>`;
+      // Note that data-attributes get lower-cased
+      p.UseForData = `<p><label for="UseForData${p["locationId"]}${p["index"]}" data-locationid="${p["locationId"]}"><input type="checkbox" id="UseForData${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForDataChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Data</span></label></p>`;
+      p.UseForControl = `<p><label for="UseForControl${p["locationId"]}${p["index"]}" data-locationid="${p["locationId"]}"><input type="checkbox" id="UseForControl${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForControlChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Control</span></label></p>`;
+
 
       table.write(p)
     });
@@ -500,17 +514,21 @@ var openDataPort = function(portHash) {
 
   if ( hw ) {
 
-    if (hw.dataPortType.includes("VCP")) {
+    if (hw.dataPortType.toUpperCase().includes("VCP")) {
       openDataPortVcp(portHash);
     } 
     else
-    if (hw.dataPortType.includes("FTDI")) {
+    if (hw.dataPortType.toUpperCase().includes("FTDI")) {
       openDataPortFtdi(portHash);
     }
     else 
     if (hw.dataPortType.includes("SameAsControl")) {
       // We use only the control port
       console.log("openDataPort: Skipping opening the data port, as it is the SameAsControl in hardwares.json and by selection");
+    }
+    else 
+    {
+      console.error("openDataPort: hw.dataPortType did not include any handled case! You will probably not see any data coming in to the graphs.  This could be sad.  This is probably a software issue. Please contact emergency dev team POC to fix.");
     }
 
   } else {
@@ -542,7 +560,7 @@ var openDataPortFtdi = function(portHash) {
     serialNumber: portHash.serialNumber }); // for d2xx only
 
   dport.on('error', function(err) {
-    console.log('dport.on error: ', err);
+    console.error('dport.on error: ', err);
     // TODO -- UI error panel/log/indicator, etc.
   });
 
@@ -822,12 +840,12 @@ var openDataPortVcp = function(portHash) {
 
   dport = new SerialPort(comName, settings, function(err) {
     if ( err ) {
-      return console.log('sprenderer: openDataPortVcp: error on create new VCP style data port: ', err.message);
+      return console.error('sprenderer: openDataPortVcp: error on create new VCP style data port: ', err.message);
     }
   });
 
   dport.on('error', function(err) {
-    console.log('dport.on error: ', err);
+    console.error('dport.on error: ', err);
     // TODO -- UI error panel/log/indicator, etc.
   });
 
@@ -1632,8 +1650,14 @@ var checkboxToPortHash = function(checkbox) {
   //console.log("CAUTION: Is the locationId always numeric across platforms? Or do we need to differentiate UseForControl vs UseForData");
   // Now, just grab if this is Data or Control and grab the location Id info after that from the ID
   var ptype = $(checkbox).siblings('span').text();
-  var locId = $(checkbox).attr('id');
-  r.locationId = locId.substr(locId.indexOf(ptype)+ptype.length);
+  //var locId = $(checkbox).attr('id'); // prior: this worked when locationId was embedded in the id
+  // however the id method for extracting locId didn't work for RS8 for FTDI D2XX driver 
+  // when the appended index update was added for RS104 -- see the label for creation update there 
+  // regarding adding the data-locationid attribute 
+  var locId = $(checkbox).parent("label").attr("data-locationid");
+  // Was used when extracting location from id:
+  //r.locationId = locId.substr(locId.indexOf(ptype)+ptype.length);
+  r.locationId = locId;
   r.description = $(checkbox).attr('name');
   //console.log(JSON.stringify(r));
   return r;
