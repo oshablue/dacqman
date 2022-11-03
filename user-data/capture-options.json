@@ -57,7 +57,8 @@
       "value" : 40,
       "indexByteStart" : 97,
       "indexByteStop" : 98,
-      "comment" : "This may be used and yes legacy is MHz for the value, by the legacy software.  The value here is indeed used to populate the main header.  A value passed in via code from mainWindow is however used to populate the equivalent field, the timebase in seconds, for the individual waveform record header."
+      "comment1" : "This may be used and yes legacy is MHz for the value, by the legacy software.  The value here is indeed used to populate the main header.  A value passed in via code from mainWindow is however used to populate the equivalent field, the timebase in seconds, for the individual waveform record header.",
+      "comment2" : "TODO could this or should this be actually the XD firing rate? or similar?"
     },
 
     "runLengthInches" : {
@@ -143,7 +144,9 @@
       "sampleFrequencyHz" : 35000000,
       "sampleFrequencyHzComment" : "Please see readme. It seems there are multiple varying naming conventions and implementations of this in the legacy code and file formats.  It is normally imported from the waveform csv file.  However, some files show the frequency in Hz while others store the value as a number of seconds, as in, 4e-08 = 40 ns = 25 MHz.  Thus, we are just using the capture options file here to define a value more clearly.",
       "comment2" : "Real value for these files was 3500000. However with a 40MHz waveform, this creates a huge ratio value needed in processing for legacy software. So we lie and say 40000000 to match.",
-      "comment3" : "Some software doesn't even use the transducer cal files that are packaged in these UTRs!"
+      "comment3" : "Some software doesn't even use the transducer cal files that are packaged in these UTRs!",
+      "comment4" : "Recently 2022 early was 35000000 and calwaves may be that value - see above - for now setting this to streaming hardware RS8 and RS104 real values of 40MHz - note DL0100A1 is 35MHz but is not yet batch run - but cal waves maybe from DL0100A1 scan - so keep at 35MHz.",
+      "comment5" : "TODO probably some day when all SW chain is syncd we want to pull this values from the hardware options file etc"
     },
 
     "serialNumbers" : {

@@ -781,6 +781,8 @@ relying on the error-free data streams.
 
 - Batch output last 150th last scan for ch four is 2488 samples not 4083 for RS104? 11/3/22
 
+- Continue working on long scan times on busy systems for overhead / runaway / lost WFs 
+
 - Re-instate data rate testing button/function
 
 - Option for local libraries (in case no net connectivity - or note about this at least)

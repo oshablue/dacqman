@@ -66,6 +66,9 @@ var plugins;
 // allow flawless processing with default algorithm settings
 // Otherwise, 40000000 loads up just fine.  It's just in the algo portion
 // snapshot from the time that things break
+//
+// TODO Sample rate: probably want to pull this from HW config and/or see where/if implemented
+//
 const defaultHardwareWaveformSampleFrequencyHz = 40000000; //25000000; //40000000;
 const defaultHardwareWaveformLengthSamples = 2500; //4095; //2500; // 4095; // TODO need to implement hardware-dependent size
 const defaultHardwareWaveformBytesPerSample = 1;
@@ -291,6 +294,11 @@ var resetReadableStream = function(chunkMultiple) {
           curChanToGraphMulti++;
 
         }
+
+        // PLACEHOLDER 
+        // if one wants to run DL0100A1 (non DCF UI view) through any plugins,
+        // then the plugin-calling capture-data.js code section might want to go here 
+        // conditionally on hardware ID perhaps so streaming boards don't call it multiple times
 
       }
 
