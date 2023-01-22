@@ -39,15 +39,18 @@ function DataChart({
 } = {}) {
   // Default params for ES >= 6 or 2015
 
-  this.parentElementIdName = parentElementIdName;
-  this.reqId = null;
-  this.chartBuffer = chartBuffer;
   var doRenderLoops = false;
   var freshData = false;
-  this.dataLen = 4095;
 
-  //console.log("New bigWfDataChart for id name: " + this.parentElementIdName);
-  //console.log(this.chartBuffer.length);
+  this._parentElementIdName = parentElementIdName;
+  this._reqId = null;
+  this._chartBuffer = chartBuffer;
+  this._dataLen = dataLen; // 4095;
+
+  //_self = this;
+
+  console.log("New bigWfDataChart for id name: " + this.parentElementIdName);
+  console.log(this._chartBuffer.length);
 
   // For tall graphs, use for 500 chartHeight below, with the .svg-container-tall class instead of .svg-container class
   var chartHeight = 300 //500 // was 300 // The larger height chart aka 500 goes along with the 560px width change in the custom.css until better implemented
@@ -62,7 +65,8 @@ function DataChart({
   // Please See:
   // https://stackoverflow.com/questions/57007378/d3-zoom-and-drag-with-svg-axes-and-canvas-chart
   // As to why we are specifying all three of these below:
-  var zoom = d3.zoom()
+  var zoom;
+  zoom = d3.zoom()
     .scaleExtent([1, 20])
     // The pair of the next two together is what allows us the sensible
     // implementation of zoom and pan extents:
@@ -73,18 +77,23 @@ function DataChart({
 
 
 
+
+
   // The number of datapoints
   //var n = 4095;
-  var n = dataLen;
+  var n;
+  n = this._dataLen;
 
   //
-  var xScale = d3.scaleLinear()
+  var xScale;
+  xScale = d3.scaleLinear()
       .domain([0, n-1]) // input
       .range([0, width]); // output
 
   //
   var yInputMaxVal = 255;
-  var yScale = d3.scaleLinear()
+  var yScale; 
+  yScale = d3.scaleLinear()
       .domain([0, yInputMaxVal]) // input
       .range([height, 0]); // output
 
@@ -92,8 +101,9 @@ function DataChart({
   //var yAxisGrid = d3.axisLeft(y).tickSize(-chartWidth).tickFormat('').ticks(10);
 
 
-  // d3 line generator
-  var line = d3.line()
+  // d3 line generator'
+  var line;
+  line = d3.line()
       .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
       .y(function(d) { return yScale(d); }) // yScale(d.y); }) // set the y values for the line generator
       .curve(d3.curveMonotoneX) // apply smoothing to the line
@@ -115,6 +125,7 @@ function DataChart({
 
 
   //var svg = d3.select('#chart')
+  var svg;
   var svg = d3.select('#' + parentElementIdName)
     .append("div")
     .classed("svg-container", true)
@@ -198,6 +209,116 @@ function DataChart({
 
 
 
+
+
+  let rebuildChart = () => { // was function rebuildChart(that) {}
+
+    //var xScale;
+    //that.n = that.dataLen;
+    //n = that._dataLen;
+    n = this._dataLen;
+    xScale = d3.scaleLinear()
+        .domain([0, n-1]) // input
+        .range([0, width]); // output
+
+    //
+    //var yInputMaxVal = 255;
+    //var yScale; 
+    // yScale = d3.scaleLinear()
+    //     .domain([0, yInputMaxVal]) // input
+    //     .range([height, 0]); // output
+
+    // Y Axis Grid Setup
+    //var yAxisGrid = d3.axisLeft(y).tickSize(-chartWidth).tickFormat('').ticks(10);
+
+
+    // d3 line generator
+    // line = d3.line()
+    //     .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
+    //     .y(function(d) { return yScale(d); }) // yScale(d.y); }) // set the y values for the line generator
+    //     .curve(d3.curveMonotoneX) // apply smoothing to the line
+    //     ;
+
+    // Add some high freq low amp overlay to test semantic zoom
+    // over geometric zoom ...
+    console.log("rebuildChart length: " + n);
+    //var dataset = [];
+    dataset = [];
+    var j;
+    var big;
+    var little;
+    for ( j = 0; j < n; j++ ) {
+      big = 126 * Math.sin(2*3.14159/2500.*j*4) + 127; // n => 2500 to add cycles to 4095 from 2500
+      little = 2 * Math.sin(2*3.14159/2500.*j*800+2); // same as above
+      dataset.push(big + little);
+    }
+    console.log("dataset len " + dataset.length );
+
+
+    //svg = d3.select('#' + parentElementIdName)
+    // .append("div")
+    // .classed("svg-container", true)
+    // .append("svg")
+    // .attr("preserveAspectRatio", "xMinYMin meet")
+    // .attr("viewBox", "0 0 " + chartWidth + " " + chartHeight)
+    // .classed("svg-content-responsive", true)
+    // .call(zoom.on("zoom", zoomed))
+    // .on("dblclick.zoom", null)          // cancels double-clicking to zoom
+    // .on("dblclick", ourDlbClick)
+
+    // .append("svg")
+    // .attr("width", chartWidth) //width + margin.left + margin.right)
+    // .attr("height", chartHeight) //height + margin.top + margin.bottom)
+
+    // .append("g")
+    // .classed("chartBody", true)
+    // .attr("transform", "translate(" + (margin.left + margin.right) + "," + 0 + ")")
+    // ;
+
+    // X-axis in a group tag
+    // svg.append("g")
+    // .attr("class", "x axis")
+    // .attr("transform", "translate(0," + height + ")")
+    // .call(d3.axisBottom(xScale)); // Create an axis component with d3.axisBottom
+    //svg.selectAll("x axis").call(xScale); //d3.axisBottom().scale(xScale);
+    //xScale.domain([0, n-1]);
+    //console.log(xScale);
+    // wow.
+    svg.select("g.x.axis").call(d3.axisBottom().scale(xScale))
+
+    // Y-axis in a group tag
+    // svg.append("g")
+    //   .attr("class", "y axis-grid-minor")
+    //   .call(d3.axisLeft(yScale).tickSize(-chartWidth).tickFormat('').ticks(255/5));
+    // svg.append("g")
+    //   .attr("class", "y axis-grid-major")
+    //   .call(d3.axisLeft(yScale).tickSize(-chartWidth).tickFormat('').ticks(10));
+
+    // svg.append("g")
+    //   .attr("class", "y axis")
+    //   .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
+
+    // Data line in a path tag
+    // svg.append("path")
+    // .datum(dataset)
+    // .attr("class", "line")
+    // .attr("d", line)
+    // .style("stroke-width", strokeWidth)
+    // ;
+    //console.log(dataset);
+
+    svg.selectAll("path.line").remove();
+    svg.append("path")
+    .datum(dataset)
+    .attr("class", "line")
+    .attr("d", line)
+    //.style("stroke-width", strokeWidth)
+    ;
+
+  }
+
+
+
   function ourDlbClick() {
     svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.scale(1));
     //.translate(margin.left + margin.right,0)); // already done in the zoomed() now
@@ -260,12 +381,12 @@ function DataChart({
   //var reqId;
 
   this.RenderChart = function() {
-    console.log("this.RenderChart " + this.parentElementIdName);
+    console.log("this.RenderChart " + this._parentElementIdName);
     doRenderLoops = true;
     renderChart();
   }
 
-  var renderChart = function() {
+  let renderChart = () => {
 
     try {
       //console.log("doRenderLoops: " + doRenderLoops);
@@ -284,7 +405,7 @@ function DataChart({
         // Get the latest data snapshot
         svg.selectAll("path.line").remove();
         svg.append("path")
-          .datum(chartBuffer) // if you use this. here, the intended functionality of course breaks due to structure implemented here
+          .datum(this._chartBuffer) // if you use this. here, the intended functionality of course breaks due to structure implemented here
           .attr("class", "line")
           .attr("d", line)
           .style("stroke-width", thisStrokeWidth)
@@ -295,7 +416,7 @@ function DataChart({
 
       } // freshData
     } catch ( e ) {
-      console.log(this.parentElementIdName + ": Error in renderChart: " + e + " calling cancelRenderChart() ");
+      console.log(this._parentElementIdName + ": Error in renderChart: " + e + " calling cancelRenderChart() ");
       cancelRenderChart();
     }
 
@@ -305,7 +426,7 @@ function DataChart({
   // DataChart.prototype.CancelRenderChart ...
   // So that we can have private and public style function access
   this.CancelRenderChart = function() {
-    console.log("Chart: " + parentElementIdName + ": cancelRenderChart req.id: " + reqId);
+    console.log("Chart: " + this._parentElementIdName + ": cancelRenderChart req.id: " + reqId);
     doRenderLoops = false;
     cancelRenderChart();
   }
@@ -324,19 +445,45 @@ function DataChart({
   this.flashColorTimeoutId;
 
   this.UpdateChartBuffer = function(newBuffer) {
-    $('#' + parentElementIdName).addClass("flash-color");
+    $('#' + this._parentElementIdName).addClass("flash-color");
     if ( this.flashColorTimeoutId ) {
       clearTimeout(this.flashColorTimeoutId);
     }
-    this.flashColorTimeoutId = setTimeout( function() {
-      $('#' + parentElementIdName).removeClass("flash-color", 1000);
+    this.flashColorTimeoutId = setTimeout( () => {
+      $('#' + this._parentElementIdName).removeClass("flash-color", 1000);
     }, 1000);
-    newBuffer.copy(this.chartBuffer, 0, 0, this.dataLen); // was testing for DLITE at 2400 // TODO hardware dependent --  4096); // was 4096
+    // Adding 2023 Q1 -- too long?
+    if ( this._dataLen > this._chartBuffer.length ) {
+      this._chartBuffer = Buffer.alloc(this._dataLen, 64);
+    }
+    // End of Add
+    newBuffer.copy(this._chartBuffer, 0, 0, this._dataLen); // was testing for DLITE at 2400 // TODO hardware dependent --  4096); // was 4096
+    //console.log("this._dataLen " + this._dataLen + " for " + this._parentElementIdName);
+    //console.log("this._chartBuffer length " + this._chartBuffer.length + " for " + this._parentElementIdName);
     freshData = true;
   }
 
 
+
+
+
+
+
+  this.UpdateChartLength = function(newLength) {
+    console.log("this.UpdateChartLength " + newLength);
+    this._dataLen = newLength;
+    //this.n = newLength;
+    this._chartBuffer = Buffer.alloc(newLength, 64);
+    rebuildChart(); // was (this)
+  }
+
+
 } // End of Function constructor DataChart(...)
+
+
+
+
+
 
 
 

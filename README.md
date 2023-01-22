@@ -76,6 +76,11 @@ Seems to still rebuild/install ok on darwin and win32.
 ### Revisions
 
 
+- **0.0.18** 
+  - add draft of popout separate (child) window for the multi-waveform graphs 
+  - update further handling of graphs and charts for data destinations and divvy-ing up for RS8 vs RS104 vs DL0100A1 hardwares for example 
+  - store some collapsible states between launches
+
 - **0.0.17** - bumped from 16 with the updates that set up either RS8 (HDL-0108-RSCPT) or the RS104 (HDL-0104-RS104) based on the hardwares.json and switches between driver interfaces depending (11/3/22)
 
 - **0.0.15** - alpha 
@@ -750,6 +755,13 @@ https://github.com/agracio/edge-js/blob/master/samples/105_add7_dll.js
 
 ## Wish List / TODO
 
+
+- **0.0.18** 
+  - toggling between DCF UI vs regular UI eg the collapsible state for the single waveform chart, if previously stored closed in regular UI, is not retained in that closed state 
+  when toggling back to regular UI and a reload - this is ok functionally under typical 
+  use-cases for the time being, so lower priority
+  - add the collapsible state restore for the control port button toggling controls (?)
+
 ### Known Limitations for Re-Dev/Mod (Maybe's)
 
 1. Chart Frame Rate / Speed: Using d3 for the data chart/graphs works well for demo, and is a good demo of d3 in general. When
@@ -1285,6 +1297,11 @@ For hiding more control sections in the data capture focused UI, looking to expo
 Storing and restoring values set for text / range inputs loaded from file.
 
 There is both a safety (when functional) and purely functional issue with this feature, though a requested feature.  Please see below, How Stuff Works.
+
+
+#### HOOKALERT04
+
+(Re-)setup for the multigraphs popout window for number of channels, eventually data length maybe.
 
 
 

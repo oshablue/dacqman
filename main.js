@@ -17,7 +17,9 @@ process.env.NODE_ENV = 'development';//'production'; // lose the devtools etc.
 
 let mainWindow;
 let addWindow;
+let multiWfsWindow;
 
+//let mainWindowClosing = false;
 
 
 
@@ -52,6 +54,8 @@ const settingsDefaults = {
   }               
   , devToolsOpen: false                     // restore on opening // TODO FUTURE currently Xing out of devTools doesn't update this
   //, cssToUse: ''                            // default css/custom.css // just use any other or default to custom.css
+  , collapsedCollapsibles: []               // explicitly user-click collapsed collapsibles
+  , openedCollapsibles: []                  // explicitely user-click opened collapsibles
 };
 // HOOKALERT03
 // customControlSettingsJson:
@@ -106,6 +110,12 @@ app.on('ready', function(){
 
   // Quit app when closed
   mainWindow.on('closed', function(){
+    //mainWindowClosing = true;
+    mainWindow = null;
+    multiWfsWindow = null;
+    // if ( multiWfsWindow ) {
+    //   multiWfsWindow.close();
+    // }
     app.quit();
   });
 
@@ -160,6 +170,96 @@ var logToMain = function(data) {
   mainWindow.webContents.send('log', data);
 }
 
+
+//
+//
+// For remote create that new window 
+//
+//
+function createMultiWfsWindow(data){
+  //let { mwidth, mheight } = mainWindow.height; //.getBounds();
+  multiWfsWindow = new BrowserWindow({
+    width: data.width, //mainWindow.width, // currently mainWindow not returning needed values
+    height: data.height, //mainWindow.height,
+    x: data.x,            // currently appears not to work - but centered is ok
+    y: data.y,            // same as above - perhaps old version of electron due to ...
+    title: 'Multi-Waveform View',
+    webPreferences: {
+      nodeIntegration: true
+    }
+    //, show: false           // so we can show only after ready ...if implemented in this old electron version
+    //, parent: mainWindow      // TOFEEDBACK do we really want this behavior?
+                                // also - behavior on mac osx 10.15.7 catalina is strange 
+                                // 2nd window as child on 2nd monitor gets mapped in some virtual space 
+                                // on the first screen - not the actual 2nd monitor right now but only in this child mode
+  });
+  if ( settingsStorage.get('devToolsOpen') === true ) {
+    multiWfsWindow.openDevTools();
+  }
+  // Load html into window
+  multiWfsWindow.loadURL(url.format({
+    pathname: path.join(__dirname, 'multiWfsWindow.html'),
+    protocol: 'file:',
+    slashes: true
+  }));
+
+  // Garbage collection handle
+  multiWfsWindow.on('closed', function(){ // was on close not closed
+    if ( mainWindow ) { // && mainWindowClosing === false ) {
+      // TODO do we need if not isClosing or something 
+      // send request to re-open the collapsible for the multiWFs
+      //if ( mainWindow.webContents ) {
+        // Sometimes on closing, there is still delay that makes this next 
+        // statement crash and create a popup error window 
+        mainWindow.webContents.send('multiWaveformChartAccordion:open', {});
+      //}
+    }
+    multiWfsWindow = null;
+  });
+
+  // once is ok because if window closed - the reopen re-instantiates it and this fires again
+  // ie after the once the listener can be reattached as this definition code is re-run
+  // HOOKALERT04
+  multiWfsWindow.once('show', function() {
+    logToMain('main.js: multiWfsWindow.once show');
+    //ipcMain.emit('multiWfsWindowCreated', {}); // xxxxxxxx !!!! TODO 
+    if ( mainWindow && mainWindow.webContents ) {
+      mainWindow.webContents.send('multiWfsWindowCreated', {});
+    }
+  });
+
+  // ready-to-show does not appear to exist or fire in current electronjs (4.2.12?)
+
+  // multiWfsWindow.once('ready-to-show', () => {
+  //   multiWfsWindow.show(); // but this breaks the graph layout 
+  //   // Could do like try to redraw with existing dimensions as manually
+  //   // doing so correctly places the graphs 
+  //   // For now - just don't do this ready-to-show thing
+  // })
+}
+
+ipcMain.on('createMultiWfsWindow', function(e, data) {
+  if ( multiWfsWindow ) { 
+    logToMain("multiWfs window already open - returning - but will try to bring open window to front");
+    multiWfsWindow.show();
+    return;       // already open - don't open another
+  }
+  createMultiWfsWindow(data);
+});
+
+ipcMain.on('multiWfsWindow:update', function(e, data) {
+  if ( multiWfsWindow && multiWfsWindow.webContents ) {
+    //logToMain("mfws update from main sent");
+    multiWfsWindow.webContents.send('multiWfsWindow:update', data);
+  }
+});
+
+ipcMain.on('multiWfsWindow:setup', function(e, data) {
+  if ( multiWfsWindow && multiWfsWindow.webContents ) {
+    logToMain("mfws setup from main sent");
+    multiWfsWindow.webContents.send('multiWfsWindow:setup', data);
+  }
+});
 
 
 
@@ -323,7 +423,13 @@ if(process.env.NODE_ENV !== 'production'){
         label: 'Toggle DevTools',
         accelerator: process.platform === 'darwin' ? 'Command+I' : 'Ctrl+I',
         click(item, focusedWindow){
-          focusedWindow.toggleDevTools();
+          //focusedWindow.toggleDevTools();
+          if ( mainWindow ) {
+            mainWindow.toggleDevTools();
+          }
+          if ( multiWfsWindow ) {
+            multiWfsWindow.toggleDevTools();
+          }
           var dts = settingsStorage.get('devToolsOpen');
           settingsStorage.set('devToolsOpen', !dts);
           console.log(`setting:devToolsOpen was ${dts} and was now set to ${!dts}`); // this will go to terminal when running from source
@@ -335,3 +441,10 @@ if(process.env.NODE_ENV !== 'production'){
     ]
   });
 }
+
+// module.exports = {
+//     GraphWindowEmitter
+// };
+
+
+

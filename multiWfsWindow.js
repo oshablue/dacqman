@@ -35,7 +35,7 @@ const stream = require('stream');
 // - chunkSize of 2 * 4095 gives steady sync graph, with eventual huge buffer (overrun)
 // - chunkSize of 3 * 4095 gives walking graph and glitches due to emptiness (underrun)
 
-const sprend = require('./sprenderer.js');
+//const sprend = require('./sprenderer.js');
 const SingleWfDataChart = require('./bigWfDataChart.js');
 
 var YourFace = null;
@@ -112,7 +112,7 @@ var customCommandsFilePath;
 var customCommandsJson;
 
 
-let mainWindowMultiWfChartAccordionIsOpen = true; // default
+
 
 
 
@@ -138,7 +138,7 @@ var MainWindowGetNumberOfChannels = function() {
 
 var resetReadableStream = function(chunkMultiple) {
 
-  //console.log(`resetReadableStream`);
+  console.log(`resetReadableStream`);
 
   curChanToGraphSingle = 0;
   curChanToGraphMulti = 0;
@@ -148,12 +148,6 @@ var resetReadableStream = function(chunkMultiple) {
   let wfLenBToUse = hwNow.waveformBytesPerSample * hwNow.waveformLengthSamples; //  defWfLenB;
   
   singleChartBuf =  Buffer.alloc(wfLenBToUse, 127);
-
-  let amsg = `resetReadableStream early: `;
-  amsg += ` chunkMultiple: ${chunkMultiple}`;
-  amsg += ` gChunkMultiple: ${gChunkMultiple}`;
-  amsg += ` wfLenBToUse: ${wfLenBToUse}`;
-  console.log(amsg);
 
   // changing below to 20ms (and doubling the chunksize) doesn't stop the
   // crash malloc errors
@@ -190,7 +184,7 @@ var resetReadableStream = function(chunkMultiple) {
     singleWfChart.UpdateChartLength(wfLenBToUse);
   }
 
-  let msg = `resetReadableStream late:  `;
+  let msg = `resetReadableStream`;
   msg += ` chunkMultiple: ${chunkMultiple}`;
   msg += ` gchunkMultiple: ${gChunkMultiple}`;
   msg += ` wfLenBToUse: ${wfLenBToUse}`;
@@ -240,7 +234,6 @@ var resetReadableStream = function(chunkMultiple) {
         var selectedChanToGraph = 0;
 
         // TODO is this update to wfLenBToUse now the correct var to put here?
-        // TODO after the partial copy - how much chunk and/or readable buffer is left?
         chunk.copy(singleChartBuf, 0, 0, wfLenBToUse + 1); // was defWfLenB + 1
 
 
@@ -315,25 +308,17 @@ var resetReadableStream = function(chunkMultiple) {
           // gChunk = 1 or 3 for single grab or single channel stream 
           // gChunk = 9 for chan scan streaming
           // Eventually we use the embedded channel data!
-          // Trying add the gReturnDataTo
-          if ( gChunkMultiple > 3 || gReturnDataTo === "multiChart" ) {
+          if ( gChunkMultiple > 3 ) {
             curChanToGraphMulti = curChanToGraphMulti == numChans ? 0 : curChanToGraphMulti;
-            
-            // TODO if this section is open then update only?
-            if ( mainWindowMultiWfChartAccordionIsOpen ) {
-              multiWfs[curChanToGraphMulti].UpdateChartBuffer(singleChartBuf);
-            }
-              
+            multiWfs[curChanToGraphMulti].UpdateChartBuffer(singleChartBuf);
+            curChanToGraphMulti++;
+
             // And if multiWFsWindow is open - send to data to it 
             // really, at the moment, just send it, main will figure out what to do 
-            // TODO this is for non-DCF right now only 
-            // for DCF graph updates see the decimateKick thing section
-            ipcRenderer.send('multiWfsWindow:update', {
+            ipcRenderer.send('multiWFsWindow:update', {
               "chartToUpdateIndex": curChanToGraphMulti, 
               "buf" : singleChartBuf
             });
-
-            curChanToGraphMulti++;
           }
 
         }
@@ -374,30 +359,13 @@ var decimate = 0;
 var decimateKick = 31; //121; //61; seems sustainable for RS8 long term //31; for RS104 Long acquisitions (?)    // was 15 // TODO this will become either UI item or pref probably better
 var MainWindowUpdateChart = function ( channelNumber, buf ) {
 
-  // From DCF...
-  // Typically called from capture-data.js from parseInBufferForWaveforms...
-  // TODO need to consolidate the display update thing
-  // because in non-DCF charts updates happen from within the readable stream on chunk readable
-
   // Decimate the data so we don't overwhelm the system...
   // Testing temporary with a simple multiple of total calls decimation
   decimate += 1;
-
   if ( decimate == decimateKick ) {
-
     decimate = 0;
-
-    if ( mainWindowMultiWfChartAccordionIsOpen ) {
-      multiWfs[channelNumber - 1].UpdateChartBuffer(buf);
-    }
-
-    // For if a popout open for multiWFs
-    ipcRenderer.send('multiWfsWindow:update', {
-      "chartToUpdateIndex": channelNumber - 1, 
-      "buf" : buf
-    });
-
-  }  
+    multiWfs[channelNumber - 1].UpdateChartBuffer(buf);
+  }
 
 }
 
@@ -536,80 +504,6 @@ function setPrefToggleTextInputValues(btn) {
    setKeyAndReloadPrefs('customControlSettingsJson', p);
 }
 
-function storeUserCollapsibleState(liEle) {
-
-  // For static div containers and their dynamic elements, 
-  // the on click event is set up in $(document).ready()
-
-  // liEle is typically the <ul class="collapsible..." />
-  // if this is called like: 
-  // $('#controlPortButtonsFromFileDiv').on('click', '.collapsible', function() {
-  //  storeUserCollapsibleState(this); // this => liEle in the target function 
-  //});
-  // or like:
-  // $('#singleWaveformChartAccordion.collapsible').on('click', '', function() {
-  //   storeUserCollapsibleState(this); // this => liEle in the target function 
-  //   will be like <ul class="collapsible collapsible-accordion">...</ul>
-  //
-  // But if called like 
-  // $('#div').collapsible({
-  //  onOpenEnd: function(ele) { storeUserCollapsibleState(ele); },
-  //  onCloseEnd: the same
-  //})
-  // then ele is the li that gets the active or not active 
-  // so we can map this to the parent ul and rework it 
-  if ( liEle.tagName === "LI" ) {
-    liEle = liEle.parentElement;
-  } 
-
-  var collapsed = true;
-  var collapsedBodyDivName = "";
-
-  if ( $(liEle).find('li')[0].className.indexOf('active') > -1 ) { collapsed = false; }
-
-  collapsedBodyDivName = $(liEle).find('div.collapsible-body').attr('id');
-
-  if ( !collapsedBodyDivName ) {
-    console.warn(`Could not get a collapsible-body div id for this clicked collapsible ${liEle.outerHTML.slice(0,60)}... (truncated at 60 chars) \r\n Nothing to store`);
-    return;
-  }
-
-  var pcc = prefs.collapsedCollapsibles;
-  var poc = prefs.openedCollapsibles;
-  if ( !pcc ) { pcc = []; }
-  if ( !poc ) { poc = []; }
-
-  console.log(`stored collapsed: ${pcc}`);
-  console.log(`stored uncollapsed: ${poc}`);
-
-  if ( collapsed && (collapsedBodyDivName.length > 0) ) {
-    if ( !pcc.includes(collapsedBodyDivName) ) {
-      pcc.push(collapsedBodyDivName)
-    }
-    // Remove from the opened array
-    if ( poc.includes(collapsedBodyDivName) ) {
-      poc.splice(poc.indexOf(collapsedBodyDivName), 1);
-    }
-  }
-  if ( !collapsed && (collapsedBodyDivName.length > 0) ) {
-    if ( !poc.includes(collapsedBodyDivName) ) {
-      poc.push(collapsedBodyDivName)
-    }
-    // Remove from the collapsed array
-    if ( pcc.includes(collapsedBodyDivName) ) {
-      pcc.splice(poc.indexOf(collapsedBodyDivName), 1);
-    }
-  }
-
-  console.log(`stored collapsed: ${pcc}`);
-  console.log(`stored uncollapsed: ${poc}`);
-
-  setKeyAndReloadPrefs('collapsedCollapsibles', pcc);
-  setKeyAndReloadPrefs('openedCollapsibles', poc);
-
-  console.log(prefs);
-
-} // end of storeUserCollapsibleState
 
 
 
@@ -623,7 +517,10 @@ window.onbeforeunload = (e) => {
   //  win.destroy();  // this will bypass onbeforeunload and close the app
   //}
 
-  ipcRenderer.send('prefs:storeWindowBounds');
+  // TODO FUTURE maybe store the window bounds for this multi WF chart popout
+  // but make sure app isn't quit yet if mainWindow gets clicked closed first 
+  // while this window still running
+  //ipcRenderer.send('prefs:storeWindowBounds');
 
 };
 
@@ -650,8 +547,7 @@ function mainWindowUpdateChartData(data) {
     console.log("mainWindowUpdateChartData: animStarted = false, calling renderChart()");
     singleWfChart.RenderChart();
     
-    // For popout window, item below is handled directly in the message receiver 
-    // TODO is that in duplicate?
+
     multiWfStartRenders(numChans);
     // if ( gReturnDataTo === "multiChart") {
     //   var i = 0;
@@ -668,7 +564,7 @@ function mainWindowUpdateChartData(data) {
     console.log("mainWindowUpdateChartData: animStarted = true, calling cancelRenderChart()");
     singleWfChart.CancelRenderChart();
     
-    // TODO 0.0.18 need to implement popout stop renders too and or VFY????
+
     multiWfStopRenders(numChans);
 
     // if ( gReturnDataTo === "multiChart") {
@@ -686,18 +582,18 @@ function mainWindowUpdateChartData(data) {
 }
 
 
-let multiWfStartRenders = (numChans) => {
-  //if ( animStarted ) { return; }
-  if ( gReturnDataTo === "multiChart") {
+let multiWfStartRenders = function(numChans) {
+  if ( animStarted ) { return; }
+  //if ( gReturnDataTo === "multiChart") {
     var i = 0;
     for ( i = 0 ; i < numChans ; i++ ) {
       multiWfs[i].RenderChart();
     }
-  }
+  //}
   animStarted = true;
 }
 
-let multiWfStopRenders = (numChans) => {
+let multiWfStopRenders = function (numChans) {
   if ( !animStarted ) { return; }
   if ( gReturnDataTo === "multiChart") {
     var i = 0;
@@ -712,72 +608,6 @@ let multiWfStopRenders = (numChans) => {
 
 
 
-// Serial port -- selection and basics, from early / legacy dev
-// NEXT: can probably eliminate some of these mainWindow wrappers
-// and simply make sure the module is loaded and items exported and
-// just call directly perhaps ... or keep them as wrappers for flexibility
-// maybe?
-function serialSelect(button) {
-  var d = document.querySelector("#activePort");
-  $('#activeSerialPortStuff').show();
-  d.innerHTML = button.name;
-}
-function serialCheckbox(checkbox) {
-  sprend.serialCheckbox(checkbox);
-}
-function serialOpen() {
-  var d = document.querySelector("#activePort");
-  var spname = d.innerHTML;
-  sprend.serialOpenByName(spname);
-}
-function serialClose() {
-  sprend.serialClose();
-}
-function controlPortClose() {
-  sprend.controlPortClose();
-}
-function controlPortOpen() {
-  sprend.controlPortOpen();
-}
-function serialTestWrite() {
-  sprend.serialTestWrite();
-}
-function serialSendData(commandAndType, returnDataTo) {
-  sprend.serialSendData(commandAndType, returnDataTo);
-}
-function controlPortSendData(commandAndType, returnDataTo, button, outputDirectory) {
-  // We capture and send the button item as well to be able parse and handle
-  // any options that are not specified at the command level of the tree
-  sprend.controlPortSendData(commandAndType, returnDataTo, button, outputDirectory);
-}
-function beginSerialComms() {
-  sprend.beginSerialComms();
-}
-function btnDataPortClick(button) {
-  sprend.btnDataPortClick(button);
-}
-function btnControlPortClick(button) {
-  sprend.btnControlPortClick(button);
-}
-function controlPortSendStuff() {
-  sprend.controlPortSendStuff($('#stuffToSend'));
-}
-function controlPortSendDataFromTextInput(button, commandAndType) {
-  sprend.controlPortSendDataFromTextInput(button, commandAndType);
-}
-function silenceIndicators(button) {
-  $("#btnListeningForData").removeClass('pulse');
-  $("#btnDataPortStatus").removeClass('pulse');
-  $(button).addClass('disabled');
-}
-function cancelCustomControlButtonCommand() {
-  return new Promise ( (resolve, reject) => {
-    resolve (sprend.cancelCustomControlButtonCommand() );
-  });
-}
-function getHardwareData() {
-  return sprend.getHardwareData();
-}
 
 
 
@@ -904,48 +734,21 @@ let  loadCustomCommandsPromise = (prefs) => {
 $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQuery functionality for this)
 
   setTimeout(function(){
-    audioFdbk.playOpen();
+    audioFdbk.playPopoutOpen();
   }, 1000);
 
   // Set window title to include software version and/or etc?
-  $(document.getElementsByTagName('head')[0]).find("title").text("DacqMan " + electron.remote.app.getVersion());
+  let titleFromMainJs = $(document.getElementsByTagName('head')[0]).find("title").text();
+  $(document.getElementsByTagName('head')[0]).find("title").text("DacqMan " + electron.remote.app.getVersion() + " " + titleFromMainJs );
   
   // https://stackoverflow.com/questions/9484295/jquery-click-not-working-for-dynamically-created-items
   // for dynamically create items we need to use .on method on a static base thing
   $('#multiWfsWindowPopout').click( function () {
     console.log("popout clicked");
-    let w = window.outerWidth; // innerWidth subtracts the devTools window width if open 
-    let h = window.innerHeight; // for height, outer - inner = top window handle height
-    let offset = window.outerHeight - window.innerHeight;
-    w = w - offset;
-    let x = window.x + 4*offset;
-    let y = window.y + 2*offset;
-    // HOOKALERT04
-    ipcRenderer.send('createMultiWfsWindow', {
-      "height": h,
-      "width": w,
-      "x": x,
-      "y": y
-    });
-    // TODO here maybe - we need to ... trigger something that for eg a 
-    // DCF view will update the # chans and graph handles for eg the 
-    // 4 channels 
-    // Like would happen if this were already open when DCF START happened
-    // Like need the captureDataNumberOfChannelsSet this.maxChannelNum from capture-data.js 
-    // and calling SetupMultipaneCharts but with the correct number of chans 
-    // Or if running maybe ask if the chan nums has been updated and stored elsewhere?
-
-    M.Collapsible.getInstance($('#multiWaveformChartAccordion.collapsible')).close();
-    // OKDO reverse this on window close - 
-    // OKDO also need a way to deactivate the updating of these graphs maybe with a 
-    // sign that says (see popout) ???
+    ipcRenderer.send('createMultiWFsWindow', this); // ?this
   });
 
   selectStylesheet();
-
-
-  sprend.vcpFind();
-  sprend.ftdiFind();
 
   YourFace = new YouFace({
     uiRegularDivs: ['#singleWaveformChartAccordion', '#multiWaveformChartAccordion'],
@@ -977,62 +780,12 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
       $('.collapsible').collapsible({
         accordion: true
       });
-
-      // For remembering collapsible states (selected items only)
-      // Ok so now these fire at the end of the open/close -- but not just for user clicks!!!
-      // $('#singleWaveformChartAccordion').collapsible({
-      //   onOpenEnd: function(ele) { storeUserCollapsibleState(ele); },
-      //   onCloseEnd: function(ele) { storeUserCollapsibleState(ele); }
-      // });
-      // $('#controlPortButtonsFromFileDiv').find('.collapsible').collapsible({
-      //   onOpenEnd: function(ele) { storeUserCollapsibleState(ele); },
-      //   onCloseEnd: function(ele) { storeUserCollapsibleState(ele); }
-      // });
-      //
-      // NOPE:
-      // $('#singleWaveformChartAccordion.collapsible').on('click', '', function() {
-      //   $(this).collapsible({
-      //     onOpenEnd: function(ele) { storeUserCollapsibleState(ele); },
-      //     onCloseEnd: function(ele) { storeUserCollapsibleState(ele); }
-      //   });
-      //   //storeUserCollapsibleState(this); // this => liEle in the target function 
-      //   // will be like <ul class="collapsible collapsible-accordion">...</ul>
-      // }); // indeed this may fire before collapsing has happened, so yes, we need to find 
-      // $('#controlPortButtonsFromFileDiv').on('click', '.collapsible', function() {
-      //   $(this).collapsible({
-      //     onOpenEnd: function(ele) { storeUserCollapsibleState(ele); },
-      //     onCloseEnd: function(ele) { storeUserCollapsibleState(ele); }
-      //   });
-      //   //storeUserCollapsibleState(this); // this => liEle in the target function 
-      //   // will be like <ul class="collapsible collapsible-accordion">...</ul>
-      // });
-
-
       YourFace.Load(prefs.interface, prefs.interfaceRefinement, customCommandsJson.uiDataCaptureFocused);
       if ( prefs.boolUsePlugins ) {
         plugins = require('./plugins.js');
       } else {
         console.warn("prefs.boolUsePlugins = false; Skipping require (and load) plugins.");
       }
-      restoreCollapsibleStates(prefs);
-
-      // Selected collapsibles, remember collapsible states
-      $('#singleWaveformChartAccordion').collapsible({
-        onOpenEnd: function(ele) { storeUserCollapsibleState(ele); },
-        onCloseEnd: function(ele) { storeUserCollapsibleState(ele); }
-      });
-      $('#controlPortButtonsFromFileDiv').find('.collapsible').collapsible({
-        onOpenEnd: function(ele) { storeUserCollapsibleState(ele); },
-        onCloseEnd: function(ele) { storeUserCollapsibleState(ele); }
-      });
-
-      // For a little speed (hopefully?) store the state of the collapsible 
-      // for multigraphs chart updates so not query needed each time?
-      $('#multiWaveformChartAccordion.collapsible').collapsible({
-        onOpenEnd: function(ele) { mainWindowMultiWfChartAccordionIsOpen = true; },
-        onCloseEnd: function(ele) { mainWindowMultiWfChartAccordionIsOpen = false; }
-      });
-
       return;
     })
     .catch ( e => {
@@ -1041,16 +794,7 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
     })
 
 
-  // Check for stuff that needs to execute on page load after population
-  // For our win32 VM 8.1 Pro - this timeout lets things load on launch
-  // and then fires the test to see if we can show the proceed button
-  // Without it, the button doesn't show, as not all is loaded in time
-  // Easy to update for other sequential functionality of course.
-  setTimeout( function() {
-    serialCheckbox(); // arg not used ... TODO better way to do this of course
-  }, 2000);
-
-
+  
   // Chart / graphing / data view items - Single
   // Initialize after DOM load to send the right chart ele parent
   singleWfChart = new SingleWfDataChart({
@@ -1066,122 +810,19 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
   $('.sidenav').sidenav();
   $(".dropdown-trigger").dropdown();
   
-  //$('.modal').modal();
-  // Or specifically:
-  $('#modal-hardwareSelect').modal({
-    onCloseStart: function() {
-      //console.log("modal-hardwareSelect closed");
-      //modalHardwareSelectHello();
-      modalHardwareSelectCloseStartFunction();
-      sprend.setHardwareByFullname(
-        $('#modal-hardwareSelect input:checked').closest('label').children('span').text()
-      );
-      // TODO 
-      // sprend.setHardware(this?);
-      // this is the modal div I think
-      // $('.modal-content input').filter(':checked') returns the input
-    },
-    onOpenStart: function() {
-      sprend.setupModalHardwareSelect();
-    }
-  })
-
-
-  // Add clicks to divs etc elements statically in the html template that should 
-  // trigger tracking of user-clicked open/close status for collapsibles, etc.
-  // Oh right - only the #controlPortButtonsFromFileDiv is static - so we need to  
-  // use the .on('click', '> li > a.collapsible-header', function () {}) syntax
-  // a.collapsible-header is the specific clickable header whereas
-  // .collapsible will get the ul.collapsible.collapsible-accordion which can be 
-  // plugged into like M.Collapsible.getInstance(ele)
-  //$('#controlPortButtonsFromFileDiv').on('click', 'a.collapsible-header', function() {
-
-  // $('#controlPortButtonsFromFileDiv').on('click', '.collapsible', function() {
-  //   storeUserCollapsibleState(this); // this => liEle in the target function 
-  //   // will be like <ul class="collapsible collapsible-accordion">...</ul>
-  // });
-
-  // This sort of call is no go:
-  // $('#controlPortButtonsFromFileDiv').on('click', '.collapsible', function() {
-  //   $(this).collapsible({
-  //     onOpenEnd: storeUserCollapsibleState(this) // 
-  //   });
-  // });
-  // $('#singleWaveformChartAccordion.collapsible').on('click', '', function() {
-  //   storeUserCollapsibleState(this); // this => liEle in the target function 
-  //   // will be like <ul class="collapsible collapsible-accordion">...</ul>
-  // }); // indeed this may fire before collapsing has happened, so yes, we need to find 
-  // a way to set a function for onOpenEnd and onCloseEnd
-  
-  // $('#singleWaveformChartAccordion').collapsible({
-  //   onOpen: function(ele) { storeUserCollapsibleState(ele); },
-  //   onClose: function(ele) { storeUserCollapsibleState(ele); }
-  // });
-
   
 
-}); // end of $(document).ready(...{...})
-// END OF DOCUMENT.READY(...)
-
-
-
-
-
-var restoreCollapsibleStates = function(_prefs) {
-
-  if ( !_prefs ) { return; }
-
-  var pcc = prefs.collapsedCollapsibles;
-  var poc = prefs.openedCollapsibles;
-  if ( !pcc ) { pcc = []; }
-  if ( !poc ) { poc = []; }
-
-  pcc.forEach ( function (c, i) {
-    // div is for the collapsible-body 
-    // and its parent is the li (with active or not as a class name)
-    // and the parent of that is the ul with the .collapsible 
-    // which can be supplied to the M.Collapsible.getInstance for example
-    var theUl = $(`#${c}`).parent().parent()[0];
-    if ( !M.Collapsible.getInstance(theUl) ) {
-      console.warn(`${c} div id name parent parent [0] for collapsible state restore is not a collapsible in this view`);
-    }
-    if ( theUl && M.Collapsible.getInstance(theUl) ) {
-      M.Collapsible.getInstance(theUl).close();
-    }
-  });
-  poc.forEach ( function (c, i) {
-    var theUl = $(`#${c}`).parent().parent()[0];
-    if ( !M.Collapsible.getInstance(theUl) ) {
-      console.warn(`${c} div id name parent parent [0] for collapsible state restore is not a collapsible in this view`);
-    }
-    if ( theUl && M.Collapsible.getInstance(theUl) ) {
-      // Some UI formats might not have the collapsible 
-      // implemented the same way - so check that UL is a collapsible
-      M.Collapsible.getInstance(theUl).open();
-    }
-    
-  });
-
-
-
-} // end of restoreCollapsibleStates
+});
 
 
 
 
 
 var SetupMultipaneCharts = function( nChans, chartDivClasses ) {
-  // mainWindows.js version only
   numChans = nChans;
-  var dname = 'divMultichart';
-  var d = $(`#${dname}`); //$('#divMultichart');
+  var d = $('#divMultichart');
   d.empty();
   setupMultipaneCharts(d, nChans, chartDivClasses);
-  ipcRenderer.send('multiWfsWindow:setup', {
-    "parentEle": dname,
-    "nChans": nChans,
-    "chartDivClasses": chartDivClasses
-  });
   $('#multiWaveformChartAccordion').collapsible("open");
   mainWindowUpdateChartData(null); // to reset render loops
 }
@@ -1879,26 +1520,33 @@ var copyCustomCommandsToLocalFile = function() {
 
 
 
-//
-//
-//
-// ipcRenderer handled messages more .... ???
-//
-//
-//
 
 
-// ipcRenderer.on('multiWfsWindow:update', function(e, data) {
-//   console.log('mwf update');
-//   multiWfStartRenders(8); //MainWindowGetNumberOfChannels()); // TODO move to a setup function 
-//   multiWfs[data.chartToUpdateIndex].UpdateChartBuffer(data.buf);
-// });
 
 
-ipcRenderer.on('multiWaveformChartAccordion:open', function(e, data) {
-  console.log('mwf accordion in mainWindow => open');
-  // TODO log the updated state of open? or is this captured and handled?
+
+//
+//
+// multiWfsWindow-specific message handling 
+//
+//
+//
+ipcRenderer.on('multiWfsWindow:update', function(e, data) {
+  console.log('mwf update');
+  console.log(data.chartToUpdateIndex);
+  // TODO below is needed for non-DCF but not for DCF (because DCF uses setup below)
   //multiWfStartRenders(8); //MainWindowGetNumberOfChannels()); // TODO move to a setup function 
-  //multiWfs[data.chartToUpdateIndex].UpdateChartBuffer(data.buf);
-  M.Collapsible.getInstance($('#multiWaveformChartAccordion.collapsible')).open();
+  multiWfs[data.chartToUpdateIndex].UpdateChartBuffer(data.buf);
 });
+
+ipcRenderer.on('multiWfsWindow:setup', function(e, data) {
+  // Currently only called in DCF UI from the 4-chan SetupMultipaneCharts
+  console.log(`mwf setup for ${data.nChans} channels`);
+  $(`#${data.parentEle}`).empty();
+  setupMultipaneCharts(`#${data.parentEle}`, data.nChans, data.chartDivClasses);
+  // Set up the render loops - in leiu of mainWindowUpdateChartData(null)
+  multiWfStartRenders(data.nChans); //MainWindowGetNumberOfChannels()); // TODO move to a setup function 
+});
+
+
+

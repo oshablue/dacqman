@@ -1132,16 +1132,26 @@ var openControlPort = function(portHash) {
   
   cport.on('data', function (data) {
 
+    // TODO eventually we move this from console (the WF buffer output)
     console.log ("cport.on data");
     console.log(data);
     var retD = hexBufToAscii(data);
-      console.log(retD);
+    console.log(retD);
+    
     //byteCount += data.length;
     //console.log(byteCount);
+    // TODO refactor this 
     if ( hw && hw.dataPortType.includes("SameAsControl") ) {
 
-      ourReadableStreamBuffer.put(data);
-
+      if ( gReturnDataTo === "console") {
+        // Added to show data always for cport recieve in the UI display of text reply
+        //showControlPortOutput(retD); 
+        $('#cmdOutput').append(retD+"\r\n"); // Device using SameAsControl lack a termination char?
+        // TODO add div id for below - so only this one item does this if add more like it in the future
+        $('pre.mini').scrollTop($('pre.mini').prop("scrollHeight"));
+      } else {
+        ourReadableStreamBuffer.put(data);
+      }
     } else {
     
       console.log("Same data parsed as ASCII chars: ");
@@ -1805,7 +1815,7 @@ var serialSendData = function ( commandAndType, returnDataTo) {
 
 
 var showControlPortOutput = function ( asciiStuff ) {
-
+  //console.log("showControlPortOutput called");
   $('#cmdOutput').prepend(asciiStuff); // or prepend()
   // nogo ... :
   //$('#cmdOutput').scrollTop($('#cmdOutput').prop("scrollHeight"));
@@ -1868,6 +1878,14 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
           }
           break;
 
+        case "console":
+        case "log":
+          if ( gReturnDataTo !== returnDataTo ) {
+            gReturnDataTo = "console";
+            console.log("Switched gReturnDataTo to console");
+          }
+          break;
+
         default:
           console.log("controlPortSentData: unhandled returnDataTo case: " + returnDataTo);
           break;
@@ -1880,15 +1898,29 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
     var doFileCaptureCustomToDirectory = false;
     var captureSizeBytes = null;
     var captureSizeNumberOfWaveformsPerFile = null;
+    var commandReplyTimeoutMs = 500; // 500 ms default
     if ( button.options ) {
       button.options.forEach( function(o) {
         switch ( o.key ) {
+          case "replyTimeoutMs":
+            console.log("parsed command replyTimeoutMs " + o.value + " with button.option note: " + o.note);
+            commandReplyTimeoutMs = o.value;
+            break;
           case "singleCaptureBuffer":
             //console.log("button option: singleCaptureBuffer is " + o.value);
             // TODO this is poor compartmentalized coding - this fcn is in the
             // mainWindow.html at the moment
             // Anyway, reset and just use a single chunksize buffer
             resetReadableStream(1);
+
+            // TODO also flush / empty the serial port if possible?
+            // cport is what type of port to check API for this?
+            // console.log("about to cport.flush()...");
+            // cport.flush(function(err,results){}); // recreate and test by setting next timeout below from 2000 to like 500 again 
+            // with radio on DL0100A1 for WF in noisy RF setting
+            // But not do this above - async / await or somewhere else etc 
+            // where natural pause - seems to interfere with ops if here
+            
             // If readable stream is finished, but buffer isn't quite full, there will
             // be nothing chunked out to pushed the readable event.  This might matter
             // for non-standard hardware, hardware in dev, or some scenario where not
@@ -1913,7 +1945,11 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
                     console.log("ourReadableStreamBuffer.size(): " + ourReadableStreamBuffer.size());
                   }
                 }
-              }, 500);
+              }, commandReplyTimeoutMs); // 500); // was 500 - but cutting short cont PAQ 2nd Start Req for DL0100A1
+              // 2023 Q1 lengthened to 2000 in DL0100A1 radio testing was getting some long WF 
+              // transmission times ... TODO make configurable?  Based on the hardware?
+              // But right that 2000 delays a long WF single grab for the HDL like that comes back 4094 instead of 4095 
+
             //}
 
             break;
@@ -2335,6 +2371,16 @@ var cancelCustomControlButtonCommand = () => {
 
   return new Promise ((resolve, reject) => {
 
+    // If not using like captureDataFileOutputBatch then button implies 
+    // in UX just clear the console window here so:
+    if ( !captureDataFileOutputBatch ) {
+      console.log("Since !captureDataFileOutputBatch, interpreting this button not as a ManagedStopNow but rather as a clear this UI text log output.");
+      $('#cmdOutput').text('');
+      resolve(true);
+      return;
+    }
+
+
     captureDataFileOutputBatch.ManagedStopNow()
     .then( jsonForButtons => {
 
@@ -2374,6 +2420,7 @@ var cancelCustomControlButtonCommand = () => {
 
   }); // End of:  Promise
 
+  
   //console.log( JSON.stringify(jsonForButtons) );
 
   //return jsonForButtons;

@@ -10,6 +10,8 @@ const { controlPortClose } = require('./sprenderer.js');
 const captDataEmitter = require('./capture-data.js').CaptDataEmitter; // For subscribing to events
 
 
+const electron = require('electron');
+const {ipcRenderer } = electron;
 
 
 
@@ -53,6 +55,10 @@ class UserInterface {
     this._currentUi = "";
     this._currentUiRefinement = "";
 
+    // TEMP? 2023 Q1
+    // Attempting to store the number of channels for a set chans event:
+    this._numChannels = null;
+
 
     captDataEmitter.on('captureDataNewFile', (data) => {
       let e = $('#uiProgressTextBar');
@@ -73,13 +79,28 @@ class UserInterface {
       this.updateProgressPercentage(data);
     }); // end of capt Data Emitter.on capture Data Progress
 
-    captDataEmitter.once('captureDataNumberOfChannelsSet', (data) => {
-      UISetupMultipaneCharts(data);
+    captDataEmitter.once('captureDataNumberOfChannelsSet', (dataIsNumChans) => {
+      this._numChannels = dataIsNumChans;
+      UISetupMultipaneCharts(dataIsNumChans);
     });
 
     // HOOKALERT01 
     captDataEmitter.on('captureDataManagedStopLastFileComplete', (data) => {
       $('#btnCaptureStop').click();
+    });
+
+    // Would not fire if the popout were clicked prior to running data because this UI
+    // instance doesn't exist yet 
+    // Yes this module still receives the mainWindow.webContents sends ...
+    // HOOKALERT04
+    ipcRenderer.on('multiWfsWindowCreated', (data) => {
+      console.log("userInterface: received multiWfsWindowCreated event via ipcRenderer");
+      console.log(`userInterface: current number of channels in the UI instance: ${this._numChannels}`);
+      if ( this._numChannels ) {
+        UISetupMultipaneCharts(this._numChannels);
+      } else {
+        console.log("this._numChannels is null ... did not call UISetupMultipaneCharts");
+      }
     });
 
   } // end of constructor

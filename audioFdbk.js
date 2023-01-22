@@ -309,6 +309,11 @@ var playOpen = function() {
 
   var durSec = 10;
 
+  var cf = Math.random() * 120. + 340;
+  var dev = Math.random() * 3. + 0.;
+  var fmin = cf - dev; // was 439
+  var fmax = cf + dev; // was 441
+  var vmaxScale = 0.8; // max volume scale 
 
   let g = Generator(
     //Generator function, returns sample values -1..1 for channels
@@ -317,8 +322,8 @@ var playOpen = function() {
 
         v = v > 1.0 ? 1.0 : v;
         return [
-            Math.sin(Math.PI * 2 * time * (439 + Math.pow(time, 8) ) ) * ( v ), //channel 1
-            Math.sin(Math.PI * 2 * time * (441 - Math.pow(time, 8) ) ) * ( v ), //channel 2
+            vmaxScale * Math.sin(Math.PI * 2 * time * (fmin + Math.pow(time, 8) ) ) * ( v ), //channel 1
+            vmaxScale * Math.sin(Math.PI * 2 * time * (fmax - Math.pow(time, 8) ) ) * ( v ), //channel 2
         ]
     },
 
@@ -358,7 +363,86 @@ var playOpen = function() {
 
 }
 
+
+
+
+
+
+var playPopoutOpen = function() {
+
+  console.warn(
+    "As of DacqMan 0.0.11 with included audio examples, audio-generator/stream \
+    is used, and on Mac OS X 10.14.n at least, with the use of a generator or speaker \
+    you will, after the generator is done, even on speaker close/destroy, etc. \
+    get repeated warnings on the command line, looped spam, about buffer underrun, \
+    the simplest method, and only working method, is too edit the file in the \
+    node_modules/speaker package, coreaudio.c, circa line 81, to comment out the \
+    warning message - there are other similar routes. But it means you cannot use \
+    the default package.  You may need to npm install -g node-gyp to allow you \
+    to then cd node_modules/speaker and node-gyp build to regenerate the bins \
+    with this source change. Please see DacqMan source for links to the issue \
+    as available and discovered in various relevant packages. Perhaps this will \
+    be fixed soon in mpg123 or elsewhere."
+  );
+
+  let speaker = new Speaker();
+  // Never happens btw:
+  speaker.on('end', function(){
+    console.log("END");
+  });
+  console.log(speaker);
+
+  var durSec = 2;
+
+  var cf = Math.random() * 120. + 840;
+  var dev = Math.random() * 3. + 0.;
+  var fmin = cf - dev; // was 439
+  var fmax = cf + dev; // was 441
+  var vmaxScale = 0.8; // max volume scale 
+
+  let g = Generator(
+    //Generator function, returns sample values -1..1 for channels
+    function (time) {
+        let v = time < 1.0 ? (0.5 * time) : 0.1 / (Math.pow(time, 6));
+
+        v = v > 1.0 ? 1.0 : v;
+        return [
+            vmaxScale * Math.sin(Math.PI * 2 * time * (fmin + Math.pow(time, 12 ) ) ) * ( v ), //channel 1
+            vmaxScale * Math.sin(Math.PI * 2 * time * (fmax - Math.pow(time, 12 ) ) ) * ( v ), //channel 2
+        ]
+    },
+
+    {
+        //Duration of generated stream, in seconds, after which stream will end.
+        duration: durSec, // Infinity,
+
+        //Periodicity of the time.
+        //period: Infinity
+    })
+    .on('error', function (e) {
+        //error happened during generation the frame
+        console.log(e);
+    })
+    .pipe(speaker);
+
+
+    setTimeout(function(){
+
+      // only for require('speaker'):
+      //speaker.close();
+
+      // Just for testing if this would stop the console warnings about
+      // buffer underruns
+      speaker.destroy();
+
+    }, durSec*1000);
+
+}
+
+
+
 module.exports = {
   playOpen: playOpen, // don't include () - this will execute immediately!
   playData: playData,
+  playPopoutOpen: playPopoutOpen,
 }

@@ -380,7 +380,7 @@
         <a class="collapsible-header">Single (Channel) Waveform Data View(s)
           <i class="material-icons medium sidenav-dd-expand">play_arrow</i>
         </a>
-        <div class="collapsible-body">
+        <div id="divSingleWaveformChart" class="collapsible-body">
 
           <div class="row">
             <div class="col s12"><!-- was col s12 m7 -->
@@ -425,7 +425,12 @@
               <div class="card blue-grey darken-1">
                 <div class="card-content white-text">
                   <span class="card-title">
-                    <span class="chart-title">Multi-Waveform Display</span>
+                    <span class="chart-title">
+                      Multi-Waveform Display
+                      <div id="multiWfsWindowPopout" class="right" style="cursor: pointer;">
+                        POPOUT
+                      </div>
+                    </span>
                   </span>
                   <div id="divMultichart" class="flex-container"></div>
                   <div class="card-action">
