@@ -117,10 +117,22 @@ pull(
 );
 */
 
+const EventEmitter = require('events');
+class Emitter extends EventEmitter{};
+var AudioFdbkEmitter = new Emitter();
+
+
+
+
+
+
 let isReady = true;
 let sr = 4500;
 let samplesPerBuffer = 4096;
 let timeoutMs = 4096 * 1.0/sr * 1000;
+
+
+
 
 var playData = function(data) {
 
@@ -254,6 +266,9 @@ var playData = function(data) {
   //stream.push(data4);
 
 }
+
+
+
 
 
 var playOpen = function() {
@@ -441,8 +456,76 @@ var playPopoutOpen = function() {
 
 
 
+
+let lastChanBase1 = 0;
+let chanArray = [];
+let chansPlayed = [];
+var roundRobbinPlayData = function(chan, data) {
+  //console.log(`audio chan ${chan}`);
+  let play = isReady;
+  //console.log(`chanArray ${chanArray}`);
+  //console.log(`chansPlayed ${chansPlayed}`);
+  if ( !chanArray.includes(chan) ) {
+
+    // First gather all the channels in their particular order
+    chanArray.push(chan);
+
+  } else { 
+
+    if ( !chansPlayed.includes(chan) ) {
+
+      if ( isNextChan(chan) && isReady ) {
+        // play it
+        //console.log(`playing next chan ${chan}`);
+        playData(data);
+        // store it
+        AudioFdbkEmitter.emit('audioFdbk:playingSoundForChanNum', {
+          "chanNum": chan
+        })
+        chansPlayed.push(chan);
+      }
+
+      if ( chansPlayed.length === chanArray.length ) {
+        chansPlayed = [];
+      }
+
+    }
+
+  }
+
+}
+
+
+var isNextChan = function(chan) {
+  let ret = false;
+  if ( chansPlayed.length == 0  && chanArray.indexOf(chan) == 0 ) {
+    return true;
+  }
+  let lastChanPlayed = chansPlayed[chansPlayed.length - 1];
+
+  if ( chanArray.indexOf(chan) - chanArray.indexOf(lastChanPlayed) == 1 ) {
+    return true;
+  }
+  return ret;
+}
+
+
+
+
+
+var reset = function() {
+  chanArray = [];
+  chansPlayed = [];
+  allPlayed = false;
+}
+
+
+
 module.exports = {
   playOpen: playOpen, // don't include () - this will execute immediately!
   playData: playData,
   playPopoutOpen: playPopoutOpen,
+  roundRobbinPlayData: roundRobbinPlayData,
+  reset: reset,
+  AudioFdbkEmitter: AudioFdbkEmitter
 }

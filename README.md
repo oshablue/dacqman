@@ -77,9 +77,11 @@ Seems to still rebuild/install ok on darwin and win32.
 
 
 - **0.0.18** 
-  - add draft of popout separate (child) window for the multi-waveform graphs 
+  - add draft of popout separate (child) window for the multi-waveform graphs - works for various orders of operations and both "Regular" and DCF-UIs
   - update further handling of graphs and charts for data destinations and divvy-ing up for RS8 vs RS104 vs DL0100A1 hardwares for example 
-  - store some collapsible states between launches
+  - store some collapsible states between launches for restoration (at least within a single UI mode selection)
+  - audio feedback for a waveform now plays in a deterministic order, in sequence of the waveform graph updates - but for the simple fix data decimation for UI overhead reduction the sequence may not be in numerical sequence but rather in order of graph update (to be clear) - until rework
+
 
 - **0.0.17** - bumped from 16 with the updates that set up either RS8 (HDL-0108-RSCPT) or the RS104 (HDL-0104-RS104) based on the hardwares.json and switches between driver interfaces depending (11/3/22)
 
@@ -761,8 +763,14 @@ https://github.com/agracio/edge-js/blob/master/samples/105_add7_dll.js
   when toggling back to regular UI and a reload - this is ok functionally under typical 
   use-cases for the time being, so lower priority
   - add the collapsible state restore for the control port button toggling controls (?)
+  - round robbin channel playing using audioFdbk.js works at a basic level but more ideally some graph indicator flashes to tell you what WF you are hearing (whereas now the flash indicates an update)
+  - the flash graph for waveform update is every other in the DCF UI - is it also in the constant stream non-DCF UI also but just hard to tell?
+  - audioFdbk option in UI to hear just one channel
+  
 
 ### Known Limitations for Re-Dev/Mod (Maybe's)
+
+1. RS8 eg in Regular-UI with Single WF Capture button - takes 3 clicks after a fresh power up - for enough data to run through pipeline to get IC awake and enough data back to parse and graph.  This is not a common use-case at the moment - designed for continuous streaming of single channel or multiple scan.  Priority floating right now with other more important stuff. Would be solved with some updates to the parsing and such, likely with buffer sizes or similar. Watch LED (North Red) on RS8 to see if any data returned on the first click or not for example to see more.
 
 1. Chart Frame Rate / Speed: Using d3 for the data chart/graphs works well for demo, and is a good demo of d3 in general. When
 trying to parse out waveform data frames and then update 8 channels
@@ -1339,7 +1347,9 @@ If you use the Developer => Toggle DevTools menu items, the devToolsOpen pref (t
 
 Then when you next start DacqMan that pref is checked, and if true, opens the devTools windows.
 
-However, if you "x" out of devTools to close the window, currently that event is not hooked, to change the stored state of devTools being open or closed. Not low hanging fruit at the moment.
+However, if you "x" out of devTools to close the window, currently that event is not hooked, to change the stored state of devTools being open or closed. Not low hanging fruit at the moment. 
+
+Update (1/23/23) maybe indeed the hook exists to catch this for some event like browserWindowInstance.webContents.on('devToolsClosed') or similar ... (?)
 
 ### Stylesheets (UI look and feel)
 

@@ -377,40 +377,6 @@ var MainWindowUpdateChart = function ( channelNumber, buf ) {
 
 
 
-// Basic demo of some ipc rendered window/interaction Electron type
-// application functionality:
-//
-// Add item
-ipcRenderer.on('item:add', function(e, item){
-  ul.className = 'collection';
-  const li = document.createElement('li');
-  li.className = 'collection-item';
-  const itemText = document.createTextNode(item);
-  li.appendChild(itemText);
-  ul.appendChild(li);
-});
-//
-// Clear items
-ipcRenderer.on('item:clear', function(){
-  ul.innerHTML = '';
-  ul.className = '';
-});
-// Remove item on double-click from main  list
-// TODO if using this test functionality:
-// How was this / should this be implemented?:
-//ul.addEventListener('dblclick', removeItem);
-function removeItem(e){
-  e.target.remove();
-  if(ul.children.length == 0){
-    ul.className = '';
-  }
-}
-
-
-
-
-
-
 // This is retained for legacy/early stage dev reference -
 // but it's probably not used any more as the data parsing functionality
 // happens in sprenderer and capture data mostly now
@@ -428,24 +394,24 @@ ipcRenderer.on('log', function(e, data) {
 
 
 
-// Preferences/settings basics
-function showUserPrefsData() {
-  console.log("sending prefs:show from ipcRenderer");
-  ipcRenderer.send('prefs:show');
-}
+// // Preferences/settings basics
+// function showUserPrefsData() {
+//   console.log("sending prefs:show from ipcRenderer");
+//   ipcRenderer.send('prefs:show');
+// }
 
-ipcRenderer.on('prefs:show', function(e, data) {
-  console.log("prefs:show: " + JSON.stringify(data));
-});
+// ipcRenderer.on('prefs:show', function(e, data) {
+//   console.log("prefs:show: " + JSON.stringify(data));
+// });
 
-function resetPrefsToDefaults() {
-  console.log("resetting prefs to defaults...");
-  ipcRenderer.send('prefs:reset');
-}
+// function resetPrefsToDefaults() {
+//   console.log("resetting prefs to defaults...");
+//   ipcRenderer.send('prefs:reset');
+// }
 
-function getPref(key) {
-  return ipcRenderer.sendSync('prefs:get', key);
-}
+// function getPref(key) {
+//   return ipcRenderer.sendSync('prefs:get', key);
+// }
 
 
 
@@ -459,50 +425,50 @@ function getPref(key) {
   mainWindow: this
 });*/
 
-function setPrefToInterfaceRegular(btn) {
-  let ui = btn.getAttribute("value");
-  console.log("setting preference to use Regular Interface");
-  ipcRenderer.send('prefs:set', { 'key':'interface', 'value':'regular'});
-  YourFace.SwitchInterface(ui);
-}
+// function setPrefToInterfaceRegular(btn) {
+//   let ui = btn.getAttribute("value");
+//   console.log("setting preference to use Regular Interface");
+//   ipcRenderer.send('prefs:set', { 'key':'interface', 'value':'regular'});
+//   YourFace.SwitchInterface(ui);
+// }
 
-function setPrefToInterfaceDataCaptureFocused(btn) {
-  let ui = btn.getAttribute("value");
-  console.log("setting preference to use Data Capture Focused Interface");
-  ipcRenderer.send('prefs:set', { 'key':'interface', 'value':'dataCaptureFocused'});
-  YourFace.SwitchInterface(ui);
-}
+// function setPrefToInterfaceDataCaptureFocused(btn) {
+//   let ui = btn.getAttribute("value");
+//   console.log("setting preference to use Data Capture Focused Interface");
+//   ipcRenderer.send('prefs:set', { 'key':'interface', 'value':'dataCaptureFocused'});
+//   YourFace.SwitchInterface(ui);
+// }
 
-function setPrefToggleRangeSliderValues(btn) {
-  // If includes Restore, then currently set to not restore the value and should be changed to restore it
-  var yesRestoreRangeValues = true;
-  btn.innerHTML.startsWith('Restore') ? yesRestoreRangeValues = true : yesRestoreRangeValues = false;
-  if ( yesRestoreRangeValues ) {
-    btn.innerHTML = btn.innerHTML.replace('Restore', 'Do not restore');
-  } else {
-    btn.innerHTML = btn.innerHTML.replace('Do not restore', 'Restore');
-  }
-  //let ui = btn.getAttribute('value');
-  var p = prefs.customControlSettingsJson;
-  p.restoreRangeSliderValues = yesRestoreRangeValues;
-  setKeyAndReloadPrefs('customControlSettingsJson', p);
-}
+// function setPrefToggleRangeSliderValues(btn) {
+//   // If includes Restore, then currently set to not restore the value and should be changed to restore it
+//   var yesRestoreRangeValues = true;
+//   btn.innerHTML.startsWith('Restore') ? yesRestoreRangeValues = true : yesRestoreRangeValues = false;
+//   if ( yesRestoreRangeValues ) {
+//     btn.innerHTML = btn.innerHTML.replace('Restore', 'Do not restore');
+//   } else {
+//     btn.innerHTML = btn.innerHTML.replace('Do not restore', 'Restore');
+//   }
+//   //let ui = btn.getAttribute('value');
+//   var p = prefs.customControlSettingsJson;
+//   p.restoreRangeSliderValues = yesRestoreRangeValues;
+//   setKeyAndReloadPrefs('customControlSettingsJson', p);
+// }
 
-function setPrefToggleTextInputValues(btn) {
-  //let ui = btn.getAttribute('value');
-   // If includes Restore, then currently set to not restore the value and should be changed to restore it
-   var yesRestoreTextValues = true;
-   btn.innerHTML.startsWith('Restore') ? yesRestoreTextValues = true : yesRestoreTextValues = false;
-   if ( yesRestoreTextValues ) {
-     btn.innerHTML = btn.innerHTML.replace('Restore', 'Do not restore');
-   } else {
-     btn.innerHTML = btn.innerHTML.replace('Do not restore', 'Restore');
-   }
-   //let ui = btn.getAttribute('value');
-   var p = prefs.customControlSettingsJson;
-   p.restoreTextInputValues = yesRestoreTextValues;
-   setKeyAndReloadPrefs('customControlSettingsJson', p);
-}
+// function setPrefToggleTextInputValues(btn) {
+//   //let ui = btn.getAttribute('value');
+//    // If includes Restore, then currently set to not restore the value and should be changed to restore it
+//    var yesRestoreTextValues = true;
+//    btn.innerHTML.startsWith('Restore') ? yesRestoreTextValues = true : yesRestoreTextValues = false;
+//    if ( yesRestoreTextValues ) {
+//      btn.innerHTML = btn.innerHTML.replace('Restore', 'Do not restore');
+//    } else {
+//      btn.innerHTML = btn.innerHTML.replace('Do not restore', 'Restore');
+//    }
+//    //let ui = btn.getAttribute('value');
+//    var p = prefs.customControlSettingsJson;
+//    p.restoreTextInputValues = yesRestoreTextValues;
+//    setKeyAndReloadPrefs('customControlSettingsJson', p);
+// }
 
 
 
@@ -741,51 +707,45 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
   let titleFromMainJs = $(document.getElementsByTagName('head')[0]).find("title").text();
   $(document.getElementsByTagName('head')[0]).find("title").text("DacqMan " + electron.remote.app.getVersion() + " " + titleFromMainJs );
   
-  // https://stackoverflow.com/questions/9484295/jquery-click-not-working-for-dynamically-created-items
-  // for dynamically create items we need to use .on method on a static base thing
-  $('#multiWfsWindowPopout').click( function () {
-    console.log("popout clicked");
-    ipcRenderer.send('createMultiWFsWindow', this); // ?this
-  });
-
   selectStylesheet();
 
-  YourFace = new YouFace({
-    uiRegularDivs: ['#singleWaveformChartAccordion', '#multiWaveformChartAccordion'],
-    uiDataCaptureFocusedParentDiv: '#capture_ui',
-    mainWindow: this
-  });
+  // YourFace = new YouFace({
+  //   uiRegularDivs: ['#singleWaveformChartAccordion', '#multiWaveformChartAccordion'],
+  //   uiDataCaptureFocusedParentDiv: '#capture_ui',
+  //   mainWindow: this
+  // });
 
   getPrefsPromise()
-    .then(prefs => loadCustomCommandsPromise(prefs))
-    .then( function(customCommandsJson) {
-      loadButtons(customCommandsJson);
+    //.then(prefs => loadCustomCommandsPromise(prefs))
+    .then( function(prefs) {
+    //.then( function(customCommandsJson) {
+      //loadButtons(customCommandsJson);
       // HOOKALERT03:
-      var useRangeSilders = true;
-      prefs.customControlSettingsJson.showAsTextInputs ? useRangeSliders = false : useRangeSliders = true;
-      $(".switch").find("input[type=checkbox]").attr('checked', useRangeSliders); // true);
+      // var useRangeSilders = true;
+      // prefs.customControlSettingsJson.showAsTextInputs ? useRangeSliders = false : useRangeSliders = true;
+      // $(".switch").find("input[type=checkbox]").attr('checked', useRangeSliders); // true);
       // TODO move to menu update function - extract
-      var rsvText = "";
-      prefs.customControlSettingsJson.restoreRangeSliderValues ? 
-        rsvText = "Do not restore range slider values" :
-        rsvText = "Restore range slider values";
-      $('#aToggleRangeSliderValues').text(rsvText);
-      var tivText = "";
-      prefs.customControlSettingsJson.restoreTextInputValues ? 
-        tivText = "Do no restore text input values" :
-        tivText = "Restore text input values";
-      $('#aToggleTextInputValues').text(tivText);
+      // var rsvText = "";
+      // prefs.customControlSettingsJson.restoreRangeSliderValues ? 
+      //   rsvText = "Do not restore range slider values" :
+      //   rsvText = "Restore range slider values";
+      // $('#aToggleRangeSliderValues').text(rsvText);
+      // var tivText = "";
+      // prefs.customControlSettingsJson.restoreTextInputValues ? 
+      //   tivText = "Do no restore text input values" :
+      //   tivText = "Restore text input values";
+      // $('#aToggleTextInputValues').text(tivText);
       // HOOKALERT03 may want to select based on stored value for slide/txt in prefs.customControlSettingsJson
-      showCustomControlsAsRangeSliders(useRangeSliders, customCommandsJson); //true, customCommandsJson);
-      $('.collapsible').collapsible({
-        accordion: true
-      });
-      YourFace.Load(prefs.interface, prefs.interfaceRefinement, customCommandsJson.uiDataCaptureFocused);
-      if ( prefs.boolUsePlugins ) {
-        plugins = require('./plugins.js');
-      } else {
-        console.warn("prefs.boolUsePlugins = false; Skipping require (and load) plugins.");
-      }
+      // showCustomControlsAsRangeSliders(useRangeSliders, customCommandsJson); //true, customCommandsJson);
+      // $('.collapsible').collapsible({
+      //   accordion: true
+      // });
+      // YourFace.Load(prefs.interface, prefs.interfaceRefinement, customCommandsJson.uiDataCaptureFocused);
+      // if ( prefs.boolUsePlugins ) {
+      //   plugins = require('./plugins.js');
+      // } else {
+      //   console.warn("prefs.boolUsePlugins = false; Skipping require (and load) plugins.");
+      // }
       return;
     })
     .catch ( e => {
@@ -797,18 +757,22 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
   
   // Chart / graphing / data view items - Single
   // Initialize after DOM load to send the right chart ele parent
-  singleWfChart = new SingleWfDataChart({
-    parentElementIdName: "chart",
-    chartBuffer: singleChartBuf,
-    dataLen: defWfLenB
-  });
+  // singleWfChart = new SingleWfDataChart({
+  //   parentElementIdName: "chart",
+  //   chartBuffer: singleChartBuf,
+  //   dataLen: defWfLenB
+  // });
+
+  let d = ipcRenderer.sendSync('multiWfsWindow:getChartsSetupData');
+  var parentEle = $('#divMultichart');
+  setupMultipaneCharts( parentEle, d.numChans, d.chartDivClasses );
+  if ( d && d.animStarted && d.numChans ) {
+    multiWfStartRenders(d.numChans);
+  }
 
 
-  setupMultipaneCharts($("#divMultichart"), numChans);
-
-
-  $('.sidenav').sidenav();
-  $(".dropdown-trigger").dropdown();
+  //$('.sidenav').sidenav();
+  //$(".dropdown-trigger").dropdown();
   
   
 
@@ -833,10 +797,17 @@ var SetupMultipaneCharts = function( nChans, chartDivClasses ) {
 
 
 
-var setupMultipaneCharts = function (parentEle, nChans, chartDivClasses) {
+var setupMultipaneCharts = async function (parentEle, nChans, chartDivClasses) {
 
   // TODO add some click or similar to allow fullscreen or class change to
   // single column for charts? etc.
+
+  // let nChansIn = nChans;
+  // console.warn('still havent fixed up nChansIn for setupMultipaneCharts');
+  // nChans = await ipcRenderer.sendSync('multiWfsWindow:getNumChans'); // TODO maybe move back to a wrapper instead
+  // console.log(`nChans from ipc sendSync: ${nChans}`);
+  // nChans = nChans ? nChans : numChans;
+
 
   // How many charts to display per row for particular @media size
   var divClasses = chartDivClasses ? chartDivClasses : "col s12 m6 l4";
@@ -1532,11 +1503,19 @@ var copyCustomCommandsToLocalFile = function() {
 //
 //
 ipcRenderer.on('multiWfsWindow:update', function(e, data) {
-  console.log('mwf update');
-  console.log(data.chartToUpdateIndex);
+  console.log(`mwf update chan ${data.chartToUpdateIndex}`);
+
   // TODO below is needed for non-DCF but not for DCF (because DCF uses setup below)
   //multiWfStartRenders(8); //MainWindowGetNumberOfChannels()); // TODO move to a setup function 
-  multiWfs[data.chartToUpdateIndex].UpdateChartBuffer(data.buf);
+  
+  // TODO the item may not exist yet in creating this window...
+  if ( multiWfs && multiWfs[data.chartToUpdateIndex]) {
+    multiWfs[data.chartToUpdateIndex].UpdateChartBuffer(data.buf);
+    // TODO if use audio feedback ... ?
+    // this is for DCF UI only
+    //audioFdbk.playData(data.buf);
+    audioFdbk.roundRobbinPlayData(data.chartToUpdateIndex + 1, data.buf);
+  }
 });
 
 ipcRenderer.on('multiWfsWindow:setup', function(e, data) {
@@ -1548,5 +1527,13 @@ ipcRenderer.on('multiWfsWindow:setup', function(e, data) {
   multiWfStartRenders(data.nChans); //MainWindowGetNumberOfChannels()); // TODO move to a setup function 
 });
 
-
+ipcRenderer.on('multiWfsWindow:cancelRenders', function(e, data) {
+  
+  if ( data && data.numChans ) {
+    console.log(`mwf cancel renders for ${data.numChans} numChans`);
+    multiWfStopRenders(data.numChans);
+  } else {
+    console.warn(`mwf :cancelRenders data or data.numChans is nothing ${JSON.stringify(data)}`);
+  }
+});
 

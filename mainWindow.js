@@ -41,6 +41,8 @@ const SingleWfDataChart = require('./bigWfDataChart.js');
 var YourFace = null;
 const { UserInterface : YouFace } = require('./userInterface.js');
 
+const audioFdbkEmitter = require('./audioFdbk.js').AudioFdbkEmitter;
+
 
 // <PLUGINS>
 
@@ -155,6 +157,8 @@ var resetReadableStream = function(chunkMultiple) {
   amsg += ` wfLenBToUse: ${wfLenBToUse}`;
   console.log(amsg);
 
+  audioFdbk.reset();
+
   // changing below to 20ms (and doubling the chunksize) doesn't stop the
   // crash malloc errors
   //chunkMultiple = 33; // 33 in our testing gives split between 8 chans, and no buffer overflow
@@ -232,7 +236,34 @@ var resetReadableStream = function(chunkMultiple) {
 
         // TODO UI switch/checkbox to allow debug UI to do enable/disable such
         // functionality
-        //console.log(chunk);
+        //console.log(chunk.length);
+        // RS8 for chunk.length:
+        // DCF with chunk multiple of 8 gives size of 8x4095=32760 in DCF mode
+        // while running continuous channel scan for example will give exactly that as the chunk.length
+        // in Regular mode channel scan chunk size set to 9 gives actual length: 36855 which is right for 4095
+        // in Regular mode single channel 12285 is the length consistently given and matches chunk=3
+        // DL0100A1 yes get chunk length of 2500 even when smaller buffers accumulated in cport on data
+        // for ch-ch direct obtesting fw and for setup cpaq and grab a wf
+        // for chunk size mult 1
+
+        // In DCF-UI 
+        // eg RS104 or RS8
+        // Start = chunk mult of 8 (captureBufferMultiple button option value)
+        // Stop back to chunk mult 1
+        // DCF: No single WF chart visible and chunk goes to parsing module for 
+        // all-data file writing and decimate Kick graph updating based on extracted
+        // channel number
+        //
+        // In Reg-UI
+        // eg RS104 or RS8
+        // Single grab: chunkMult: 1 singleBuffer in button description
+        // (1C) Single Channel stream: chunkMult: 3 (mult)
+        // (CS) ChanScan stream: chunkMult: 9 (mult)
+        // In Reg-UI currently:
+        // 1C: only the 1st WF length is retained and plotted on the singleWF graph
+        //     the other 2 WF lengths get lost
+        // CS: only the 1st WF length is retained and the remaining 8 WFs are thus discarded 
+        //     so in perfect data transmission you advance 1 WF graph every chan sweep 
 
         // The channel to graph in the single waveform chart
         // NEXT: Move to UI for single-channel focused selection
@@ -249,6 +280,7 @@ var resetReadableStream = function(chunkMultiple) {
         // the data and wanting to just graph some interval of a single channel
         if ( gChunkMultiple > 3 && selectedChanToGraph == curChanToGraphSingle ) {
           singleWfChart.UpdateChartBuffer(singleChartBuf);
+          //audioFdbk.playData(singleChartBuf); // TODO this creates another play on top of below multiWfs
         }
         // Versus:
         // for smaller chunks, assume this is more of a single channel
@@ -257,6 +289,10 @@ var resetReadableStream = function(chunkMultiple) {
         // chart the same channel
         if ( gChunkMultiple < 4 ) {
           singleWfChart.UpdateChartBuffer(singleChartBuf);
+          if ( prefs.interface !== 'dataCaptureFocused' ){ 
+            // oy. TODO because round robbin from the decimateKick thing but gChunk is still small like 1
+            audioFdbk.playData(singleChartBuf); // this might too as above issue ... TODO
+          }
         }
 
         // Sure, for now, basic testing, each chunk, whatever multiple, each
@@ -282,8 +318,9 @@ var resetReadableStream = function(chunkMultiple) {
 
         if ( prefs.interface === 'dataCaptureFocused' ) {
 
+          // Now in DCF UI audio play happens in the decimateKick UI graph update function
           // <TESTING>
-            audioFdbk.playData(chunk);
+          //  audioFdbk.playData(chunk);
           // </TESTING>
 
           if ( captureDataFileOutputBatch ) {
@@ -322,6 +359,9 @@ var resetReadableStream = function(chunkMultiple) {
             // TODO if this section is open then update only?
             if ( mainWindowMultiWfChartAccordionIsOpen ) {
               multiWfs[curChanToGraphMulti].UpdateChartBuffer(singleChartBuf);
+              // TODO round-robbin the audio below:
+              //audioFdbk.playData(singleChartBuf);
+              audioFdbk.roundRobbinPlayData(curChanToGraphMulti+1, singleChartBuf);
             }
               
             // And if multiWFsWindow is open - send to data to it 
@@ -388,7 +428,12 @@ var MainWindowUpdateChart = function ( channelNumber, buf ) {
     decimate = 0;
 
     if ( mainWindowMultiWfChartAccordionIsOpen ) {
+      //console.log('mainWindowMultiWfChartAccordionIsOpen ... updating it');
       multiWfs[channelNumber - 1].UpdateChartBuffer(buf);
+      // TODO if use audio feedback ... ?
+      // this is for DCF UI only
+      //audioFdbk.playData(buf);
+      audioFdbk.roundRobbinPlayData(channelNumber, buf);
     }
 
     // For if a popout open for multiWFs
@@ -404,6 +449,10 @@ var MainWindowUpdateChart = function ( channelNumber, buf ) {
 // TS -- 7ceee74 buffer / chunk data (no O/F)
 // Buffer 4095 incl ourReadableStreamBuffer
 // Buffer 2500 
+
+
+
+
 
 
 
@@ -671,6 +720,10 @@ function mainWindowUpdateChartData(data) {
     // TODO 0.0.18 need to implement popout stop renders too and or VFY????
     multiWfStopRenders(numChans);
 
+    ipcRenderer.send('multiWfsWindow:cancelRenders', {
+      "numChans": numChans
+    });
+
     // if ( gReturnDataTo === "multiChart") {
     //   var i = 0;
     //   for ( i = 0 ; i < numChans ; i++ ) {
@@ -901,7 +954,17 @@ let  loadCustomCommandsPromise = (prefs) => {
 
 
 
+
+
+
+
+
+
+
+
 $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQuery functionality for this)
+
+
 
   setTimeout(function(){
     audioFdbk.playOpen();
@@ -910,9 +973,12 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
   // Set window title to include software version and/or etc?
   $(document.getElementsByTagName('head')[0]).find("title").text("DacqMan " + electron.remote.app.getVersion());
   
+
+
   // https://stackoverflow.com/questions/9484295/jquery-click-not-working-for-dynamically-created-items
   // for dynamically create items we need to use .on method on a static base thing
   $('#multiWfsWindowPopout').click( function () {
+
     console.log("popout clicked");
     let w = window.outerWidth; // innerWidth subtracts the devTools window width if open 
     let h = window.innerHeight; // for height, outer - inner = top window handle height
@@ -920,12 +986,30 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
     w = w - offset;
     let x = window.x + 4*offset;
     let y = window.y + 2*offset;
+
+    // available:
+    // multiWfs.length 
+    // numChans 
+    // Get current classes applied:
+    //   $('multiWaveformChartAccordion').find('.row > div').attr('class') // eg col s12
+    // Applied per chart class for the 4x is eg col s12 m6
+    //   $('#divMultichart > div').length // is the number of charts eg 4 for RS104
+    //   $('#divMultichart > div').attr('class') // eg col s12 m6 l4 for 4x @RS104
+    let numChansToSetup = numChans; 
+    if ( numChansToSetup != $('#divMultichart > div').length ) {
+      console.warn(`numChans does not equal number of charts in the multichart area`);
+    }
+    let chartClasses = $('#divMultichart > div').attr('class') || 'col s12 m6 l4';
+
     // HOOKALERT04
     ipcRenderer.send('createMultiWfsWindow', {
       "height": h,
       "width": w,
       "x": x,
-      "y": y
+      "y": y,
+      "numChans": numChansToSetup, // may be default or updated to eg 4 from DCF UI
+      "chartDivClasses": chartClasses,
+      "animStarted": animStarted
     });
     // TODO here maybe - we need to ... trigger something that for eg a 
     // DCF view will update the # chans and graph handles for eg the 
@@ -1182,7 +1266,10 @@ var SetupMultipaneCharts = function( nChans, chartDivClasses ) {
     "nChans": nChans,
     "chartDivClasses": chartDivClasses
   });
-  $('#multiWaveformChartAccordion').collapsible("open");
+  let mwfIsOpen = ipcRenderer.sendSync('multiWfsWindow:getIsOpen');
+  if ( !mwfIsOpen ) {
+    $('#multiWaveformChartAccordion').collapsible("open");
+  }
   mainWindowUpdateChartData(null); // to reset render loops
 }
 
@@ -1902,3 +1989,8 @@ ipcRenderer.on('multiWaveformChartAccordion:open', function(e, data) {
   //multiWfs[data.chartToUpdateIndex].UpdateChartBuffer(data.buf);
   M.Collapsible.getInstance($('#multiWaveformChartAccordion.collapsible')).open();
 });
+
+// ipcRenderer.on('multiWfsWindow:created', (data) => {
+//   console.log("received multiWfsWindowCreated event via ipcRenderer");
+  
+// });

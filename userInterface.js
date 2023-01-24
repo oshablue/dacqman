@@ -57,7 +57,7 @@ class UserInterface {
 
     // TEMP? 2023 Q1
     // Attempting to store the number of channels for a set chans event:
-    this._numChannels = null;
+    //this._numChannels = null;
 
 
     captDataEmitter.on('captureDataNewFile', (data) => {
@@ -93,15 +93,21 @@ class UserInterface {
     // instance doesn't exist yet 
     // Yes this module still receives the mainWindow.webContents sends ...
     // HOOKALERT04
-    ipcRenderer.on('multiWfsWindowCreated', (data) => {
-      console.log("userInterface: received multiWfsWindowCreated event via ipcRenderer");
-      console.log(`userInterface: current number of channels in the UI instance: ${this._numChannels}`);
-      if ( this._numChannels ) {
-        UISetupMultipaneCharts(this._numChannels);
-      } else {
-        console.log("this._numChannels is null ... did not call UISetupMultipaneCharts");
-      }
-    });
+    // ipcRenderer.on('multiWfsWindowCreated', (data) => {
+    //   console.log("userInterface: received multiWfsWindowCreated event via ipcRenderer");
+    //   console.log(`userInterface: current number of channels in the UI instance: ${this._numChannels}`);
+    //   if ( this._numChannels ) {
+    //     UISetupMultipaneCharts(this._numChannels);
+    //   } else {
+    //     console.log("this._numChannels is null ... did not call UISetupMultipaneCharts");
+    //   }
+    // });
+    //
+    // ipcRenderer.on('multiWfsWindow:created', (data) => {
+    //   console.log("received multiWfsWindowCreated event via ipcRenderer");
+      
+    // });
+
 
   } // end of constructor
 

@@ -98,7 +98,7 @@ var findSofPair = ( buf, startIndex, startingScanNum, maxScanNumToInclude ) => {
         var chan = buf[matchIndex + channelNumIndex] + channelNumIndexBaseAddend;
 
         if ( chan > warnMaxHardwareChannelBase1 ) {
-          console.warn(`Warning: waveform-parseing-hdl...js: a channel number, ${chan}, larger than the hardware maximum channel number, ${warnMaxHardwareChannelBase1}, was encountered.  This is likely an intrahardware signaling or configuration issue and should be debugged, culminating in a firmware update.`);
+          console.warn(`Warning: waveform-parseing-hdl...js: a channel number, ${chan}, larger than the hardware maximum channel number, ${warnMaxHardwareChannelBase1}, was encountered.  This is likely an a firmware or configuration or communications issue and should be debugged, IF it is worth it in the use case at hand.`);
         }
 
         var scan = chan == chanAddedBaseAtWhichToIncrementScanNum ? startingScanNum + 1 : startingScanNum;
