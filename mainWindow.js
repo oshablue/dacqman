@@ -103,7 +103,7 @@ var gReturnDataTo = "chart";
 var multiWfs = [];
 var multiWfBufs = [];
 
-var curChanToGraphSingle = 0;
+//var curChanToGraphSingle = 0;
 var curChanToGraphMulti = 0;
 
 const defNumChans = 8;
@@ -142,7 +142,7 @@ var resetReadableStream = function(chunkMultiple) {
 
   //console.log(`resetReadableStream`);
 
-  curChanToGraphSingle = 0;
+  //curChanToGraphSingle = 0;
   curChanToGraphMulti = 0;
 
   let hwNow = getHardwareData(); 
@@ -220,6 +220,11 @@ var resetReadableStream = function(chunkMultiple) {
 
       var chunk;
 
+      // NOTE TO DEVS:
+      // Try changing chunk values in the buttons definition file(s)
+      // rather than forcing to a value here - or be aware that this is 
+      // or was a primary intended option
+
       if ( ourReadableStreamBuffer.size() > (1000*1024) ) {
         console.log(ourReadableStreamBuffer.size());
         $('#btnBufferOverflowing').removeClass('disabled').addClass('orange pulse');
@@ -270,29 +275,48 @@ var resetReadableStream = function(chunkMultiple) {
         // Base 0
         var selectedChanToGraph = 0;
 
-        // TODO is this update to wfLenBToUse now the correct var to put here?
-        // TODO after the partial copy - how much chunk and/or readable buffer is left?
+        // OKDO is this update to wfLenBToUse now the correct var to put here? yes
+        // OKDO after the partial copy - how much chunk and/or readable buffer is left?
+        // VFYD: indeed the chunk is the whole amount of the mult * wflen and is all pulled 
+        // from the stream - so the uncopied portion goes away unless the whole chunk 
+        // is used elsehow down there
         chunk.copy(singleChartBuf, 0, 0, wfLenBToUse + 1); // was defWfLenB + 1
 
 
         // This was for quick live demo updated functionality
         // If the chunk multiple was larger, then we were probably decimating
         // the data and wanting to just graph some interval of a single channel
-        if ( gChunkMultiple > 3 && selectedChanToGraph == curChanToGraphSingle ) {
-          singleWfChart.UpdateChartBuffer(singleChartBuf);
-          //audioFdbk.playData(singleChartBuf); // TODO this creates another play on top of below multiWfs
-        }
+        // Really this is or could be:
+        // if ( prefs.interface !== 'dataCaptureFocused' ) or similar like:
+        // gChunkMultiple > 3 used to target like chan scan in RegUI
+        // and then for showing just one selected chan in the single WF chart
+        // Currently this (below) only triggers once for cont chan scan for the RS8
+        // and then curChanToGraphSingle just keeps incrementing ...
+        // TODO we'll disable this until some intended logic is reconstructed
+        // if ( gChunkMultiple > 3 && selectedChanToGraph == curChanToGraphSingle ) {
+        //   singleWfChart.UpdateChartBuffer(singleChartBuf);
+        //   //audioFdbk.playData(singleChartBuf); // TODO this creates another play on top of below multiWfs
+        // }
+
         // Versus:
         // for smaller chunks, assume this is more of a single channel
         // scan or snapshot and that the chunk size does the decimation
         // sufficiently and we don't care about trying to always grab and
         // chart the same channel
-        if ( gChunkMultiple < 4 ) {
+        // Currently this triggers for RS8:
+        // single chan single acquire 
+        // single chan stream
+        //if ( gChunkMultiple < 4 ) {
+        // so let's update this to the new below because we are moving to proper implementation 
+        // based on chart destination and the chunking does it's own thing 
+        // ie in RegUI just the first chunk is grabbed
+        if ( prefs.interface !== 'dataCaptureFocused' && gReturnDataTo === 'chart' ){ 
           singleWfChart.UpdateChartBuffer(singleChartBuf);
-          if ( prefs.interface !== 'dataCaptureFocused' ){ 
-            // oy. TODO because round robbin from the decimateKick thing but gChunk is still small like 1
+          //if ( prefs.interface !== 'dataCaptureFocused' ){ 
+            // oy. above case check because round robbin from the decimateKick thing if DCF
+            // but gChunk is still small like 1
             audioFdbk.playData(singleChartBuf); // this might too as above issue ... TODO
-          }
+          //}
         }
 
         // Sure, for now, basic testing, each chunk, whatever multiple, each
@@ -300,7 +324,8 @@ var resetReadableStream = function(chunkMultiple) {
         // assuming that the multiple of chunk is set to intentionally
         // account for cycling through channels or the interaction is known
         // and correspondingly accounted for / set up
-        curChanToGraphSingle += 1;
+        // TODO need to wrap check and reset if going to implement this
+        //curChanToGraphSingle += 1;
 
 
 
@@ -341,19 +366,22 @@ var resetReadableStream = function(chunkMultiple) {
             console.warn(chunk);
           }
 
-        } else {
+        } else { // prefs.interface is not DCF:
 
           // If we're not parsing waveforms (which at the moment, is only done
           // in the capture data file output batch module) then just dump to
           // waveform charts
 
           // TODO - better way
-          // HDL:
+          // HDL: for non-DCF (DCF uses different button defs and whole chunks go for processing)
           // gChunk = 1 or 3 for single grab or single channel stream 
           // gChunk = 9 for chan scan streaming
           // Eventually we use the embedded channel data!
-          // Trying add the gReturnDataTo
-          if ( gChunkMultiple > 3 || gReturnDataTo === "multiChart" ) {
+          // Trying add the gReturnDataTo - now we can clean up the gChunk stuff:
+          //if ( gChunkMultiple > 3 || gReturnDataTo === "multiChart" ) {
+          if ( gReturnDataTo === 'multiChart') {
+
+            // wrap the counter over if needed
             curChanToGraphMulti = curChanToGraphMulti == numChans ? 0 : curChanToGraphMulti;
             
             // TODO if this section is open then update only?
@@ -368,15 +396,17 @@ var resetReadableStream = function(chunkMultiple) {
             // really, at the moment, just send it, main will figure out what to do 
             // TODO this is for non-DCF right now only 
             // for DCF graph updates see the decimateKick thing section
+            // audio is handled by the popout itself probably with another round robbin call
             ipcRenderer.send('multiWfsWindow:update', {
               "chartToUpdateIndex": curChanToGraphMulti, 
               "buf" : singleChartBuf
             });
 
             curChanToGraphMulti++;
-          }
 
-        }
+          } // if gReturnDataTo multiChart
+
+        } // if prefs.interface is not DCF (ie it is regular)
 
         // PLACEHOLDER 
         // if one wants to run DL0100A1 (non DCF UI view) through any plugins,

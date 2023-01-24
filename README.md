@@ -766,6 +766,10 @@ https://github.com/agracio/edge-js/blob/master/samples/105_add7_dll.js
   - round robbin channel playing using audioFdbk.js works at a basic level but more ideally some graph indicator flashes to tell you what WF you are hearing (whereas now the flash indicates an update)
   - the flash graph for waveform update is every other in the DCF UI - is it also in the constant stream non-DCF UI also but just hard to tell?
   - audioFdbk option in UI to hear just one channel
+  - KNOWN ISSUES
+    - Low Priority: RegUI mode - while streaming chan scan then hit popout sync with actual real world ch 1 gets lost and probably arbitrary ch 1 - just stop and restart for now - uncommon use case concern
+  - PUSH CHECKLIST
+    - set the control-port-buttons.json back to the intended default (until the switching or mgmt feature is enabled etc)
   
 
 ### Known Limitations for Re-Dev/Mod (Maybe's)

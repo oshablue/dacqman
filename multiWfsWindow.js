@@ -1503,7 +1503,7 @@ var copyCustomCommandsToLocalFile = function() {
 //
 //
 ipcRenderer.on('multiWfsWindow:update', function(e, data) {
-  console.log(`mwf update chan ${data.chartToUpdateIndex}`);
+  //console.log(`mwf update chan ${data.chartToUpdateIndex}`);
 
   // TODO below is needed for non-DCF but not for DCF (because DCF uses setup below)
   //multiWfStartRenders(8); //MainWindowGetNumberOfChannels()); // TODO move to a setup function 
