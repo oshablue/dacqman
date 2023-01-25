@@ -457,6 +457,8 @@ var MainWindowUpdateChart = function ( channelNumber, buf ) {
 
     decimate = 0;
 
+    buf = transformWf(buf);
+
     if ( mainWindowMultiWfChartAccordionIsOpen ) {
       //console.log('mainWindowMultiWfChartAccordionIsOpen ... updating it');
       multiWfs[channelNumber - 1].UpdateChartBuffer(buf);
@@ -465,6 +467,7 @@ var MainWindowUpdateChart = function ( channelNumber, buf ) {
       //audioFdbk.playData(buf);
       audioFdbk.roundRobbinPlayData(channelNumber, buf);
     }
+
 
     // For if a popout open for multiWFs
     ipcRenderer.send('multiWfsWindow:update', {
@@ -482,7 +485,13 @@ var MainWindowUpdateChart = function ( channelNumber, buf ) {
 
 
 
-
+var transformWf = function (buf) {
+  let i = 0;
+  buf.forEach( function(v, i, buf) {
+    buf[i] = Math.abs(v);
+  });
+  return buf;
+}
 
 
 

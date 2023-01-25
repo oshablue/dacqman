@@ -75,12 +75,20 @@ Seems to still rebuild/install ok on darwin and win32.
 
 ### Revisions
 
+- **0.0.19** Planned
+  - 
 
 - **0.0.18** 
   - add draft of popout separate (child) window for the multi-waveform graphs - works for various orders of operations and both "Regular" and DCF-UIs
   - update further handling of graphs and charts for data destinations and divvy-ing up for RS8 vs RS104 vs DL0100A1 hardwares for example 
   - store some collapsible states between launches for restoration (at least within a single UI mode selection)
   - audio feedback for a waveform now plays in a deterministic order, in sequence of the waveform graph updates - but for the simple fix data decimation for UI overhead reduction the sequence may not be in numerical sequence but rather in order of graph update (to be clear) - until rework
+  - TEST CHECKLIST
+    - expected data rate (file size / file quantity) within expected time?
+    - error rate
+    - work flow for popout sensible? need use case / field use feedback
+    - DCF-UI output file format still ok?
+    - long run time (within actual use-case bounds) ok? or buffer / slow down issues?
 
 
 - **0.0.17** - bumped from 16 with the updates that set up either RS8 (HDL-0108-RSCPT) or the RS104 (HDL-0104-RS104) based on the hardwares.json and switches between driver interfaces depending (11/3/22)
@@ -770,6 +778,7 @@ https://github.com/agracio/edge-js/blob/master/samples/105_add7_dll.js
     - Low Priority: RegUI mode - while streaming chan scan then hit popout sync with actual real world ch 1 gets lost and probably arbitrary ch 1 - just stop and restart for now - uncommon use case concern
   - PUSH CHECKLIST
     - set the control-port-buttons.json back to the intended default (until the switching or mgmt feature is enabled etc)
+
   
 
 ### Known Limitations for Re-Dev/Mod (Maybe's)
