@@ -772,8 +772,22 @@ https://github.com/agracio/edge-js/blob/master/samples/105_add7_dll.js
   use-cases for the time being, so lower priority
   - add the collapsible state restore for the control port button toggling controls (?)
   - round robbin channel playing using audioFdbk.js works at a basic level but more ideally some graph indicator flashes to tell you what WF you are hearing (whereas now the flash indicates an update)
+  - can we update decimate kick round robbin to go in channel order ????
+  - pref option to turn off graph flashing too
   - the flash graph for waveform update is every other in the DCF UI - is it also in the constant stream non-DCF UI also but just hard to tell?
-  - audioFdbk option in UI to hear just one channel
+    - keep working with this 
+    - is the 8 channel thing? but updates show cycling 4 chans
+  - audioFdbk 
+    - option in UI to hear just one channel
+    - tweak indicator positioning and format
+    - add indicator fcn also to popout (wire it in there too)
+    - MUTE option
+  - first draft of optional WF transforms eg:
+    - absolute / shifted / multiplied
+    - bring in library like running average 
+    - bring in spectrogram / spectrum waterfall
+    - try b scan / c-scan / m-scan options starting from eg the running average over time mapped to intensity 
+    - try above and add adjustable time frame rate or width of band over time or per WF in stacked band WF moving over time or WF update
   - KNOWN ISSUES
     - Low Priority: RegUI mode - while streaming chan scan then hit popout sync with actual real world ch 1 gets lost and probably arbitrary ch 1 - just stop and restart for now - uncommon use case concern
   - PUSH CHECKLIST

@@ -442,16 +442,42 @@ function DataChart({
   // Highlight the chart when new data is added, allowing the last update to
   // fade out within 1000 ms - such that if no new data, chart background
   // fades out
-  this.flashColorTimeoutId;
-
+  this.flashColorTimeoutId; //= []; // TODO list / array ???
+  let fadeOutMs = 1000;
+  let timingMs = 500; // 500 ok for no flash missed for RS8 chan scan
+  // was 1000 but in RS8 currently getting every other - haven't debugged yet - is it the 8 chan thing?
+  // for DCF mode - or maybe we like the every other - easier on the brain?
+  // Ok I think what is happening:
+  // class is set for the flash color and the setTimeout is set 
+  // the setTimeout starts firing and fading the color out 
+  // but it takes long enough that the clearTimeout doesn't stop the fadeOut in progress 
+  // so even if the class was added again it gets removed once the fadeout stops - or similar
+  // Hence using a shorter time for the setTimeout specific to hardware maybe or just test for 
+  // all seems a reasonable solution without getting more complicated 
+  // Or even allowing the skip might be easier on the brain.
+  // TODO still need to VFY what is happening with Chs 5 - 8 in DCF-UI
   this.UpdateChartBuffer = function(newBuffer) {
+    //console.log(`${this._parentElementIdName} ${$('#' + this._parentElementIdName).attr('class')}`)
+    //$('#' + this._parentElementIdName).removeClass("flash-color");
     $('#' + this._parentElementIdName).addClass("flash-color");
     if ( this.flashColorTimeoutId ) {
-      clearTimeout(this.flashColorTimeoutId);
+      //this.flashColorTimeoutId.forEach( function(v) {
+        //console.log(`clearing flashColorTimeoutId ${this.flashColorTimeoutId}`);
+        clearTimeout(this.flashColorTimeoutId);
+      //});
+      //this.flashColorTimeoutId = [];
+      // console.log(`clearing flashColorTimeoutId ${this.flashColorTimeoutId}`);
+      // clearTimeout(this.flashColorTimeoutId);
+      //$('#' + this._parentElementIdName).removeClass("flash-color"); // testing - in case still there?
     }
+    //let tid;
     this.flashColorTimeoutId = setTimeout( () => {
-      $('#' + this._parentElementIdName).removeClass("flash-color", 1000);
-    }, 1000);
+    //tid = setTimeout( () => {
+      //console.log(`${this._parentElementIdName} ${$('#' + this._parentElementIdName).attr('class')}`);
+      $('#' + this._parentElementIdName).removeClass("flash-color", fadeOutMs) // was 1000 - but add again a little easier on the eyes
+    }, timingMs); // was 1000
+    //this.flashColorTimeoutId.push(tid);
+    //console.log(`flashColorTimeoutId ${this.flashColorTimeoutId}`);
     // Adding 2023 Q1 -- too long?
     if ( this._dataLen > this._chartBuffer.length ) {
       this._chartBuffer = Buffer.alloc(this._dataLen, 64);
@@ -464,6 +490,27 @@ function DataChart({
   }
 
 
+  this.soundPlayingTimeoutId; // TODO list / array
+  this.ShowPlayingSound = function(timeoutMs) {
+    // let i = $(document.createElement("i"))
+    // .text("play_circle_filled")
+    // .addClass("material-icon")
+    // ;
+    let i = $(document.createElement("img"))
+      .addClass("sound-indicator")
+      .attr("src", "./assets/icon-audio-wave-50-white.png")
+      .attr("alt", "Playing Now")
+      ;
+    // <img src="./assets/icon-audio-wave-50.png" width="50" height="50" alt="PLAYING"></img>
+    (i).insertAfter($('#' + this._parentElementIdName).parent().find('span')[0]); // append to the parent Channel label
+    
+    if ( this.soundPlayingTimeoutId ) {
+      clearTimeout(this.soundPlayingTimeoutId);
+    }
+    this.soundPlayingTimeoutId = setTimeout( () => {
+      $('#' + this._parentElementIdName).parent().find('.sound-indicator').remove();
+    }, timeoutMs);
+  }
 
 
 

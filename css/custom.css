@@ -518,6 +518,14 @@ input[type=range]+.thumb.active .value {
 .flash-color {
   background-color: rgba(244, 255, 0, 0.1);
 }
+.sound-indicator {
+  height: 15px;
+  width: 25px;
+  /*opacity: 0.3;*/
+  transition: .3s ease;
+  position: absolute;
+  margin-left: 5px;
+}
 path {
     stroke: steelblue;
     /*stroke-width: 2;*/

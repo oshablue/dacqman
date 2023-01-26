@@ -480,7 +480,8 @@ var roundRobbinPlayData = function(chan, data) {
         playData(data);
         // store it
         AudioFdbkEmitter.emit('audioFdbk:playingSoundForChanNum', {
-          "chanNum": chan
+          "chanNum": chan,
+          "timeoutMs": timeoutMs
         })
         chansPlayed.push(chan);
       }

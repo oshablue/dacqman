@@ -441,7 +441,9 @@ var resetReadableStream = function(chunkMultiple) {
 // and then user interface can decide how/when to call the chart object to
 // update its data display
 var decimate = 0;
-var decimateKick = 31; //121; //61; seems sustainable for RS8 long term //31; for RS104 Long acquisitions (?)    // was 15 // TODO this will become either UI item or pref probably better
+// RS8 31 puts in a weird chan order for graph and every-other round robbin audio updates 
+// but 33 does correct order (as would be expected for an 8 chan system)
+var decimateKick = 33; //31; //121; //61; seems sustainable for RS8 long term //31; for RS104 Long acquisitions (?)    // was 15 // TODO this will become either UI item or pref probably better
 var MainWindowUpdateChart = function ( channelNumber, buf ) {
 
   // From DCF...
@@ -457,15 +459,15 @@ var MainWindowUpdateChart = function ( channelNumber, buf ) {
 
     decimate = 0;
 
-    buf = transformWf(buf);
+    //let tfBuf = transformWf(buf);
 
     if ( mainWindowMultiWfChartAccordionIsOpen ) {
       //console.log('mainWindowMultiWfChartAccordionIsOpen ... updating it');
-      multiWfs[channelNumber - 1].UpdateChartBuffer(buf);
+      multiWfs[channelNumber - 1].UpdateChartBuffer(buf); // graph TF buf
       // TODO if use audio feedback ... ?
       // this is for DCF UI only
       //audioFdbk.playData(buf);
-      audioFdbk.roundRobbinPlayData(channelNumber, buf);
+      audioFdbk.roundRobbinPlayData(channelNumber, buf); // play audio buf
     }
 
 
@@ -488,7 +490,7 @@ var MainWindowUpdateChart = function ( channelNumber, buf ) {
 var transformWf = function (buf) {
   let i = 0;
   buf.forEach( function(v, i, buf) {
-    buf[i] = Math.abs(v);
+    buf[i] = Math.abs(v - 128) * 2;
   });
   return buf;
 }
@@ -2033,3 +2035,9 @@ ipcRenderer.on('multiWaveformChartAccordion:open', function(e, data) {
 //   console.log("received multiWfsWindowCreated event via ipcRenderer");
   
 // });
+
+audioFdbkEmitter.on('audioFdbk:playingSoundForChanNum', function(data){
+  if ( multiWfs && multiWfs[data.chanNum - 1]) {
+    multiWfs[data.chanNum - 1].ShowPlayingSound(data.timeoutMs);
+  }
+});
