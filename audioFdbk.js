@@ -131,12 +131,18 @@ let sr = 4500;
 let samplesPerBuffer = 4096;
 let timeoutMs = 4096 * 1.0/sr * 1000;
 
+let soundMutedState = 'unmuted';
+
 
 
 
 var playData = function(data) {
 
   //console.log(isReady);
+
+  if ( !okToPlay() ) {
+    return;
+  }
 
   if ( !isReady ) { return; }
   isReady = false; // wait until write data
@@ -288,6 +294,10 @@ var playOpen = function() {
     be fixed soon in mpg123 or elsewhere."
   );
 
+  if ( !okToPlay() ) {
+    return;
+  }
+
   let speaker = new Speaker();
   // Never happens btw:
   speaker.on('end', function(){
@@ -399,6 +409,10 @@ var playPopoutOpen = function() {
     as available and discovered in various relevant packages. Perhaps this will \
     be fixed soon in mpg123 or elsewhere."
   );
+
+  if ( !okToPlay() ) {
+    return;
+  }
 
   let speaker = new Speaker();
   // Never happens btw:
@@ -522,11 +536,31 @@ var reset = function() {
 
 
 
+var SetSoundMutedState = function (state) {
+  soundMutedState = state;
+}
+
+
+
+var GetSoundMutedState = function() {
+  return soundMutedState;
+}
+
+
+
+
+var okToPlay = function() {
+  return soundMutedState === 'unmuted';
+}
+
+
+
 module.exports = {
   playOpen: playOpen, // don't include () - this will execute immediately!
   playData: playData,
   playPopoutOpen: playPopoutOpen,
   roundRobbinPlayData: roundRobbinPlayData,
   reset: reset,
-  AudioFdbkEmitter: AudioFdbkEmitter
+  AudioFdbkEmitter: AudioFdbkEmitter,
+  SetSoundMutedState: SetSoundMutedState
 }

@@ -80,9 +80,10 @@ Seems to still rebuild/install ok on darwin and win32.
 
 - **0.0.18** 
   - add draft of popout separate (child) window for the multi-waveform graphs - works for various orders of operations and both "Regular" and DCF-UIs
-  - update further handling of graphs and charts for data destinations and divvy-ing up for RS8 vs RS104 vs DL0100A1 hardwares for example 
-  - store some collapsible states between launches for restoration (at least within a single UI mode selection)
+  - update further handling of graphs and charts for data destinations and divvy-ing up for RS8 vs RS104 vs DL0100A1 hardwares for example (chunk size, buffer mgmt clarifications, decimation of data for visuals updates)
+  - store selected collapsible states between launches for restoration (at least within a single UI mode selection)
   - audio feedback for a waveform now plays in a deterministic order, in sequence of the waveform graph updates - but for the simple fix data decimation for UI overhead reduction the sequence may not be in numerical sequence but rather in order of graph update (to be clear) - until rework
+  - mute / unmute for audio WFs and indicators
   - TEST CHECKLIST
     - expected data rate (file size / file quantity) within expected time?
     - error rate
@@ -788,6 +789,7 @@ https://github.com/agracio/edge-js/blob/master/samples/105_add7_dll.js
     - bring in spectrogram / spectrum waterfall
     - try b scan / c-scan / m-scan options starting from eg the running average over time mapped to intensity 
     - try above and add adjustable time frame rate or width of band over time or per WF in stacked band WF moving over time or WF update
+  - Package remote packages for local distribution (option ?) like materializecss jquery etc.
   - KNOWN ISSUES
     - Low Priority: RegUI mode - while streaming chan scan then hit popout sync with actual real world ch 1 gets lost and probably arbitrary ch 1 - just stop and restart for now - uncommon use case concern
   - PUSH CHECKLIST

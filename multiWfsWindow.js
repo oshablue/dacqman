@@ -21,6 +21,8 @@ var audioFdbk = require('./audioFdbk.js');
   audioFdbk.playOpen();
 }, 1000);*/
 
+const audioControl = require('./audioControl');
+
 //const edge = require('electron-edge-js');
 
 // https://stackoverflow.com/questions/36980201/how-to-reset-nodejs-stream
@@ -40,6 +42,8 @@ const SingleWfDataChart = require('./bigWfDataChart.js');
 
 var YourFace = null;
 const { UserInterface : YouFace } = require('./userInterface.js');
+
+const audioFdbkEmitter = require('./audioFdbk.js').AudioFdbkEmitter;
 
 
 // <PLUGINS>
@@ -355,17 +359,18 @@ var resetReadableStream = function(chunkMultiple) {
 // code will create the data set and it can be pushed to the user interface
 // and then user interface can decide how/when to call the chart object to
 // update its data display
-var decimate = 0;
-var decimateKick = 31; //121; //61; seems sustainable for RS8 long term //31; for RS104 Long acquisitions (?)    // was 15 // TODO this will become either UI item or pref probably better
+//var decimate = 0;
+//var decimateKick = 31; //121; //61; seems sustainable for RS8 long term //31; for RS104 Long acquisitions (?)    // was 15 // TODO this will become either UI item or pref probably better
 var MainWindowUpdateChart = function ( channelNumber, buf ) {
 
   // Decimate the data so we don't overwhelm the system...
   // Testing temporary with a simple multiple of total calls decimation
-  decimate += 1;
-  if ( decimate == decimateKick ) {
-    decimate = 0;
-    multiWfs[channelNumber - 1].UpdateChartBuffer(buf);
-  }
+  console.warn(`multiWfsWindow.js MainWindowUpdateChart called but not implemented.`);
+  // decimate += 1;
+  // if ( decimate == decimateKick ) {
+  //   decimate = 0;
+  //   multiWfs[channelNumber - 1].UpdateChartBuffer(buf);
+  // }
 
 }
 
@@ -718,6 +723,12 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
   getPrefsPromise()
     //.then(prefs => loadCustomCommandsPromise(prefs))
     .then( function(prefs) {
+
+      // TODO shall we combine below into modular?
+      //audioFdbk.SetSoundMutedState(prefs.soundMutedState);
+      audioControl.SetMuteStateFromPrefs(prefs, $('#mwfs-sound-control > img.mute-unmute'));
+
+
     //.then( function(customCommandsJson) {
       //loadButtons(customCommandsJson);
       // HOOKALERT03:
@@ -769,6 +780,12 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
   if ( d && d.animStarted && d.numChans ) {
     multiWfStartRenders(d.numChans);
   }
+
+  // TODO extract the urls and texts
+  // TODO extract the setting / changing img functions / strings
+  $('#mwfs-sound-control').click( function(e) {
+    audioControl.onSoundControlClick(e);
+  });
 
 
   //$('.sidenav').sidenav();
@@ -1537,3 +1554,8 @@ ipcRenderer.on('multiWfsWindow:cancelRenders', function(e, data) {
   }
 });
 
+audioFdbkEmitter.on('audioFdbk:playingSoundForChanNum', function(data){
+  if ( multiWfs && multiWfs[data.chanNum - 1]) {
+    multiWfs[data.chanNum - 1].ShowPlayingSound(data.timeoutMs);
+  }
+});

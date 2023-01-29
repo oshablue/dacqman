@@ -490,19 +490,28 @@ function DataChart({
   }
 
 
+
+
+
+  let perGraphAudioIndicator = $(document.createElement("img"))
+      .addClass("sound-indicator")
+      .attr("src", "./assets/icon-audio-wave-50-wh.png")
+      .attr("alt", "Playing Now")
+      ;
+
   this.soundPlayingTimeoutId; // TODO list / array
   this.ShowPlayingSound = function(timeoutMs) {
     // let i = $(document.createElement("i"))
     // .text("play_circle_filled")
     // .addClass("material-icon")
     // ;
-    let i = $(document.createElement("img"))
-      .addClass("sound-indicator")
-      .attr("src", "./assets/icon-audio-wave-50-white.png")
-      .attr("alt", "Playing Now")
-      ;
+    // let i = $(document.createElement("img"))
+    //   .addClass("sound-indicator")
+    //   .attr("src", "./assets/icon-audio-wave-50-white.png")
+    //   .attr("alt", "Playing Now")
+    //   ;
     // <img src="./assets/icon-audio-wave-50.png" width="50" height="50" alt="PLAYING"></img>
-    (i).insertAfter($('#' + this._parentElementIdName).parent().find('span')[0]); // append to the parent Channel label
+    (perGraphAudioIndicator).insertAfter($('#' + this._parentElementIdName).parent().find('span')[0]); // append to the parent Channel label
     
     if ( this.soundPlayingTimeoutId ) {
       clearTimeout(this.soundPlayingTimeoutId);

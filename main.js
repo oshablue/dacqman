@@ -56,6 +56,7 @@ const settingsDefaults = {
   //, cssToUse: ''                            // default css/custom.css // just use any other or default to custom.css
   , collapsedCollapsibles: []               // explicitly user-click collapsed collapsibles
   , openedCollapsibles: []                  // explicitely user-click opened collapsibles
+  , soundMutedState: 'unmuted'
 };
 // HOOKALERT03
 // customControlSettingsJson:

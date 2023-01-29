@@ -21,6 +21,8 @@ var audioFdbk = require('./audioFdbk.js');
   audioFdbk.playOpen();
 }, 1000);*/
 
+const audioControl = require('./audioControl.js');
+
 //const edge = require('electron-edge-js');
 
 // https://stackoverflow.com/questions/36980201/how-to-reset-nodejs-stream
@@ -1001,15 +1003,11 @@ let  loadCustomCommandsPromise = (prefs) => {
 
 
 
-
-
 $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQuery functionality for this)
 
 
 
-  setTimeout(function(){
-    audioFdbk.playOpen();
-  }, 1000);
+
 
   // Set window title to include software version and/or etc?
   $(document.getElementsByTagName('head')[0]).find("title").text("DacqMan " + electron.remote.app.getVersion());
@@ -1103,6 +1101,10 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
         accordion: true
       });
 
+      // TODO shall we combine below into modular?
+      //audioFdbk.SetSoundMutedState(prefs.soundMutedState);
+      audioControl.SetMuteStateFromPrefs(prefs, $('#sound-control > img.mute-unmute'));
+
       // For remembering collapsible states (selected items only)
       // Ok so now these fire at the end of the open/close -- but not just for user clicks!!!
       // $('#singleWaveformChartAccordion').collapsible({
@@ -1187,6 +1189,36 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
 
   setupMultipaneCharts($("#divMultichart"), numChans);
 
+  // TODO extract the urls and texts
+  // TODO extract the setting / changing img functions / strings
+  $('#sound-control').click( function(e) {
+    audioControl.onSoundControlClick(e);
+  });
+  //$('#sound-control').click( function(e) {
+  //   // b.target should be an img tag within the clicked span#sound-control
+  //   let isUnmuted = e.target.src.includes("unmuted");
+  //   // if isUnmuted, go to muted and swap the img 
+  //   if ( isUnmuted ) {
+  //     // 1. update pref 
+  //     ipcRenderer.send('prefs:set', {
+  //        'key': 'soundMutedState', 'value': 'muted'
+  //     });
+  //     // 2. swap the icon 
+  //     e.target.src = "./assets/icon-muted-audio-50-wh.png";
+  //     e.target.alt = "No Audio (Muted)";
+  //     // 3. update the global or big WF graph or whatever and/or the audioFdbk module
+  //     audioFdbk.SetSoundMutedState('muted');
+  //   } else {
+  //     ipcRenderer.send('prefs:set', {
+  //       'key': 'soundMutedState', 'value': 'unmuted'
+  //     });
+  //     e.target.src = "./assets/icon-unmuted-audio-50-wh.png";
+  //     e.target.alt = "Audio (Unmuted)";
+  //     audioFdbk.SetSoundMutedState('unmuted');
+  //   }
+  // });
+
+
 
   $('.sidenav').sidenav();
   $(".dropdown-trigger").dropdown();
@@ -1210,6 +1242,13 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
       sprend.setupModalHardwareSelect();
     }
   })
+
+
+
+
+  setTimeout(function(){
+    audioFdbk.playOpen();
+  }, 1000);
 
 
   // Add clicks to divs etc elements statically in the html template that should 
@@ -2029,6 +2068,14 @@ ipcRenderer.on('multiWaveformChartAccordion:open', function(e, data) {
   //multiWfStartRenders(8); //MainWindowGetNumberOfChannels()); // TODO move to a setup function 
   //multiWfs[data.chartToUpdateIndex].UpdateChartBuffer(data.buf);
   M.Collapsible.getInstance($('#multiWaveformChartAccordion.collapsible')).open();
+  // get latest prefs and resync up any change in audio mute or sound control state
+  getPrefsPromise()
+    .then( (prefs) => { // TODO WTF not on back to opened collapsible this recalls state from popout?
+      // TODO shall we combine below into modular?
+      //audioFdbk.SetSoundMutedState(prefs.soundMutedState);
+      audioControl.SetMuteStateFromPrefs(prefs, $('#sound-control > img.mute-unmute'));
+    });
+  
 });
 
 // ipcRenderer.on('multiWfsWindow:created', (data) => {
