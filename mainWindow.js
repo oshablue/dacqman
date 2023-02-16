@@ -1092,7 +1092,7 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
       $('#aToggleRangeSliderValues').text(rsvText);
       var tivText = "";
       prefs.customControlSettingsJson.restoreTextInputValues ? 
-        tivText = "Do no restore text input values" :
+        tivText = "Do not restore text input values" :
         tivText = "Restore text input values";
       $('#aToggleTextInputValues').text(tivText);
       // HOOKALERT03 may want to select based on stored value for slide/txt in prefs.customControlSettingsJson

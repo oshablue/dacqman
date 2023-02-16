@@ -45,6 +45,24 @@
     },
 
     {
+      "fullname" : "HDL-0104-RS104",
+      "shortname" : "RS104",
+      "numberOfChannels" : 4,
+      "waveformLengthSamples" : 4095,
+      "waveformBytesPerSample" : 1,
+      "numberOfMatchingComPorts" : 2,
+      "controlPortBaudRate" : 57600,
+      "dataPortBaudRate" : 2000000,
+      "comPortDeviceIdTextTypicallyContains" : "RS232-HS",
+      "dataPortType" : "VCP",
+      "comments" : [
+        "dataPortBaudRate is given as 2000000 because this port is also a VCP port and as of Q4 2021 Windows and Mac OS X FTDI USB Serial drivers support this high baud rate",
+        "adding this RS104 description with an updated text usually contains for US Converters dual RS485 USB adapter that uses the FTDI FT2232HL IC without an EEPROM",
+        "this device also has no programmed serial number"
+      ]
+    },
+
+    {
       "fullname" : "DL-Series-by-Radio-USB-Adapter",
       "shortname" : "DL",
       "numberOfChannels" : 8,

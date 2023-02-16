@@ -993,6 +993,10 @@ var openDataPortVcp = function(portHash) {
 
 var getVcpPortNameFromPortInfoHash = function (infoHash) {
 
+  if ( infoHash.serialNumber.length <= 1 ) {
+    console.warn("getVcpPortNameFromPortInfoHash: this device enumerates without a serial number. Auto-select serial port gets somewhat dumber. The auto-select may not work." );
+  }
+
   var serialNumberLessAorB = infoHash.serialNumber.substr(0, infoHash.serialNumber.length - 1);
   var serialNumberWithAorB = infoHash.serialNumber;
   var suffix = infoHash.serialNumber.substr(infoHash.serialNumber.length - 1, 1); // 5/29/21 why was this 2?
@@ -1014,12 +1018,22 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
 
   // On MAC OS X so far, the A or B trailing is replaced by corresponding 0 or 1
   // div class cv contains text
-  var t = $('#vcp_ports').find("td[data-header='comName']").find(".cv:contains('" + sn + "')");
+  // If using like US Converters dual 485/USB converter there is no EEPROM and 
+  // no serial number (although U4 is DNP and may be the missing EEPROM FP)
+  // and so we just get like 0 or 1 here.  So using the previous logic 
+  // below we would get qty 2 of the $(t) like [.cv].length == 2
+  // so we can sub the logic - update it to endswith:
+  //var t = $('#vcp_ports').find("td[data-header='comName']").find(".cv:contains('" + sn + "')");
+  var t = $('#vcp_ports').find("td[data-header='comName']").find(`.cv`).filter( function() { return $(this).text().endsWith(sn); } );
   console.log("Number of VCP comNames matching the selected control port serialNumber: " + t.length);
+
+  if ( t && t.length != 1 ) {
+    console.warn(`for serial number ${sn} there are ${t.length} matching .cv cells in the table, in this function really we want just 1. ${JSON.stringify(t)}`);
+  }
 
   // WINDOWS WIN32
   // Win work around, as described above
-  if ( t.length == 0 ) {
+  if ( t && t.length == 0 ) {
     console.log(`t.length is 0 for ${serialNumberLessAorB} - maybe this is Windows? Checking pnpId column...`);
     if ( !suffix.match(/[A-B]/) || (process.platform == "win32") ) {
       console.log(`yeah, suffix is not A or B, or process.platform is win32 ... seems probable...full serial number with suffix: ${serialNumberWithAorB}`);
