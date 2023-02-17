@@ -1039,6 +1039,18 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
       console.log(`yeah, suffix is not A or B, or process.platform is win32 ... seems probable...full serial number with suffix: ${serialNumberWithAorB}`);
       t = $('#vcp_ports').find(".cv:contains('" + serialNumberWithAorB + "')").closest("tr").find("td[data-header='comName']").find(".cv");
       console.log("2nd tier: number of VCP comNames matching the selected control port serialNumber: " + t.length);
+      if ( t.length > 1 && serialNumberWithAorB.length <= 1 ) {
+        // no actual SN - just A or B - device does not have a serial number
+        // again for the eg US Converter dual USB 485 w/o EEPROM and so no serial number
+        console.log("3rd tier: serialNumberWithAorB A or B and no serial number - swapping A/B for 0+1/1+2 = 1/2 as suffix for PnPId table");
+        t = $('#vcp_ports').find(".cv:contains('" + serialNumberWithAorB + "')")
+          .filter( function () { 
+            return $(this).text().endsWith(`&${parseInt(sn)+1}\\0000`); 
+          })
+          .closest("tr").find("td[data-header='comName']").find(".cv");
+        console.log("t is: ");
+        console.log(t);
+      }
     }
   }
 
