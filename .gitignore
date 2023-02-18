@@ -4,6 +4,7 @@ release-builds/
 release-builds-external-win32/
 private-doc-no-repo/
 sample-output-files/
+third-party-custom/node-ftdi/build/
 
 ## eg for excluding from the repo custom plugin wrappers
 *nogit*

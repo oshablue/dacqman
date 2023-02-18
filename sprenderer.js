@@ -114,6 +114,7 @@ function ftdiFind() {
     table.on('data', data => tableHTML += data)
     table.on('end', () => {
       document.getElementById('ftdi_ports').innerHTML = tableHTML;
+      serialCheckbox(); // defined in mainWindow.js
     });
 
     // Now see if we can set some defaults
@@ -993,14 +994,35 @@ var openDataPortVcp = function(portHash) {
 
 var getVcpPortNameFromPortInfoHash = function (infoHash) {
 
-  if ( infoHash.serialNumber.length <= 1 ) {
-    console.warn("getVcpPortNameFromPortInfoHash: this device enumerates without a serial number. Auto-select serial port gets somewhat dumber. The auto-select may not work." );
+  // Updating to accommodate up to 4-port USB 485 converter eg
+
+  let serialNumber = infoHash.serialNumber;
+
+  if ( serialNumber.length <= 1 ) {
+    console.warn(`getVcpPortNameFromPortInfoHash: this device probably enumerates without a serial number. 
+      Auto-select serial port gets somewhat dumber. The auto-select may not work.  
+      infoHash serial number is ${serialNumber}`);
   }
 
-  var serialNumberLessAorB = infoHash.serialNumber.substr(0, infoHash.serialNumber.length - 1);
-  var serialNumberWithAorB = infoHash.serialNumber;
-  var suffix = infoHash.serialNumber.substr(infoHash.serialNumber.length - 1, 1); // 5/29/21 why was this 2?
-  console.log("getVcpPortNameFromPortInfoHash: base serial number: " + serialNumberLessAorB + " with suffix found to be: " + suffix);
+  //var serialNumberLessAorB = infoHash.serialNumber.substr(0, infoHash.serialNumber.length - 1);
+  let seriesAlphas = ["A", "B", "C", "D"]; // serial number may end with any Alpha!
+  let lastSerialNumberPlace = serialNumber.substr(serialNumber.length - 1, 1);
+  let serialNumberLessLastSeriesAlpha = serialNumber;
+  // TODO some warnings are relevant here about serial number checks and what not
+  if ( seriesAlphas.includes(lastSerialNumberPlace) ) {
+    console.log(`
+      serial number series alphabetic sequence indicator possibilities ${seriesAlphas} includes the current
+      serial last place: ${lastSerialNumberPlace}
+    `);
+    serialNumberLessLastSeriesAlpha = serialNumber.substr(0, serialNumber.length - 1);
+  }
+  let isFullSerialNumber = serialNumber.length > 1 ? true : false;
+  
+  
+  //var serialNumberWithAorB = infoHash.serialNumber;
+  //var suffix = infoHash.serialNumber.substr(infoHash.serialNumber.length - 1, 1); // 5/29/21 why was this 2?
+  //console.log("getVcpPortNameFromPortInfoHash: base serial number: " + serialNumberLessAorB + " with suffix found to be: " + suffix);
+  console.log("getVcpPortNameFromPortInfoHash: base serial number: " + serialNumberLessLastSeriesAlpha + " with suffix found to be: " + lastSerialNumberPlace);
 
   // Another Windows scenario:
   // In the FTDI table, the two devices are listed as eg:
@@ -1013,8 +1035,9 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   // Thus logic below until proven guilty:
 
   // Or simply just regex replace trailing A with 0 and trailing B with 1
-  var sn = infoHash.serialNumber.replace(/A$/,'0').replace(/B$/,'1');
-  console.log("getVcpPortNameFromPortInfoHash: regexd last digit swap: " + sn);
+  //var sn = infoHash.serialNumber.replace(/A$/,'0').replace(/B$/,'1');
+  let snLastAlphaSwappedToNumber = serialNumber.replace(/A$/,'0').replace(/B$/,'1').replace(/C$/,'0').replace(/D$/,'1');
+  console.log("getVcpPortNameFromPortInfoHash: regexd last digit swap from alpha to numeric: " + snLastAlphaSwappedToNumber);
 
   // On MAC OS X so far, the A or B trailing is replaced by corresponding 0 or 1
   // div class cv contains text
@@ -1024,39 +1047,83 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   // below we would get qty 2 of the $(t) like [.cv].length == 2
   // so we can sub the logic - update it to endswith:
   //var t = $('#vcp_ports').find("td[data-header='comName']").find(".cv:contains('" + sn + "')");
-  var t = $('#vcp_ports').find("td[data-header='comName']").find(`.cv`).filter( function() { return $(this).text().endsWith(sn); } );
-  console.log("Number of VCP comNames matching the selected control port serialNumber: " + t.length);
+  let matchingComPorts =  $('#vcp_ports')
+    .find("td[data-header='comName']")
+    .find(`.cv`);
+  // matchingComPorts = $('#vcp_ports')
+  //   .find("td[data-header='comName']")
+  //   .find(`.cv`)
+  //   .filter( function() { 
+  //     return $(this).text().endsWith(snLastAlphaSwappedToNumber); 
+  //   });
+  // console.log("Number of VCP comNames matching the selected control port serialNumber: " + matchingComPorts.length);
 
-  if ( t && t.length != 1 ) {
-    console.warn(`for serial number ${sn} there are ${t.length} matching .cv cells in the table, in this function really we want just 1. ${JSON.stringify(t)}`);
+  if ( matchingComPorts && matchingComPorts.length != 1 ) {
+    console.warn(`
+      for serial number ${snLastAlphaSwappedToNumber} there are 
+      ${matchingComPorts.length} matching .cv cells in the table, 
+      in this function really we want just 1.}
+    `);
+    console.warn(matchingComPorts);
+    // but as of now just let it ride aka don't return
   }
 
   // WINDOWS WIN32
   // Win work around, as described above
-  if ( t && t.length == 0 ) {
-    console.log(`t.length is 0 for ${serialNumberLessAorB} - maybe this is Windows? Checking pnpId column...`);
-    if ( !suffix.match(/[A-B]/) || (process.platform == "win32") ) {
-      console.log(`yeah, suffix is not A or B, or process.platform is win32 ... seems probable...full serial number with suffix: ${serialNumberWithAorB}`);
-      t = $('#vcp_ports').find(".cv:contains('" + serialNumberWithAorB + "')").closest("tr").find("td[data-header='comName']").find(".cv");
-      console.log("2nd tier: number of VCP comNames matching the selected control port serialNumber: " + t.length);
-      if ( t.length > 1 && serialNumberWithAorB.length <= 1 ) {
-        // no actual SN - just A or B - device does not have a serial number
-        // again for the eg US Converter dual USB 485 w/o EEPROM and so no serial number
-        console.log("3rd tier: serialNumberWithAorB A or B and no serial number - swapping A/B for 0+1/1+2 = 1/2 as suffix for PnPId table");
-        t = $('#vcp_ports').find(".cv:contains('" + serialNumberWithAorB + "')")
-          .filter( function () { 
-            return $(this).text().endsWith(`&${parseInt(sn)+1}\\0000`); 
-          })
-          .closest("tr").find("td[data-header='comName']").find(".cv");
-        console.log("t is: ");
-        console.log(t);
-      }
+  // Prior logic - matchingComPorts.length == 0 meant likely Win Platform - now do explicitly
+  // if ( matchingComPorts && matchingComPorts.length == 0 ) {
+  //   console.log(`t.length is 0 for ${serialNumberLessAorB} - maybe this is Windows? Checking pnpId column...`);
+  //   if ( !suffix.match(/[A-B]/) || (process.platform == "win32") ) {
+  //     console.log(`yeah, suffix is not A or B, or process.platform is win32 ... seems probable...full serial number with suffix: ${serialNumberWithAorB}`);
+  //     t = $('#vcp_ports').find(".cv:contains('" + serialNumberWithAorB + "')").closest("tr").find("td[data-header='comName']").find(".cv");
+  //     console.log("2nd tier: number of VCP comNames matching the selected control port serialNumber: " + t.length);
+  //     if ( t.length > 1 && serialNumberWithAorB.length <= 1 ) {
+  //       // no actual SN - just A or B - device does not have a serial number
+  //       // again for the eg US Converter dual USB 485 w/o EEPROM and so no serial number
+  //       console.log("3rd tier: serialNumberWithAorB A or B and no serial number - swapping A/B for 0+1/1+2 = 1/2 as suffix for PnPId table");
+  //       t = $('#vcp_ports').find(".cv:contains('" + serialNumberWithAorB + "')")
+  //         .filter( function () { 
+  //           return $(this).text().endsWith(`&${parseInt(sn)+1}\\0000`); 
+  //         })
+  //         .closest("tr").find("td[data-header='comName']").find(".cv");
+  //       console.log("t is: ");
+  //       console.log(t);
+  //     }
+  //   }
+  // }
+
+  // Non-Win
+  if ( process.platform != "win32" ) {
+    matchingComPorts = $('#vcp_ports')
+    .find("td[data-header='comName']")
+    .find(`.cv`)
+    .filter( function() { 
+      return $(this).text().endsWith(snLastAlphaSwappedToNumber); 
+    });
+    console.log(`Number of VCP comNames matching the selected control port serialNumber ${serialNumber}: ` + matchingComPorts.length);
+  }
+
+  // Win
+  if ( process.platform == "win32" ) {
+    console.log(`looks like win32 ... trying to auto match for serial number ${serialNumber}`);
+    // If a real serial number then likely the whole serial number should match narrowing this down to one item
+    if ( isFullSerialNumber ) {
+      matchingComPorts = $('#vcp_ports')
+        .find(".cv:contains('" + serialNumber + "')")
+        .closest("tr").find("td[data-header='comName']").find(".cv");
+    } else {
+      matchingComPorts = $('#vcp_ports')
+        .find(".cv:contains('" + serialNumber + "')")
+        .filter( function () { 
+          return $(this).text().endsWith(`&${parseInt(snLastAlphaSwappedToNumber)+1}\\0000`); 
+        })
+        .closest("tr").find("td[data-header='comName']").find(".cv");
     }
   }
 
-  console.log("comName is chosen as: " + $(t).text());
+  console.log("comName is chosen as: " + $(matchingComPorts).text());
 
-  return $(t).text();
+  return $(matchingComPorts).text();
 
 }
 
