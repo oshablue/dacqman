@@ -114,7 +114,12 @@ function ftdiFind() {
     table.on('data', data => tableHTML += data)
     table.on('end', () => {
       document.getElementById('ftdi_ports').innerHTML = tableHTML;
-      serialCheckbox(); // defined in mainWindow.js
+      // in Win 10 VM 2012 MBP FTDI load/find takes 15 seconds so we add this here to fire at end - 
+      // likely a better concept anyway - TODO needs use case testing though across platforms
+      // hook here too - TODO figure out with the ready() mainWindow.js timeout function as well
+      // TODO could be to put 2x item checklist that when complete fires serialCheckbox - 
+      // so like when both tables of devices are complete
+      serialCheckbox();
     });
 
     // Now see if we can set some defaults
@@ -137,6 +142,11 @@ function ftdiFind() {
     // html table to determine whats up
     //setTimeout(guessAndSetHardwareIdentity);
 
+    // TODO Win 10 VM on Mac 10.15.7 this takes like 15 seconds to complete
+    // need to test obviously on other platforms and native
+    // nonetheless update button showing that the findFtdi is in progress!
+
+    // Try to auto check the checkboxes for data / control if applicable 
     for ( i = 0; i < devices.length; i++) {
       if ( i + 1 >= devices.length ) {
         break;
@@ -158,6 +168,12 @@ function ftdiFind() {
             // for now, this if faster in dev
             devices[i].UseForDataChecked = "checked";
             devices[i+1].UseForControlChecked = "checked";
+          }
+          // On Win 10 VM via Mac 10.15.7 using FTDI USB-COM485 Plus2 the enum goes B then A
+          if ( sn1.substr(sn1.length - 1, 1) === 'B' && sn2.substr(sn2.length - 1, 1) === 'A' ) {
+            console.log("Devices have a B/A sequence for suffixes...assuming this is reverse order");
+            devices[i+1].UseForDataChecked = "checked";
+            devices[i].UseForControlChecked = "checked";
           }
         }
       }
@@ -1515,7 +1531,7 @@ var guessAndSetHardwareIdentity = function() {
     return;
   }
   var useOnlyChecked = nChecked > 1;
-  const maxComs = 2;
+  const maxComs = 2; // TODO-4CHANNEL?
   
   var hwCount = 0;
   var hws = [];
