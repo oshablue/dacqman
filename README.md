@@ -83,6 +83,7 @@ Seems to still rebuild/install ok on darwin and win32.
   - update further handling of graphs and charts for data destinations and divvy-ing up for RS8 vs RS104 vs DL0100A1 hardwares for example (chunk size, buffer mgmt clarifications, decimation of data for visuals updates)
   - store selected collapsible states between launches for restoration (at least within a single UI mode selection)
   - audio feedback for a waveform now plays in a deterministic order, in sequence of the waveform graph updates - but for the simple fix data decimation for UI overhead reduction the sequence may not be in numerical sequence but rather in order of graph update (to be clear) - until rework
+  - Trying the requested bump from electron 4.2.12 to 18.3.7 by dependabot (wow)
   - mute / unmute for audio WFs and indicators
   - TEST CHECKLIST
     - expected data rate (file size / file quantity) within expected time?
@@ -90,6 +91,7 @@ Seems to still rebuild/install ok on darwin and win32.
     - work flow for popout sensible? need use case / field use feedback
     - DCF-UI output file format still ok?
     - long run time (within actual use-case bounds) ok? or buffer / slow down issues?
+    - Test enum and comms and run with Win 10 VM and Mac OS X (Catalina 10.15.7) with DL0100A1 RS8 and RS104 (2x: Both of FTDI and US Conv Dual 485 adapters)
 
 
 - **0.0.17** - bumped from 16 with the updates that set up either RS8 (HDL-0108-RSCPT) or the RS104 (HDL-0104-RS104) based on the hardwares.json and switches between driver interfaces depending (11/3/22)
