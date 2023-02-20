@@ -31,8 +31,7 @@
     "node-gyp": "^7.1.2",
     "nodesynth": "^0.6.0",
     "serialport": "^6.1.0",
-    "strftime": "^0.10.0",
-    "web-audio-api": "^0.2.2"
+    "strftime": "^0.10.0"
   },
   "devDependencies": {
     "chai": "^4.2.0",
