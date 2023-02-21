@@ -398,6 +398,10 @@ Serialport 6.1.0
 Ftdi 1.2.3 (customized src, local with project)
 Readable-streambuffer (customized src, local with project)
 
+Or Node 10.18.0 to match windows
+Mocha 9.0.0 dropped support for Node 10 - there is an 8.4.0 (which adds vulns)
+Electron version ^4.0.0 should use Spectron ^6.0.0 per readme (which adds vulns incl critical)
+
 The node and electron versions are what they are (the latest major revisions) on
 Mac to allow serialport (no prebuilds found so far) and node-ftdi (with heavy
 modifications) to build.  This is due to such things as the bundled node-gyp
