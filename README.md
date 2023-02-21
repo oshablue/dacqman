@@ -229,6 +229,28 @@ package combinations.
 
 See package.json.
 
+### Package Notes
+
+#### serialport & possibly electron-rebuild too was required 
+
+Have been for long time using
+^6.1.0 serialport
+and
+^1.8.8 electron-rebuild
+
+Branch: UpdateSerialPort testing so far:
+
+- 7.1.5: Rebuild seems ok (not full npm install yet) - getting that NODE_VERSION issue and rebuild doesn't seem to fix it
+- Trying electron-rebuild from ^1.8.8 => ^2.3.5
+- Nope: 2.3.5 needs node >=10.19 ... nope down to ^2.0.3 is the max that works so far and 2.0.3 fixes some more NODE_VERSION stuff (npm install work? builds ok - but still same issue)
+- https://github.com/serialport/node-serialport/issues/1910
+  - rm -fr node_modules/serialport
+  - rm package-lock.json
+  - npm i
+  - ./node_modules/.bin/electron-rebuild (rebuilds all but maybe is ok ...)
+- Yes that did it - forcing the rebuild to the right NODE_VERSION -- maybe it was an issue with package-lock.json
+
+
 
 ### Drivers - Summary
 

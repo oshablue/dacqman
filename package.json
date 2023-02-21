@@ -30,7 +30,7 @@
     "ftdi": "file:./third-party-custom/node-ftdi",
     "node-gyp": "^7.1.2",
     "nodesynth": "^0.6.0",
-    "serialport": "^6.1.0",
+    "serialport": "^7.1.5",
     "strftime": "^0.10.0"
   },
   "devDependencies": {
@@ -39,7 +39,7 @@
     "chai-as-promised": "^7.1.1",
     "electron": "^4.2.12",
     "electron-packager": "^13.1.1",
-    "electron-rebuild": "^1.8.8",
+    "electron-rebuild": "^2.0.3",
     "mocha": "^8.4.0",
     "spectron": "^6.0.0"
   }
