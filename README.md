@@ -86,12 +86,13 @@ Seems to still rebuild/install ok on darwin and win32.
   - Trying the requested bump from electron 4.2.12 to 18.3.7 by dependabot (wow)
   - mute / unmute for audio WFs and indicators
   - TEST CHECKLIST
+    - does the plugin architecture still work as needed?
     - expected data rate (file size / file quantity) within expected time?
     - error rate
     - work flow for popout sensible? need use case / field use feedback
     - DCF-UI output file format still ok?
     - long run time (within actual use-case bounds) ok? or buffer / slow down issues?
-    - Test enum and comms and run with Win 10 VM and Mac OS X (Catalina 10.15.7) with DL0100A1 RS8 and RS104 (2x: Both of FTDI and US Conv Dual 485 adapters)
+    - OK Test enum and comms and run with Win 10 VM and Mac OS X (Catalina 10.15.7) with DL0100A1 RS8 and RS104 (2x: Both of FTDI and US Conv Dual 485 adapters)
 
 
 - **0.0.17** - bumped from 16 with the updates that set up either RS8 (HDL-0108-RSCPT) or the RS104 (HDL-0104-RS104) based on the hardwares.json and switches between driver interfaces depending (11/3/22)
