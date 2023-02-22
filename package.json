@@ -28,7 +28,7 @@
     "electron-edge-js": "^12.18.5",
     "envelope-generator": "^3.0.0",
     "ftdi-d2xx": "^1.1.2",
-    "serialport": "^10.3.0",
+    "serialport": "^10.8.0",
     "strftime": "^0.10.0"
   },
   "devDependencies": {

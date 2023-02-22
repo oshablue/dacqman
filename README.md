@@ -249,6 +249,33 @@ Branch: UpdateSerialPort testing so far:
   - npm i
   - ./node_modules/.bin/electron-rebuild (rebuilds all but maybe is ok ...)
 - Yes that did it - forcing the rebuild to the right NODE_VERSION -- maybe it was an issue with package-lock.json
+- But in windows doing so (the rebuild) breaks the build / install for electron-edge-js and can't seem to find a successful individual module rebuild command yet (encounter other things like broken headers urls etc when specificy like -v 10.18.0 etc)
+
+
+Win issue about pcm_utils or something and rename or delete file - persmissions issue reported. Solution: Close VSCode!
+
+
+Win - above the issue is with rebuild breaking electron-edge-js - so trying node v 10.19.0 for now
+
+
+Win now using node 12.0.0
+
+macosx issue in npm i using 12.0.0 (or prior too) from @serialport/bindings.cpp
+
+Refs for this:
+- https://www.npmjs.com/package/electron-releases
+- https://github.com/electron/releases
+- https://nodejs.org/en/download/releases/
+- https://github.com/serialport/electron-serialport/blob/master/renderer.js
+- https://github.com/motla/ftdi-d2xx/blob/HEAD/docs/Home.md
+- https://serialport.io/docs/guide-usage
+- https://www.npmjs.com/package/electron-edge-js/v/12.18.5
+- https://www.npmjs.com/package/electron?activeTab=versions
+- https://www.electronjs.org/docs/latest/tutorial/using-native-node-modules
+- https://github.com/electron/rebuild
+- https://serialport.io/docs/guide-upgrade#upgrading-from-7x-to-8x
+
+
 
 
 
