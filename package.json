@@ -6,9 +6,9 @@
   "repository": "https://github.com/oshablue/dacqman.git",
   "scripts": {
     "start": "electron .",
-    "install": "npm run -s rebuild-ftdi & npm run -s rebuild-serialport",
+    "install-bak": "npm run -s rebuild-ftdi & npm run -s rebuild-serialport",
     "rebuild-ftdi": "electron-rebuild --only ftdi",
-    "rebuild-serialport": "electron-rebuild --only serialport",
+    "rebuild-serialport": "electron-rebuild -o serialport",
     "package-packed-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --asar.unpackDir=plugins --icon=assets/icons/mac/icon.icns --prune=true --out=release-builds",
     "package-packed-win": "electron-packager . dacqman --overwrite --platform=win32 --arch=x64 --asar.unpackDir=plugins --icon=assets/icons/win/icon.ico --prune=true --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"DacqMan\"",
     "package-packed-linux": "electron-packager . dacqman --overwrite --asar=true --platform=linux --arch=x64 --icon=assets/icons/png/icon.png --prune=true --out=release-builds",
@@ -27,19 +27,17 @@
     "data-table": "^2.0.0",
     "electron-edge-js": "^12.18.5",
     "envelope-generator": "^3.0.0",
-    "ftdi": "file:./third-party-custom/node-ftdi",
-    "node-gyp": "^7.1.2",
-    "nodesynth": "^0.6.0",
-    "serialport": "^7.1.5",
+    "ftdi-d2xx": "^1.1.2",
+    "serialport": "^10.3.0",
     "strftime": "^0.10.0"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.1",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.1",
-    "electron": "^4.2.12",
+    "electron": "5.0.13",
     "electron-packager": "^13.1.1",
-    "electron-rebuild": "^2.0.3",
+    "electron-rebuild": "^3.2.9",
     "mocha": "^8.4.0",
     "spectron": "^6.0.0"
   }

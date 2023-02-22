@@ -2,7 +2,8 @@
 // be executed in the renderer process for that window.
 // All of the Node.js APIs are available in this process.
 
-const SerialPort = require('serialport')
+//const SerialPort = require('serialport') // from 6.1.0 days
+const { SerialPort } = require('serialport') // 10.x
 
 // parser requires a newer serialport, like 7.x.x
 // whereas we were using and specifying 6.1.0 initially
@@ -16,7 +17,7 @@ var dport  // the data port
 var device //
 var cport // control port
 
-const Ftdi = require('ftdi');
+const Ftdi = require('ftdi-d2xx'); // require('ftdi'); for when was a 3rd party file locally modded
 
 // For debugging
 //var util = require('util');
@@ -50,8 +51,9 @@ var time;
 
 
 
-function vcpFind() {
-  SerialPort.list((err, ports) => {
+async function vcpFind() { // 6.x was not async
+  //SerialPort.list((err, ports) => { // 6.x
+  await SerialPort.list().then( (ports, err) => { // 6.x was not await
     console.log('ports', ports);
     if (err) {
       document.getElementById('vcp_error').textContent = err.message
@@ -87,23 +89,27 @@ function vcpFind() {
 
 
 // List devices via D2XX FTDI (node ftdi)
-function ftdiFind() {
-  Ftdi.find( function(err, devices) {
+async function ftdiFind() { // node ftdi old local file was not async
+  const devices = await Ftdi.getDeviceInfoList(); // new ftdi-d2xx
+  //Ftdi.find( function(err, devices) { // old
     console.log(devices.length + " FTDI (D2XX) Devices Found.");
-    if (err) {
-      document.getElementById('ftdi_error').textContent = err.message
-      //return
-    } else {
-      document.getElementById('ftdi_error').textContent = 'No FTDI errors, so far.'
-    }
+    // if (err) { // from old
+    //   document.getElementById('ftdi_error').textContent = err.message
+    //   //return
+    // } else {
+    //   document.getElementById('ftdi_error').textContent = 'No FTDI errors, so far.'
+    // }
     if (devices.length === 0) {
       document.getElementById('ftdi_error').innerText = 'No FTDI ports (via non-VCP) found.'
     }
 
     var headers;
     if ( devices.length > 0 ) {
-      var fd = new Ftdi.FtdiDevice(devices[0]);
-      headers = Object.keys(fd.deviceSettings);
+      //var fd = new Ftdi.FtdiDevice(devices[0]); // old
+      console.log(devices);
+      var fd = devices[0];
+      //headers = Object.keys(fd.deviceSettings); // old
+      headers = Object.keys(fd);
     } else {
       headers = Object.keys(new Ftdi.FtdiDevice({ locationId: 0, serialNumber: 0}).deviceSettings);
     }
@@ -153,12 +159,14 @@ function ftdiFind() {
       }
       var d1 = devices[i];
       var d2 = devices[i+1];
-      var sn1 = d1["serialNumber"];
-      var sn2 = d2["serialNumber"];
+      var sn1 = d1["serial_number"]; // old: serialNumber; ftdi-d2xx => serial_number
+      var sn2 = d2["serial_number"];
       console.log("FTDI sn1: " + sn1);
       console.log("FTDI sn2: " + sn2);
-      if ( d1["vendorId"] === d2["vendorId"] && d1["productId"] === d2["productId"] ) {
-        console.log("Same device vendorId and productId");
+       // old: vendorId productId
+       // ftdi-d2xx: usb_vid, usb_pid
+      if ( d1["usb_vid"] === d2["usb_vid"] && d1["usb_pid"] === d2["usb_pid"] ) { // old: vendorId productId
+        console.log("Same device vendorId (usb_vid) and productId (usb_pid)");
         if ( sn1.substr(0, sn1.length - 2) === sn2.substr(0, sn2.length - 2) ) {
           console.log("Same device serial number base");
           if ( sn1.substr(sn1.length - 1, 1) === 'A' && sn2.substr(sn2.length - 1, 1) === 'B' ) {
@@ -181,8 +189,10 @@ function ftdiFind() {
 
 
     devices.forEach ( function(d) {
-      var fd = new Ftdi.FtdiDevice(d);
-      console.log(fd.deviceSettings.description);
+      //var fd = new Ftdi.FtdiDevice(d); // old
+      //console.log(fd.deviceSettings.description); // old
+      console.log(d.description); // ftdi-d2xx
+
       //console.log(JSON.stringify(fd));
 
       /*if ( (headers.length - 2) < Object.keys(fd.deviceSettings).length ) {
@@ -197,9 +207,14 @@ function ftdiFind() {
       }*/
 
       var p = {}
-      Object.keys(fd.deviceSettings).forEach(function eachKey(key) {
-        p[key] = (fd.deviceSettings[key]).toString();
+      // old
+      // Object.keys(fd.deviceSettings).forEach(function eachKey(key) {
+      //   p[key] = (fd.deviceSettings[key]).toString();
+      // })
+      Object.keys(fd).forEach(function eachKey(key) {
+        p[key] = (fd[key]).toString();
       })
+
       //p.UseForData = `<button id="${p["locationId"]}" tag="${p["serialNumber"]}" name="${p["description"]}" onclick="serialSelect(this)">Data</button>`;
       // Per materializecss docs:
       // Match the label for attribute to the input's id value to get the toggling effect
@@ -231,7 +246,7 @@ function ftdiFind() {
     table.end();
 
     
-  });
+  //}); // end of Ftdi.find // old
 
 
 
