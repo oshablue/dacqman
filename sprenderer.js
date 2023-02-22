@@ -211,8 +211,8 @@ async function ftdiFind() { // node ftdi old local file was not async
       // Object.keys(fd.deviceSettings).forEach(function eachKey(key) {
       //   p[key] = (fd.deviceSettings[key]).toString();
       // })
-      Object.keys(fd).forEach(function eachKey(key) {
-        p[key] = (fd[key]).toString();
+      Object.keys(d).forEach(function eachKey(key) {
+        p[key] = (d[key]).toString();
       })
 
       //p.UseForData = `<button id="${p["locationId"]}" tag="${p["serialNumber"]}" name="${p["description"]}" onclick="serialSelect(this)">Data</button>`;
@@ -237,8 +237,14 @@ async function ftdiFind() { // node ftdi old local file was not async
       //p.UseForData = `<p><label for="UseForData${p["locationId"]}${p["index"]}"><input type="checkbox" id="UseForData${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForDataChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Data</span></label></p>`;
       //p.UseForControl = `<p><label for="UseForControl${p["locationId"]}${p["index"]}"><input type="checkbox" id="UseForControl${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForControlChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Control</span></label></p>`;
       // Note that data-attributes get lower-cased
-      p.UseForData = `<p><label for="UseForData${p["locationId"]}${p["index"]}" data-locationid="${p["locationId"]}"><input type="checkbox" id="UseForData${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForDataChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Data</span></label></p>`;
-      p.UseForControl = `<p><label for="UseForControl${p["locationId"]}${p["index"]}" data-locationid="${p["locationId"]}"><input type="checkbox" id="UseForControl${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForControlChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Control</span></label></p>`;
+      // old ftdi driver local file rebuild adapted:
+      //p.UseForData = `<p><label for="UseForData${p["locationId"]}${p["index"]}" data-locationid="${p["locationId"]}"><input type="checkbox" id="UseForData${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForDataChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Data</span></label></p>`;
+      //p.UseForControl = `<p><label for="UseForControl${p["locationId"]}${p["index"]}" data-locationid="${p["locationId"]}"><input type="checkbox" id="UseForControl${p["locationId"]}${p["index"]}" tag="${p["serialNumber"]}" name="${p["description"]}" ${d["UseForControlChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Control</span></label></p>`;
+
+      // new ftdi-d2xx usage
+      p.UseForData = `<p><label for="UseForData${p["usb_loc_id"]}${p["index"]}" data-locationid="${p["usb_loc_id"]}"><input type="checkbox" id="UseForData${p["usb_loc_id"]}${p["index"]}" tag="${p["serial_number"]}" name="${p["description"]}" ${d["UseForDataChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Data</span></label></p>`;
+      p.UseForControl = `<p><label for="UseForControl${p["usb_loc_id"]}${p["index"]}" data-locationid="${p["usb_loc_id"]}"><input type="checkbox" id="UseForControl${p["usb_loc_id"]}${p["index"]}" tag="${p["serial_number"]}" name="${p["description"]}" ${d["UseForControlChecked"] === "" ? "" : "checked=\"checked\""} onclick="serialCheckbox(this)" /><span>Control</span></label></p>`;
+
 
 
       table.write(p)
@@ -587,10 +593,15 @@ var openDataPort = function(portHash) {
 var openDataPortFtdi = function(portHash) {
   console.log("openDataPortFtdi: " + JSON.stringify(portHash));
 
-  dport = new Ftdi.FtdiDevice({
-    locationId: portHash.locationId,
-    serialNumber: portHash.serialNumber }); // for d2xx only
+  // old 
+  // dport = new Ftdi.FtdiDevice({
+  //   locationId: portHash.locationId,
+  //   serialNumber: portHash.serialNumber }); // for d2xx only
 
+  // new ftdi-d2xx - TODO PERHAPS CAN IMPROVE? DEVICE LIST?
+  dport = new Ftdi.openDevice(portHash.serialNumber);
+
+  // XXXXX problem ... no .on in this ftdi-d2xx
   dport.on('error', function(err) {
     console.error('dport.on error: ', err);
     // TODO -- UI error panel/log/indicator, etc.
@@ -870,7 +881,10 @@ var openDataPortVcp = function(portHash) {
     parity  : 'none',
   }
 
-  dport = new SerialPort(comName, settings, function(err) {
+  // TODO XXXX wrong sig?
+  //dport = new SerialPort(comName, settings, function(err) { 
+  settings.path = comName;
+  dport = new SerialPort(settings, function(err) {
     if ( err ) {
       return console.error('sprenderer: openDataPortVcp: error on create new VCP style data port: ', err.message);
     }
@@ -1079,7 +1093,8 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   // so we can sub the logic - update it to endswith:
   //var t = $('#vcp_ports').find("td[data-header='comName']").find(".cv:contains('" + sn + "')");
   let matchingComPorts =  $('#vcp_ports')
-    .find("td[data-header='comName']")
+    //.find("td[data-header='comName']") // old was comName - now is path
+    .find("td[data-header='path']")
     .find(`.cv`);
   // matchingComPorts = $('#vcp_ports')
   //   .find("td[data-header='comName']")
@@ -1126,7 +1141,8 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   // Non-Win
   if ( process.platform != "win32" ) {
     matchingComPorts = $('#vcp_ports')
-    .find("td[data-header='comName']")
+    //.find("td[data-header='comName']") // old was comName - now path
+    .find("td[data-header='path']")
     .find(`.cv`)
     .filter( function() { 
       return $(this).text().endsWith(snLastAlphaSwappedToNumber); 
@@ -1141,18 +1157,20 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
     if ( isFullSerialNumber ) {
       matchingComPorts = $('#vcp_ports')
         .find(".cv:contains('" + serialNumber + "')")
-        .closest("tr").find("td[data-header='comName']").find(".cv");
+        //.closest("tr").find("td[data-header='comName']").find(".cv"); // old was comName now is path
+        .closest("tr").find("td[data-header='path']").find(".cv");
     } else {
       matchingComPorts = $('#vcp_ports')
         .find(".cv:contains('" + serialNumber + "')")
         .filter( function () { 
           return $(this).text().endsWith(`&${parseInt(snLastAlphaSwappedToNumber)+1}\\0000`); 
         })
-        .closest("tr").find("td[data-header='comName']").find(".cv");
+        //.closest("tr").find("td[data-header='comName']").find(".cv"); // old was comName now is path serialport 10.x
+        .closest("tr").find("td[data-header='path']").find(".cv");
     }
   }
 
-  console.log("comName is chosen as: " + $(matchingComPorts).text());
+  console.log("comName / path is chosen as: " + $(matchingComPorts).text());
 
   return $(matchingComPorts).text();
 
@@ -1201,9 +1219,13 @@ var openControlPort = function(portHash) {
     parity  : 'none',
   };
 
+  // for 10.x serialport
+  settings.path = comName;
+
   console.log("openControlPort: settings: " + JSON.stringify(settings));
 
-  cport = new SerialPort(comName, settings, function (err) {
+  //cport = new SerialPort(comName, settings, function (err) { // old
+  cport = new SerialPort(settings, function(err) { // serialport 10.x
     if ( err ) {
       return console.log('sprenderer: openControlPort: error on create new VCP style control port: ', err.message)
     }
@@ -1793,7 +1815,8 @@ var checkboxToPortHash = function(checkbox) {
   //r.locationId = locId.substr(locId.indexOf(ptype)+ptype.length);
   r.locationId = locId;
   r.description = $(checkbox).attr('name');
-  //console.log(JSON.stringify(r));
+  console.log(`checkbox to port hash:`);
+  console.log(JSON.stringify(r));
   return r;
 }
 
