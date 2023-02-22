@@ -28,7 +28,8 @@
     "electron-edge-js": "^12.18.5",
     "envelope-generator": "^3.0.0",
     "ftdi-d2xx": "^1.1.2",
-    "serialport": "^10.5.0",
+    "serialport": "file:./third-party-custom/serialport-10.5.0.tgz",
+    "@serialport/bindings-cpp": "file:./third-party-custom/serialport-bindings-cpp-10.8.0.tgz",
     "strftime": "^0.10.0"
   },
   "devDependencies": {

@@ -261,6 +261,11 @@ Win - above the issue is with rebuild breaking electron-edge-js - so trying node
 Win now using node 12.0.0
 
 macosx issue in npm i using 12.0.0 (or prior too) from @serialport/bindings.cpp
+- https://github.com/serialport/node-serialport/issues/2436
+
+
+
+
 
 Refs for this:
 - https://www.npmjs.com/package/electron-releases
