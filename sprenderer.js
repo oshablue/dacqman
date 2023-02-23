@@ -19,6 +19,10 @@ var cport // control port
 
 const Ftdi = require('ftdi-d2xx'); // require('ftdi'); for when was a 3rd party file locally modded
 
+const FtdiWrapped = require('./ftdi-d2xx-wrap.js');
+
+
+
 // For debugging
 //var util = require('util');
 
@@ -599,7 +603,14 @@ var openDataPortFtdi = function(portHash) {
   //   serialNumber: portHash.serialNumber }); // for d2xx only
 
   // new ftdi-d2xx - TODO PERHAPS CAN IMPROVE? DEVICE LIST?
-  dport = new Ftdi.openDevice(portHash.serialNumber);
+  //dport = new Ftdi.openDevice(portHash.serialNumber); // old in transition to ftdi-d2xx
+  // dport = Ftdi.openDevice(portHash.serialNumber)
+  //   .then( (fd) => { // Promise returned is FTDI_Device from ftdi-d2xx
+  //     console.log(fd);
+  //   });
+
+  dport = new FtdiWrapped.FtdiDeviceWrapped(portHash.serialNumber);
+  //dport.open(); // testing - real open happens after items are set up
 
   // XXXXX problem ... no .on in this ftdi-d2xx
   dport.on('error', function(err) {
@@ -1104,15 +1115,16 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   //   });
   // console.log("Number of VCP comNames matching the selected control port serialNumber: " + matchingComPorts.length);
 
-  if ( matchingComPorts && matchingComPorts.length != 1 ) {
-    console.warn(`
-      for serial number ${snLastAlphaSwappedToNumber} there are 
-      ${matchingComPorts.length} matching .cv cells in the table, 
-      in this function really we want just 1.}
-    `);
-    console.warn(matchingComPorts);
-    // but as of now just let it ride aka don't return
-  }
+  // Now we always just initialize like above - so there should be multiples
+  // if ( matchingComPorts && matchingComPorts.length != 1 ) {
+  //   console.warn(`
+  //     for serial number ${snLastAlphaSwappedToNumber} there are 
+  //     ${matchingComPorts.length} matching .cv cells in the table, 
+  //     in this function really we want just 1.}
+  //   `);
+  //   console.warn(matchingComPorts);
+  //   // but as of now just let it ride aka don't return
+  // }
 
   // WINDOWS WIN32
   // Win work around, as described above

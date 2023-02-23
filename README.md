@@ -288,10 +288,33 @@ node 12.4.0 electron 6.1.12
 
 
 
-https://github.com/nodejs/node-gyp/blob/main/docs/Updating-npm-bundled-node-gyp.md
+
+Finally for node 12.8.1 and electron 7.3.3:
+- see the package.json special bak snap for this including darwin notes esp.
+- https://github.com/nodejs/node-gyp/blob/main/docs/Updating-npm-bundled-node-gyp.md
+- https://www.electronjs.org/docs/latest/tutorial/using-native-node-modules (for export npm_config_disturl to fix electron-edge-js)
+- https://github.com/nodejs/node-gyp/issues/2673 for npm i --verbose --openssl_fips='' to fix that new error
+- 12.8.x seems to fix the napi set instance data thing and allow use of the prebuilt or similar for that serialport 10.5.0 issue with bindings-cpp
+- Works on Win 10 VM as well
+
+
+Node 14x and electron ?.?.? -- Nope - not yet per electron-edge-js 12.18.5 -- max is Node v 12.18.3 and electron 11.x
+- nvm ls-remote | v14
+- https://github.com/electron/releases
+- https://www.npmjs.com/package/electron-edge-js/v/12.18.5
+- suggests like: node 12.18.3 and electron 11.5.0 -- to do try later -- focus on the on.data etc for ftdi-d2xx
 
 
 
+
+
+TODO - still need in this code package to like update mpg123 or move it and customize to comment out that error message and use a local file or try to
+
+
+
+
+Version Update Deps (Current):
+- Node > 12.18.3 && Electron > 11.5.0 => requires update and testing Win esp for electron-edge-js > 12.18.5
 
 
 

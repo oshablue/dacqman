@@ -327,7 +327,11 @@ EnableCaptureButtons = () => {
 
 DirectorySelectClick = (event) => {
 
-  var captureDataFileOutputDirectory = dialog.showOpenDialog( {
+  console.log("DirectorySelectClick");
+
+  // Electron 4.2.12 => 7.3.3 dialog.showOpenDialog is now Promise 
+  // vs Sync option behaves like the old
+  var captureDataFileOutputDirectory = dialog.showOpenDialogSync( {
     title : 'Select and/or create your captured data directory ...',
     buttonLabel: 'Start Capture to this Directory',
     properties: [ 'openDirectory', 'createDirectory']
