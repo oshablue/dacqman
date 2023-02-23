@@ -29,6 +29,7 @@
     "envelope-generator": "^3.0.0",
     "ftdi-d2xx": "^1.1.2",
     "serialport": "^10.5.0",
+    "speaker": "^0.5.4",
     "strftime": "^0.10.0"
   },
   "devDependencies": {

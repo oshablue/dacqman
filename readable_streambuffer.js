@@ -37,6 +37,9 @@ const constants = {
 };
 
 var ReadableStreamBuffer = module.exports = function(opts) {
+
+  console.log('readableStreamBuffer');
+
   var that = this;
   opts = opts || {};
 
@@ -168,16 +171,20 @@ var ReadableStreamBuffer = module.exports = function(opts) {
       throw new Error('Tried to write data to a stopped ReadableStreamBuffer');
     }
 
-    if(Buffer.isBuffer(data)) {
+    if(Buffer.isBuffer(data)) { // now 2/23/23 nodejs 12 data is Uint8Array and not a buffer
       increaseBufferIfNecessary(data.length);
       data.copy(buffer, size, 0);
       size += data.length;
     }
     else {
-      data = data + '';
+      //data = data + ''; // now 2/23/23 nodejs 12 this makes a string array or something or char? and if it was ever used is probably not desired now
+      // yeah now with update 2/23/23 nodejs 12 this is all broken 
+      // a 65536 byte buffer now becomes 261919 bytes
       var dataSizeInBytes = Buffer.byteLength(data);
       increaseBufferIfNecessary(dataSizeInBytes);
-      buffer.write(data, size, encoding || 'utf8');
+      //buffer.write(data, size, encoding || 'utf8');
+      //buffer.writeUInt8(data, size) // nope that for writing one uint8
+      Buffer.from(data).copy(buffer, size, 0);
       size += dataSizeInBytes;
     }
 

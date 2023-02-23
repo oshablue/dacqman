@@ -284,14 +284,15 @@ var playOpen = function() {
     is used, and on Mac OS X 10.14.n at least, with the use of a generator or speaker \
     you will, after the generator is done, even on speaker close/destroy, etc. \
     get repeated warnings on the command line, looped spam, about buffer underrun, \
-    the simplest method, and only working method, is too edit the file in the \
+    the simplest method, and only working method, is to edit the file in the \
     node_modules/speaker package, coreaudio.c, circa line 81, to comment out the \
     warning message - there are other similar routes. But it means you cannot use \
     the default package.  You may need to npm install -g node-gyp to allow you \
     to then cd node_modules/speaker and node-gyp build to regenerate the bins \
     with this source change. Please see DacqMan source for links to the issue \
     as available and discovered in various relevant packages. Perhaps this will \
-    be fixed soon in mpg123 or elsewhere."
+    be fixed soon in mpg123 or elsewhere. \
+    Path: node_modules/speaker/deps/mpg123/src/output/coreaudio.c circa line 81."
   );
 
   if ( !okToPlay() ) {

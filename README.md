@@ -308,7 +308,7 @@ Node 14x and electron ?.?.? -- Nope - not yet per electron-edge-js 12.18.5 -- ma
 
 
 
-TODO - still need in this code package to like update mpg123 or move it and customize to comment out that error message and use a local file or try to
+TODO - still need in this code package to like update mpg123 or move it and customize to comment out that error message and use a local file or try to - still just edited the node_modules npm file and simple npm install -g node-gyp and then node_modules/speaker $ node-gyp build
 
 
 
@@ -1469,6 +1469,17 @@ And what I've done in practice is just comment out line 81 in coreaudio.c for a 
 
 Of course, this does not persist on a next npm install, until we move it to the 3rd party custom modules directory or similar.
 
+Update 2/23/23 this worked:
+```
+node_modules/speaker/deps/mpg123/src/output/coreaudio.c // circa line 81 comment it out
+```
+And then just
+```
+npm install -g node-gyp // install it globally to use it on command line like 
+cd node_modules/speaker
+node-gyp build // should regen the bins from your code change
+```
+and that did it.
 
 
 ## Resource Usage in Long Capture Durations
