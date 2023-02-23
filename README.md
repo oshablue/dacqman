@@ -263,6 +263,36 @@ Win now using node 12.0.0
 macosx issue in npm i using 12.0.0 (or prior too) from @serialport/bindings.cpp
 - https://github.com/serialport/node-serialport/issues/2436
 
+Well - tried local package and modified the @serialport-bindings-cpp 10.8.0 bindings.gyp and then repackaged locally and set package.json to use the local packages for serialport and bindings-cpp but then new error - seems like Napi SetInstanceData fails.  This seems to be a node version thing.  It didn't stop things when modifying the npm i --force (to keep the local build files in node_modules are failed build that failed from issue with bindings.gyp including -arch arm64 or whatever in addition to the base platform we need that was breaking the CommandLineTools build chain for our Mac OSX setup).  So on mac, trying to move from 12.0.0 to latest Erbium which was 12.22.12.  Maybe that will have the NAPI function about the SetInstance thing - and perhaps that will even allow the loading of the native module from the prebuilt selection in the serialport 10.5.0 package since it will respond to the query looking for a native module.  That would be nice.
+
+Useful commands during all of this:
+- nvm ls-remote
+- npm view package-name versions or dist.tarball or nothing at the end
+- npm pack package-name (pulls the tarball tgz right local)
+- navigate into the unzipped package, make changes, and then within, do npm pack from within and make the new tgz of it
+- npm i --force (keeps local files in node_modules after fail instead of deleting them so you can inspect and compare to the errors listed)
+- npm i --verbose (really helps to see which files are really getting checked and otherwise suppressed errors)
+
+Nope macosx 12.22.12 doesn't help - still says can't find the symbol in the prebuilts - just at runtime is all - plus other i stuff breaks
+
+Nope 7.3.3 electron w/ node 12.8.1 -- the electron-edge-js install still has the atom.io dist urls for this condition trying to find the prebuilt
+
+node 12.0.0 electron 5.0.13
+- crashes the serialport-bindings-cpp portion of the build due to the -arch armXX switch that is included in the bindings-cpp package's bindings.gyp file.  With verbose, seem that _napi_set_instance_data or similar fails and maybe a prebuilt isn't used. 
+- in building the serialport-bindings-cpp node-gyp 9.3.1 is used
+- npm 6.9.0
+- npm i electron-edge-js builds with only warnings and seems to use from ~./node-gyp/12.0.0 or something node-gyp 3.8.0 also ???
+
+
+node 12.4.0 electron 6.1.12
+
+
+
+https://github.com/nodejs/node-gyp/blob/main/docs/Updating-npm-bundled-node-gyp.md
+
+
+
+
 
 
 
