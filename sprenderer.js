@@ -167,8 +167,17 @@ async function ftdiFind() { // node ftdi old local file was not async
       var sn2 = d2["serial_number"];
       console.log("FTDI sn1: " + sn1);
       console.log("FTDI sn2: " + sn2);
-       // old: vendorId productId
-       // ftdi-d2xx: usb_vid, usb_pid
+      // old: vendorId productId
+      // ftdi-d2xx: usb_vid, usb_pid
+      // below: now with ftdi-d2xx 1.1.2 and serialport 10.5.0
+      // there is no longer any serial number at all in either FTDI or VCP tables
+      // but the description ends with A / B
+      if ( sn1.length === 0 && sn2.length === 0 ) {
+        sn1 = d1["description"];
+        sn2 = d2["description"];
+        console.log(`serial_number fields were blanks so using descriptions ${sn1} ${sn2}. /
+          Maybe this is non-EEPROM FTDI based USB 485 device.`);
+      }
       if ( d1["usb_vid"] === d2["usb_vid"] && d1["usb_pid"] === d2["usb_pid"] ) { // old: vendorId productId
         console.log("Same device vendorId (usb_vid) and productId (usb_pid)");
         if ( sn1.substr(0, sn1.length - 2) === sn2.substr(0, sn2.length - 2) ) {

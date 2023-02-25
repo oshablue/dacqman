@@ -904,6 +904,7 @@ https://github.com/agracio/edge-js/blob/master/samples/105_add7_dll.js
     - try b scan / c-scan / m-scan options starting from eg the running average over time mapped to intensity 
     - try above and add adjustable time frame rate or width of band over time or per WF in stacked band WF moving over time or WF update
   - Package remote packages for local distribution (option ?) like materializecss jquery etc.
+  - TODO LT update the serial port auto select method that guesses from the FTDI table and tries to map to the VCP table ? or continue to condense the UX on it
   - KNOWN ISSUES
     - Low Priority: RegUI mode - while streaming chan scan then hit popout sync with actual real world ch 1 gets lost and probably arbitrary ch 1 - just stop and restart for now - uncommon use case concern
   - PUSH CHECKLIST
