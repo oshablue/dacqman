@@ -1062,6 +1062,7 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   // Updating to accommodate up to 4-port USB 485 converter eg
 
   let serialNumber = infoHash.serialNumber;
+  let descrip = infoHash.description;
 
   if ( serialNumber.length <= 1 ) {
     console.warn(`getVcpPortNameFromPortInfoHash: this device probably enumerates without a serial number. 
@@ -1072,6 +1073,12 @@ var getVcpPortNameFromPortInfoHash = function (infoHash) {
   //var serialNumberLessAorB = infoHash.serialNumber.substr(0, infoHash.serialNumber.length - 1);
   let seriesAlphas = ["A", "B", "C", "D"]; // serial number may end with any Alpha!
   let lastSerialNumberPlace = serialNumber.substr(serialNumber.length - 1, 1);
+  if ( lastSerialNumberPlace.length < 1 ) {
+    lastSerialNumberPlace = descrip.substr(descrip.length - 1, 1);
+    serialNumber = lastSerialNumberPlace; // set this to reconstruct if there were an SN in this case
+    console.log(`lastSerialNumberPlace is empty - likely serial number is empty - maybe \
+    this is macosx and using a non-eeprom FTDI based USB 485 device?. Using description instead of serial number.`);
+  }
   let serialNumberLessLastSeriesAlpha = serialNumber;
   // TODO some warnings are relevant here about serial number checks and what not
   if ( seriesAlphas.includes(lastSerialNumberPlace) ) {
