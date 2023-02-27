@@ -39,7 +39,7 @@
     "electron": "7.3.3",
     "electron-packager": "^13.1.1",
     "electron-rebuild": "^3.2.9",
-    "mocha": "^8.4.0",
-    "spectron": "^6.0.0"
+    "mocha": "^9.2.2",
+    "spectron": "^9.0.0"
   }
 }

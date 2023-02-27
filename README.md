@@ -523,6 +523,14 @@ It is possible that an out-of-the-box stock node-ftdi variant roughly version 1.
 could build with node 10.x.x instead.  This is how the Windows runtime is built and
   packaged.
 
+Currently using the ftdi-d2xx package instead with our custom wrapper.
+
+Mocha 10.0.0 drops Node.js v12.x support.  So probably stick with the latest Mocha 9.2.2 now for our nodejs 12.8.1 updated serialport branch.
+
+Since we are using electron 7.3.3 that means use Spectron ^9.0.0
+according to https://www.npmjs.com/package/spectron 
+
+
 ### Mac OS X - Building a Runtime App Package
 
 This all builds to an App on Mac OS X using:
