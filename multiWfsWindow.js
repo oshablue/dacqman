@@ -626,7 +626,7 @@ let selectStylesheet = () => {
 
   var eleHead = document.getElementsByTagName('head')[0]; //.getElementById('stylesheet');
   var ele = $(eleHead).find('#stylesheet');
-  var files = fs.readdirSync('css/');
+  var files = fs.readdirSync(path.join(__dirname,'css/'));
   console.log(`Files: ${files}`);
   var nonCustomFiles = [];
   var customFiles = [];
