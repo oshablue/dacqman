@@ -115,6 +115,36 @@ FtdiDeviceWrapped.prototype.pollDumb = function() {
 
 
 
+FtdiDeviceWrapped.prototype.close = function() {
+  //FtdiDeviceWrapped.prototype.open = () => { // no! not with this. etc
+    try {
+
+      if ( !this.fd ) {
+        console.warn( `this.fd is not anything so it can't be closed`);
+      }
+
+      if ( this.fd && !this.fd.is_connected ) {
+        console.warn( `${this.FtdiSerialNumber} is already closed (is_connected === false)`);
+        return;
+      }
+
+      this.fd.close()
+        .then( () => {
+          this.fd = null;
+          this.emit('close', {});
+        })
+        .catch( e=> console.error(e));
+  
+    } catch (e) {
+      console.log(e);
+    }
+  } // end of: public instance method: close()
+
+
+
+
+
+
 module.exports = {
   FtdiDeviceWrapped: FtdiDeviceWrapped
 }

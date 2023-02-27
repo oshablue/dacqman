@@ -115,7 +115,9 @@ async function ftdiFind() { // node ftdi old local file was not async
       //headers = Object.keys(fd.deviceSettings); // old
       headers = Object.keys(fd);
     } else {
-      headers = Object.keys(new Ftdi.FtdiDevice({ locationId: 0, serialNumber: 0}).deviceSettings);
+      // old node-ftdi below - but doesn't work for ftdi-d2xx(-wrap)
+      //headers = Object.keys(new Ftdi.FtdiDevice({ locationId: 0, serialNumber: 0}).deviceSettings);
+      // currently no work around built for the Ftdi ftdi-d2xx solution yet
     }
     headers.push("UseForData");
     headers.push("UseForControl");
@@ -635,7 +637,7 @@ var openDataPortFtdi = function(portHash) {
   });
 
   dport.on('close', function(err) {
-    console.log('close event subscription ');
+    console.log('dport.on close ie close event subscription ');
     console.timeEnd("timeOpen");
     console.log("samples collected: " + samples);
     const difftime = process.hrtime(time);
@@ -1655,19 +1657,6 @@ var guessAndSetHardwareIdentity = function() {
      hw = hws[0];
   }
   
-  // TODO put in I dunno some config or param place - extract basically
-  // var descrips = $("[id^=ftdi_ports]").find("td[data-header='description']").find(".cv:contains('COM485')");
-  // var hw = "Undetermined";
-  // if ( descrips.length === 2 ) {
-  //   // Assume HDL-0104-RS104
-  //   console.log("Found 2x *COM485* in the device descriptions ... assuming RS104");
-  //   hw = "HDL-0104-RS104 (\"RS104\")";
-  // } else {
-  //   // Assume HDL-0108-RSCPT
-  //   console.log("Did not find 2x *COM485* in the device descriptions ... assuming HDL-0108-RSCPT");
-  //   hw = "HDL-0108-RSCPT";
-  // }
-  
   // TODO 
   if ( hwCount == 1) {
     $("#hardware-id").text(hwTxt);
@@ -2543,7 +2532,14 @@ var progress = function (timeleft, timetotal, element) {
 //var cancelCustomControlButtonCommand = function() {
 var cancelCustomControlButtonCommand = () => {
 
-  console.log ("cancelCustomControlButtonCommand");
+  //
+  // cancel the ftdi-d2xx-wrap timeouts here or similar ???
+  // Is it necessary? Nope. Was not done for the prior data port either
+  // Assumption is that it is not presently important or part of work flow 
+  // or even sufficiently valuable best practice yet. 
+  // The data port close / open however has been updated and works.
+
+  console.log ("cancelCustomControlButtonCommand. Executing timeout fcns are:");
   console.log(executingTimeoutFcns);
 
   var jsonForButtons = {}; //captureDataFileOutputBatch.ManagedStopNow();
