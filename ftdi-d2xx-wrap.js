@@ -14,7 +14,7 @@
 
 
 const maxBufferLen = Math.pow(2,16);
-const pollingIntervalMs = 50;
+const pollingIntervalMs = 40;   // TODO add to constructor and/or get/set etc.
 
 
 const EventEmitter = require('events');
@@ -92,7 +92,7 @@ FtdiDeviceWrapped.prototype.pollDumb = function() {
     //if ( this.fd.status.events.rxchar ) { // this doesn't function as needed
     let len = this.fd.status.rx_queue_bytes;
     if ( len > 0 ) {
-      console.log(len);
+      //console.log(len);
       this.fd.read(len)
       .then ( data => {
         if ( data ) {
@@ -101,7 +101,10 @@ FtdiDeviceWrapped.prototype.pollDumb = function() {
       });
     }
     if ( len >= maxBufferLen ) {
-      this.emit('error', `Max Buf Len reached for FTDI rx_queue_bytes ${maxBufferLen}`)
+      this.emit('error', {
+        "type": "BufferOverflow", // TODO does this yet warrant custom errors?
+        "message": `Max Buf Len reached for FTDI rx_queue_bytes ${maxBufferLen}`
+      });
     }
     //}
   }

@@ -621,10 +621,17 @@ var openDataPortFtdi = function(portHash) {
   dport = new FtdiWrapped.FtdiDeviceWrapped(portHash.serialNumber);
   //dport.open(); // testing - real open happens after items are set up
 
-  // XXXXX problem ... no .on in this ftdi-d2xx
+  // in this ftdi-d2xx - now it is wrapped and this event is added
   dport.on('error', function(err) {
-    console.error('dport.on error: ', err);
-    // TODO -- UI error panel/log/indicator, etc.
+    console.error('dport.on error: ', JSON.stringify(err));
+    if ( err.type && err.type === "BufferOverflow" ) {
+      $('#btnBufferOverflowing').removeClass('disabled').addClass('orange pulse');
+      $('#btnBufferOverflowing').attr("title", "DataPortFtdi BufferOverflow Detected. Click to Reset.");
+      $('#btnBufferOverflowing').click( ()=> {
+        $('#btnBufferOverflowing').removeClass('orange pulse').addClass('disabled');
+        $('#btnBufferOverflowing').attr("title","");
+      });
+    }
   });
 
   dport.on('close', function(err) {

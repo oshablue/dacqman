@@ -227,11 +227,21 @@ var resetReadableStream = function(chunkMultiple) {
       // rather than forcing to a value here - or be aware that this is 
       // or was a primary intended option
 
+      // TODO probably better buffer overflow tracking ...
+      // Update this functionality to click to reset instead 
+      // in case this was set from somewhere else
+      // and don't reset until clicked again
       if ( ourReadableStreamBuffer.size() > (1000*1024) ) {
         console.log(ourReadableStreamBuffer.size());
         $('#btnBufferOverflowing').removeClass('disabled').addClass('orange pulse');
+        // TODO DRY - see sprenderer.js dport.on('error'...)
+        $('#btnBufferOverflowing').attr("title", "ourReadableStreamBuffer.size buffer backlag detected. Click to Reset.");
+        $('#btnBufferOverflowing').click( ()=> {
+          $('#btnBufferOverflowing').removeClass('orange pulse').addClass('disabled');
+          $('#btnBufferOverflowing').attr("title","");
+        });
       } else {
-        $('#btnBufferOverflowing').removeClass('orange pulse').addClass('disabled');
+        //$('#btnBufferOverflowing').removeClass('orange pulse').addClass('disabled');
       }
 
       // Could try to:

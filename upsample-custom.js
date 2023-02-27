@@ -34,7 +34,7 @@ module.exports = upsample = (data, UPSAMPLE_RATIO = 2, doWavHeader = true, NUMER
 
     let wavheader = data.slice(0, 22); // slice: original array not modified
 
-    console.log(data.length)
+    //console.log(data.length)
 
 
     let originalDoublesData = data; 

@@ -214,12 +214,13 @@ var resetReadableStream = function(chunkMultiple) {
 
       var chunk;
 
-      if ( ourReadableStreamBuffer.size() > (1000*1024) ) {
-        console.log(ourReadableStreamBuffer.size());
-        $('#btnBufferOverflowing').removeClass('disabled').addClass('orange pulse');
-      } else {
-        $('#btnBufferOverflowing').removeClass('orange pulse').addClass('disabled');
-      }
+      // N/A for popout window:
+      // if ( ourReadableStreamBuffer.size() > (1000*1024) ) {
+      //   console.log(ourReadableStreamBuffer.size());
+      //   $('#btnBufferOverflowing').removeClass('disabled').addClass('orange pulse');
+      // } else {
+      //   $('#btnBufferOverflowing').removeClass('orange pulse').addClass('disabled');
+      // }
 
       // Could try to:
       // - Increment the decimation counter here instead and it talks to the sprendered code
