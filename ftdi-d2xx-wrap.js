@@ -12,14 +12,33 @@
 // - https://stackoverflow.com/questions/8898399/node-js-inheriting-from-eventemitter
 //
 
-
+// TODO this could become an inquiry on instantiation to check actual hardware / platform implementation
 const maxBufferLen = Math.pow(2,16);
-const pollingIntervalMs = 40;   // TODO add to constructor and/or get/set etc.
+
+// TODO add to constructor and/or get/set etc.
+const pollingIntervalMs = 40;   
 
 
 const EventEmitter = require('events');
 const Ftdi = require('ftdi-d2xx');
 
+
+// CAUTION: ftdi-d2xx on version change could have a differently defined device info 
+// so this would need to be updated.
+// We need a blank reference to just the fields if nothing is attached, so 
+// make it up here.
+// https://github.com/motla/ftdi-d2xx/blob/9b6ae6dc46a3f281dda180a8ef53452cff820ec9/docs/FTDI_DeviceInfo.md
+// Can't yet figure out how to access the classes in eg main.d.ts - maybe because they're not exported
+const FtdiDeviceInfo = {
+  "serial_number": "",
+  "description": "",
+  "type" : "",
+  "is_open": false,
+  "usb_vid": 0,
+  "usb_pid": 0,
+  "usb_loc_id": 0,
+  "usb_speed": ""
+}
 
 
 class FtdiDeviceWrapped extends EventEmitter {
@@ -142,6 +161,12 @@ FtdiDeviceWrapped.prototype.close = function() {
 
 
 
+
+FtdiDeviceWrapped.FTDI_DeviceInfoBlank = function() {
+  
+  return FtdiDeviceInfo;
+
+}
 
 
 

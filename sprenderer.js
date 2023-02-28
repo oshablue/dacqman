@@ -118,6 +118,7 @@ async function ftdiFind() { // node ftdi old local file was not async
       // old node-ftdi below - but doesn't work for ftdi-d2xx(-wrap)
       //headers = Object.keys(new Ftdi.FtdiDevice({ locationId: 0, serialNumber: 0}).deviceSettings);
       // currently no work around built for the Ftdi ftdi-d2xx solution yet
+      headers = Object.keys(FtdiWrapped.FtdiDeviceWrapped.FTDI_DeviceInfoBlank());
     }
     headers.push("UseForData");
     headers.push("UseForControl");
