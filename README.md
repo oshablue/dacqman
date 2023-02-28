@@ -316,6 +316,17 @@ Version Update Deps (Current):
 
 
 
+electron-packager:
+- using 13.1.1 -- exe seems ok on Win 10 VM - but not for Mac OS 10.15.7 (Catalina)
+  - the App crashes immediately
+  - electron-forge requires nodejs > 14.x - we're not there yet
+- trying later versions of packager: https://github.com/electron/electron-packager/blob/main/NEWS.md
+  - 15.0.0 removes Node < 10 support
+    - try 15.5.2 ? get cannot read info property issue
+    - try 15.5.1 ?
+  - 16.0.0 removes Node 12 support
+
+
 
 
 Refs for this:
