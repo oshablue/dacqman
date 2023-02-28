@@ -75,10 +75,8 @@ Seems to still rebuild/install ok on darwin and win32.
 
 ### Revisions
 
-- **0.0.19** Planned
-  - 
-
 - **0.0.18** 
+  - merged UpdateSerialPort branch to master with bumps of several packages to engine node 12.8.1 electron 7.3.3 serialport 10.5.0 using alternate ftdi-d2xx (wrapped) etc etc - see package.json changes
   - add draft of popout separate (child) window for the multi-waveform graphs - works for various orders of operations and both "Regular" and DCF-UIs
   - update further handling of graphs and charts for data destinations and divvy-ing up for RS8 vs RS104 vs DL0100A1 hardwares for example (chunk size, buffer mgmt clarifications, decimation of data for visuals updates)
   - store selected collapsible states between launches for restoration (at least within a single UI mode selection)
@@ -530,6 +528,8 @@ Mocha 10.0.0 drops Node.js v12.x support.  So probably stick with the latest Moc
 Since we are using electron 7.3.3 that means use Spectron ^9.0.0
 according to https://www.npmjs.com/package/spectron 
 
+Something has changed in the mocha spectron version bump such that when the app start it does not have the dev tools open when running tests if they were stored as opened by the user, showing in npm start for example.
+
 
 ### Mac OS X - Building a Runtime App Package
 
@@ -889,7 +889,15 @@ https://github.com/agracio/edge-js/blob/master/samples/105_add7_dll.js
 ## Wish List / TODO
 
 
+- **0.1.1**
+  - some draft WF goodies
+  - frameworks are packaged local for offline (vfy in packaged only?)
+  - unit test added for hardware scenarios - or interactive for live hw connect touch and go? or mock bindings?
+  - can we bump nodejs and electron and then electron-edge-js? etc?
+  - buttons file selector
+  -
 - **0.0.18** 
+  - TODO release notes about version bumps after merge branch for UpdateSerialPort or whatever
   - toggling between DCF UI vs regular UI eg the collapsible state for the single waveform chart, if previously stored closed in regular UI, is not retained in that closed state 
   when toggling back to regular UI and a reload - this is ok functionally under typical 
   use-cases for the time being, so lower priority
