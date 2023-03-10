@@ -63,6 +63,24 @@
     },
 
     {
+      "fullname" : "HDL-0104-RS104",
+      "shortname" : "RS104",
+      "numberOfChannels" : 4,
+      "waveformLengthSamples" : 4095,
+      "waveformBytesPerSample" : 1,
+      "numberOfMatchingComPorts" : 4,
+      "controlPortBaudRate" : 57600,
+      "dataPortBaudRate" : 2000000,
+      "comPortDeviceIdTextTypicallyContains" : "COM485",
+      "dataPortType" : "VCP",
+      "comments" : [
+        "dataPortBaudRate is given as 2000000 because this port is also a VCP port and as of Q4 2021 Windows and Mac OS X FTDI USB Serial drivers support this high baud rate",
+        "adding this RS104 description for the 4-port FTDI USB-COM485 Plus4 in lieu of the 2-port typical",
+        "the 2 extra ports are not currently implemented - but could be in the future for a dual setup"
+      ]
+    },
+
+    {
       "fullname" : "DL-Series-by-Radio-USB-Adapter",
       "shortname" : "DL",
       "numberOfChannels" : 8,

@@ -1631,12 +1631,31 @@ var guessAndSetHardwareIdentity = function() {
     console.log(`descrips.length: ${descrips.length}`);
     console.log(`matchingRowsWithChecks.length: ${matchingRowsWithChecks.length}`);
     console.log(`h.numberOfMatchingComPorts: ${h.numberOfMatchingComPorts}`);
+
+    // Ok for like a 4-Port device with a single RS104 we would like still to be able to use
+    // the 2 auto-checked A/B ports or select whatever - but still only 2 should be checked
+    // but we have a hardwares.json entry that says yes 4 matching com port names
+    // FTDI USB-COM485 Plus4 - has a serial number
+    // In this case:
+    // descrips.length, h.numberOfMatchingComPorts => 4
+    // matchingRowsWithChecks.length, checkedBoxesInMatchingRows.length => 2
+
     if ( useOnlyChecked ) {
-      pushTheHw = (new Set([ descrips.length, matchingRowsWithChecks.length, h.numberOfMatchingComPorts])).size === 1
+      pushTheHw = (
+        new Set([ 
+          descrips.length, matchingRowsWithChecks.length, h.numberOfMatchingComPorts
+        ])).size === 1
         && checkedBoxesInMatchingRows.length === maxComs;
+      if ( !pushTheHw ) {
+        // Test for the 4-port case above noted for the FTDI Plus4
+        pushTheHw = 
+          (descrips.length === 4 && h.numberOfMatchingComPorts === 4) 
+          && (matchingRowsWithChecks.length === 2 && checkedBoxesInMatchingRows.length === 2);
+      }
     } else {
       pushTheHw = descrips.length === h.numberOfMatchingComPorts;
     }
+
     if ( pushTheHw ) {
       console.log("Found " + h.numberOfMatchingComPorts + " of " + txt + " in the device descriptions ... assuming " + h.shortname);
       hwTxt = `${h.fullname} (${h.shortname})`;
