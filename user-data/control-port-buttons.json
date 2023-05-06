@@ -1531,7 +1531,7 @@
           ]
         },
         "description": "First position N2E/S + BRG JPR",
-        "returnDataTo" : "chart"
+        "returnDataTo" : "log"
       },
 
       {
@@ -1563,7 +1563,7 @@
           ]
         },
         "description": "Second position N2W",
-        "returnDataTo" : "chart"
+        "returnDataTo" : "log"
       },
 
       {
@@ -1595,7 +1595,7 @@
           ]
         },
         "description": "Third position E2S",
-        "returnDataTo" : "chart"
+        "returnDataTo" : "log"
       }
 
     ]
