@@ -138,9 +138,10 @@ var MainWindowGetNumberOfChannels = function() {
 
 
 
+var readableStreamBufferGraphCompleteTimeoutId;
+var readableStreamBufferGraphIntervalUpdateId;
 
-
-var resetReadableStream = function(chunkMultiple) {
+var resetReadableStream = function(chunkMultiple, chunkSizeBytes) {
 
   //console.log(`resetReadableStream`);
 
@@ -151,7 +152,15 @@ var resetReadableStream = function(chunkMultiple) {
 
   let wfLenBToUse = hwNow.waveformBytesPerSample * hwNow.waveformLengthSamples; //  defWfLenB;
   
+  // if parameter is passed up the wfLenBToUse etc
+  // https://stackoverflow.com/questions/11796093/is-there-a-way-to-provide-named-parameters-in-a-function-call-in-javascript
+  if ( chunkSizeBytes ) {
+    wfLenBToUse = chunkSizeBytes;
+  }
+
   singleChartBuf =  Buffer.alloc(wfLenBToUse, 127);
+
+  singleWfChart.RebuildChart();
 
   let amsg = `resetReadableStream early: `;
   amsg += ` chunkMultiple: ${chunkMultiple}`;
@@ -193,7 +202,12 @@ var resetReadableStream = function(chunkMultiple) {
   // create an immediate chart fill of dummy data (TODO - Promise? Await?)
   if ( singleWfChart._chartBuffer.length != wfLenBToUse ) {
     console.log("mainWindow: about to call UpdateChartLengh to " + wfLenBToUse);
-    singleWfChart.UpdateChartLength(wfLenBToUse);
+    // TODO eventually - this is not actually what we always want 
+    // for example
+    // ADMN5 FFT buffer might come in at 1024 * 3 * 4 + 16 bytes - 
+    // but actually the target length is just 1024 data points
+    // which is available in the button options for example
+    singleWfChart.UpdateChartLength(wfLenBToUse); 
   }
 
   let msg = `resetReadableStream late:  `;
@@ -322,14 +336,73 @@ var resetReadableStream = function(chunkMultiple) {
         // so let's update this to the new below because we are moving to proper implementation 
         // based on chart destination and the chunking does it's own thing 
         // ie in RegUI just the first chunk is grabbed
-        if ( prefs.interface !== 'dataCaptureFocused' && gReturnDataTo === 'chart' ){ 
-          singleWfChart.UpdateChartBuffer(singleChartBuf);
-          //if ( prefs.interface !== 'dataCaptureFocused' ){ 
-            // oy. above case check because round robbin from the decimateKick thing if DCF
-            // but gChunk is still small like 1
-            audioFdbk.playData(singleChartBuf); // this might too as above issue ... TODO
-          //}
-        }
+
+        // Now not just 'chart' but maybe like 'chart-admn5-fft-bin'
+        //if ( prefs.interface !== 'dataCaptureFocused' && gReturnDataTo.indexOf('chart') > -1 ){ 
+        
+        if ( prefs.interface !== 'dataCaptureFocused' ) {
+
+          switch ( gReturnDataTo ) {
+
+            case 'chart-admn5-fft-bin':
+              if ( readableStreamBufferGraphCompleteTimeoutId ) {
+                clearTimeout(readableStreamBufferGraphCompleteTimeoutId);
+                readableStreamBufferGraphCompleteTimeoutId = null;
+                clearTimeout(readableStreamBufferGraphIntervalUpdateId);
+                readableStreamBufferGraphIntervalUpdateId = null;
+              }
+              // Either here or outside of this - accumulate / parse the FFT data for chart 
+              // freq x mag norm to 1
+              // 32-bit floats in 3x sets
+              // bindex, freq, mag (norm to 1)
+              // https://stackoverflow.com/questions/40970739/how-to-convert-two-16bit-integer-high-word-low-word-into-32bit-float/40970862#40970862
+              // https://stackoverflow.com/questions/42699162/javascript-convert-array-of-4-bytes-into-a-float-value-from-modbustcp-read
+              var v = new DataView(chunk.buffer);
+              var offs = 16; // First 16 bytes are the message about like received well yeah 
+              // or could do like find first index of 0x0d for the end of that ascii msg like:
+              // var offs = chunk.indexOf(0x0d) // 15 returned at this time
+              var destInd = 0;
+              var mag = 0.0;
+              var NaNMagFlag = false;
+              while ( destInd*12+12+offs < chunk.length ) {
+                // See IEEE-754 Float format for NaN (like when /0.0 or when FFT has no data 
+                // yet and a waveform needs to be acquired first
+                // Then data coming in for the magniture looks like:
+                // chunk[off+12*1+8 ... 11] = [ ... 0x00 0x00 0xc0 0x7f ... ] or [0 0 192 127]
+                // which as little endian is 0x7f c0 00 00 which is actually NaN 
+                // see: https://www.h-schmidt.net/FloatConverter/IEEE754.html for example
+                // float sets like [ binIndex, freq, magNormd ]
+                admn5ParsedBufX[destInd] = v.getFloat32(offs + destInd*12 + 4, true); // true = little endian - it matters
+                mag = v.getFloat32(offs + 12*destInd + 8, true);
+                if ( isNaN(mag) ) {
+                  mag = 0.0;
+                  NaNMagFlag = true;
+                }
+                admn5ParsedBufY[destInd] = mag;
+                destInd++;
+                // 20, 24, skip, 32, 36, skip, 44, 48
+                // (skip 0), 4, 8     dest: 0th bin
+                // (skip 12), 16, 20  dest: 1st bin
+                // (skip 24), 28, 32  dest: 2nd bin
+                // (skip 12*dest), 12*dest+4, 12*dest+8
+              } // end of while ( parsing chunk.length )
+              singleWfChart.UpdateChartBufferFloat32(admn5ParsedBufX, admn5ParsedBufY);
+              if ( NaNMagFlag ) {
+                console.warn(`Warning: At least one magnitude was converted to float32 as NaN. Maybe you need to initialize the WF first and then retreive the FFT?`);
+              }
+              break;
+
+            case 'chart':
+            default:
+              singleWfChart.UpdateChartBuffer(singleChartBuf);
+              audioFdbk.playData(singleChartBuf);
+              ;
+
+          } // switch gReturnDataTo
+
+        } // end of prefs.interface !== dataCaptureFocused
+
+
 
         // Sure, for now, basic testing, each chunk, whatever multiple, each
         // time we're here, just increment the channel number,
@@ -428,7 +501,7 @@ var resetReadableStream = function(chunkMultiple) {
       }
 
     } catch (e) {
-      console.log("Error in readable event: " + e);
+      console.error("Error in readable event: " + e);
     }
   }); // end of: our Readable Stream Buffer .on ( 'readable'
 
@@ -897,7 +970,8 @@ var singleWfChart; /* = new SingleWfDataChart({
 });*/ // need to re-assign after DOM load to catch the right DOM ele (chart)
 
 
-
+var admn5ParsedBufX;
+var admn5ParsedBufY;
 
 
 
@@ -1292,6 +1366,15 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
   //   onClose: function(ele) { storeUserCollapsibleState(ele); }
   // });
 
+
+  // Testing auto cal visa
+  //require('./autocal.js');
+
+
+  // Testing - piecewise customer cal examples 
+  // setTimeout(() => {
+  //   singleWfChart.DcCurrentCal(); // or AcCurrentCal(); 
+  // }, 2000);
   
 
 }); // end of $(document).ready(...{...})

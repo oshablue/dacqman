@@ -42,6 +42,14 @@ const { CaptureDataFileOutput : CaptureDataFileOutput } = require('./capture-dat
 const { UserInterface : YouFace } = require('./userInterface.js');
 
 
+const html2canvas = require('html2canvas');
+
+
+
+
+
+
+
 var buf = []; // new Uint8Array; //[];
 var nsamp = 4096;
 var filling = false;
@@ -1336,6 +1344,7 @@ var openControlPort = function(portHash) {
       } else {
         ourReadableStreamBuffer.put(data);
       }
+
     } else {
     
       console.log("Same data parsed as ASCII chars: ");
@@ -2056,6 +2065,36 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
             console.log("Switched gReturnDataTo to chart");
             mainWindowUpdateChartData(null);
           }
+          // TODO optionize:
+          // TODO QABATCH
+          // For single WF return, copy the WF svg after plot
+          // TODO FIX TIMING
+          // See: https://stackoverflow.com/questions/14595541/capture-div-into-image-using-html2canvas
+          // See: https://codepen.io/karannagupta/pen/RXpddB
+          // See: https://html2canvas.hertzen.com/configuration
+          // See: https://github.com/exupero/saveSvgAsPng
+          // See: https://stackoverflow.com/questions/36303964/save-d3-chart-as-image
+          $('#divSingleWaveformChart').find('span.chart-title').first().text("Waveform Display: " + button.title);
+          setTimeout( () => {
+            var svg = document.getElementById('divSingleWaveformChart');
+            html2canvas(svg).then(function(canvas) {
+              canvas.toBlob(function(blob) {
+                navigator.clipboard
+                  .write([
+                  new ClipboardItem(
+                    Object.defineProperty({}, blob.type, {
+                      value: blob,
+                      enumerable: true
+                    })
+                  )
+                ])
+                .then(function() {
+                  console.log("Copied to clipboard");
+                });
+              });
+            });
+          }, 2000);
+
           // Placeholder for more complex actions
           break;
 
@@ -2067,6 +2106,23 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
             console.log("Switched gReturnDataTo to multiChart");
             mainWindowUpdateChartData(null);
           }
+          break;
+
+        case "chart-admn5-fft-bin":
+          // Copied from above for chart:
+          if ( gReturnDataTo !== returnDataTo ) {
+            mainWindowUpdateChartData(null);
+            gReturnDataTo = "chart-admn5-fft-bin";
+            console.log("Switched gReturnDataTo to chart-admn5-fft-bin");
+            mainWindowUpdateChartData(null);
+            admn5ParsedBufX = new Float32Array(1024).fill(0);
+            admn5ParsedBufY = new Float32Array(1024).fill(0);
+            // Trying - TODO - should implement from the button options
+            // and or may not need if now the button options correctly fires
+            resetReadableStream(1, 1024*3*4+16); // 12 bytes per set + 16 overhead - but the FFT len will be graphed
+            // TODO actually - buf len should reflect the overhead of early conf of comd
+          }
+          // TODO now also clear out like the admn5 parser accumulator
           break;
 
         case "console":
@@ -2147,6 +2203,41 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
 
           case "captureBufferMultiple":
             resetReadableStream(parseInt(o.value));
+            break;
+
+          case "singleCaptureBufferWithSpecificSizeBytes":
+
+            // Important for this special case of FFT and different length - large single buffer
+            resetReadableStream(1, parseInt(o.value));
+
+            launchProgressCountdown( commandReplyTimeoutMs );
+
+            // Also this, as above (TODO DRY)
+            // TODO also set diff b/w ow long to return all data vs how long to wait for any reply at all
+            // which are 2 very different things for long data sets
+            readableStreamBufferGraphCompleteTimeoutId = // defined in mainWindow.js
+            setTimeout( function() {
+              if ( ourReadableStreamBuffer.size() < ourReadableStreamBuffer.chunkSize() ) { //ourReadableStreamBuffer.chunkSize ) {
+                console.log( "mainWindow: ourReadableStreamBuffer.size()" + ourReadableStreamBuffer.size() + " is less than chunkSize " + ourReadableStreamBuffer.chunkSize() );
+                if ( ourReadableStreamBuffer.size() < 1 ) {
+                  console.log("... looks like we got some dribble ... probably a CCC firmware DEV TODO ");
+                } else {
+                  console.log ( "Appending zero data to push data to chart...");
+                  let n = ourReadableStreamBuffer.chunkSize() - ourReadableStreamBuffer.size();
+                  let a = Buffer.alloc(n, 0);
+                  console.log("adding " + n + " elements ...");
+                  ourReadableStreamBuffer.put(a);
+                  console.log("ourReadableStreamBuffer.size(): " + ourReadableStreamBuffer.size());
+                }
+              }
+            }, commandReplyTimeoutMs);
+
+            readableStreamBufferGraphIntervalUpdateId = // defined in mainWindow.js
+            setInterval( function() {
+              // TODO 
+              console.log(ourReadableStreamBuffer.size());
+            }, 500);
+
             break;
 
           case "captureSizeBytes":

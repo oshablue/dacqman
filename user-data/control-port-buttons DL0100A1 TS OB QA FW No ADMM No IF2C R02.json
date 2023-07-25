@@ -508,25 +508,9 @@
 
 {
 
-  "name" : "PAQ Chan Cmds (DL0100A1)",
+  "name" : "PAQ Chan Cmds (DL0100A1) Same Chan",
 
   "buttons" : [
-
-    {
-      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 1 => 2) Uses Chan Set",
-      "command": {
-        "type": "hexCsvBytes",
-        "value": "0x53, 0xC4, 0x12, 0x00, 0x50"
-      },
-      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
-      "returnDataTo" : "chart",
-      "options" : [
-        {
-          "key" : "singleCaptureBuffer",
-          "value" : "true"
-        }
-      ]
-    },
 
 
     {
@@ -534,40 +518,6 @@
       "command": {
         "type": "hexCsvBytes",
         "value": "0x53, 0xC4, 0x11, 0x00, 0x50"
-      },
-      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
-      "returnDataTo" : "chart",
-      "options" : [
-        {
-          "key" : "singleCaptureBuffer",
-          "value" : "true"
-        }
-      ]
-    },
-
-
-    {
-      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 1 => 8) Uses Chan Set",
-      "command": {
-        "type": "hexCsvBytes",
-        "value": "0x53, 0xC4, 0x18, 0x00, 0x50"
-      },
-      "description": "Ch 8 Rx for XChan Iso Checks ... Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
-      "returnDataTo" : "chart",
-      "options" : [
-        {
-          "key" : "singleCaptureBuffer",
-          "value" : "true"
-        }
-      ]
-    },
-
-
-    {
-      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 8 => 8) Uses Chan Set",
-      "command": {
-        "type": "hexCsvBytes",
-        "value": "0x53, 0xC4, 0x88, 0x00, 0x50"
       },
       "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
       "returnDataTo" : "chart",
@@ -672,6 +622,77 @@
         "value": "0x53, 0xC4, 0x77, 0x00, 0x50"
       },
       "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 8 => 8) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x88, 0x00, 0x50"
+      },
+      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    }
+
+
+  ]
+},
+
+
+
+
+
+
+
+
+
+
+
+
+{
+
+  "name" : "PAQ Chan Cmds (DL0100A1) Cross-Chan",
+
+  "buttons" : [
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 1 => 2) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x12, 0x00, 0x50"
+      },
+      "description": "Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
+      "returnDataTo" : "chart",
+      "options" : [
+        {
+          "key" : "singleCaptureBuffer",
+          "value" : "true"
+        }
+      ]
+    },
+
+
+    {
+      "title": "DL0100A1 PAQ (DCMD_DO_2X_ACQUIRE Single Cmd 1 => 8) Uses Chan Set",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0xC4, 0x18, 0x00, 0x50"
+      },
+      "description": "Ch 8 Rx for XChan Iso Checks ... Newly implemented (not base FW) command to use the 0xC4 cmd and package arg1 with Tx / Rx chans both for cross-chan",
       "returnDataTo" : "chart",
       "options" : [
         {

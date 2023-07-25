@@ -1531,7 +1531,7 @@
           ]
         },
         "description": "First position N2E/S + BRG JPR",
-        "returnDataTo" : "log"
+        "returnDataTo" : "chart"
       },
 
       {
@@ -1563,7 +1563,7 @@
           ]
         },
         "description": "Second position N2W",
-        "returnDataTo" : "log"
+        "returnDataTo" : "chart"
       },
 
       {
@@ -1595,7 +1595,7 @@
           ]
         },
         "description": "Third position E2S",
-        "returnDataTo" : "log"
+        "returnDataTo" : "chart"
       }
 
     ]
@@ -1957,6 +1957,91 @@
       }
   
     ]
+    },
+
+
+
+
+
+
+    {
+
+      "name" : "ADMN5 via DL0100A1",
+
+      "buttons" : [
+
+        {
+          "title": "FFT",
+          "command": {
+            "type": "hexCsvBytes",
+            "value": "0x53, 0xdd, 0x01, 0x05, 0x50"
+          },
+          "description": "Get the FFT (no DC removal, normalized)",
+          "returnDataTo" : "chart-admn5-fft-bin",
+          "options" : [
+            {
+              "key" : "replyTimeoutMs",
+              "value" : 6000 
+            },{
+              "key" : "singleCaptureBufferWithSpecificSizeBytes",
+              "value" : 12304,
+              "note" : "3*4*1024+16 for 1024 FFT bins with 3 floats per bin and 4 bytes per float (32-bit) plus 16 bytes overhead of response DL ADMN5 CMD OK or whatever"
+            }
+          ],
+          "parser" : "admn5-fft-bin"
+        },
+
+        {
+          "title": "FFT (No DC)",
+          "command": {
+            "type": "hexCsvBytes",
+            "value": "0x53, 0xdd, 0x01, 0x06, 0x50"
+          },
+          "description": "Get the FFT (no DC removal, normalized)",
+          "returnDataTo" : "chart-admn5-fft-bin",
+          "options" : [
+            {
+              "key" : "replyTimeoutMs",
+              "value" : 6000 
+            },{
+              "key" : "singleCaptureBufferWithSpecificSizeBytes",
+              "value" : 12304,
+              "note" : "3*4*1024+16 for 1024 FFT bins with 3 floats per bin and 4 bytes per float (32-bit) plus 16 bytes overhead of response DL ADMN5 CMD OK or whatever"
+            }
+          ],
+          "parser" : "admn5-fft-bin"
+        },
+
+        {
+          "title": "Chain: Acq + FFT",
+          "command": {
+            "type": "hexCsvBytesChained",
+            "chainedCmdDelayMs" : "6000",
+            "chainedCmdTimeoutMs" : "6000",
+            "chainedCmdCompleteChar" : "0x0D",
+            "value": [
+              "0x53, 0x93, 0x00, 0x00, 0x50",
+              "0x53, 0xdd, 0x01, 0x03, 0x50",
+              "0x53, 0xdd, 0x01, 0x05, 0x50"
+            ],
+            "description-summary" : "Third position E2S",
+            "description-detail" : [
+              "1. Get FW Rev (to wake, just in case sleeping)",
+              "2. Acq HRes N2E V UA WF",
+              "3. Return the FFT (leave DC as is)"
+            ]
+          },
+          "description": "Acq and get FFT",
+          "returnDataTo" : "chart"
+        }
+
+
+
+
+
+
+      ]
+
     }
   
 

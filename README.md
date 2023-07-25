@@ -1486,6 +1486,23 @@ There is both a safety (when functional) and purely functional issue with this f
 
 ## Modules Notes
 
+
+### d3
+
+7/21/23 moving from cdn html script tag for d3 v5.7.n to instead use npm i d3 as npm module
+
+However get ES6 incompat at the moment with the infamous Unexpected token exports - so could either edit and redefine the module exports line or try just 
+
+npm uninstall d3
+
+npm i d3@6
+
+which gives d3 v6.7.0
+
+
+
+
+
 ### audio-speaker / speaker: looped warning message on terminal
 
 Currently, default package (1.5.1) will dump looped error onto the terminal when running from source, coming from mpg123 and output/coreaudio.c (see the message).

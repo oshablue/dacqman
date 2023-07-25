@@ -580,9 +580,10 @@ path {
   display: inline-block;
   position: relative;
   width: 100%;
-  /*height: 560px;*/ /*560px;*/ /* this relates to chart height when set to 500px instead of 300px and is explicitly set here until a better solution */
+  /* height: 560px; */ /*560px;*/ /* this relates to chart height when set to 500px instead of 300px and is explicitly set here until a better solution */
   padding-bottom: 33%; /* aspect ratio - update for graph init dims */
   vertical-align: top;
+  margin-top: 10px;
   /*overflow: hidden;*/
 }
 .svg-container-tall {
