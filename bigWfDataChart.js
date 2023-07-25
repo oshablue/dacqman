@@ -403,7 +403,7 @@ function DataChart({
     //currentTransform = d3.event.transform; // v5 
     currentTransform = e.transform; // v6
 
-    console.log(`zoomed e.transform: ${e.transform}`);
+    //console.log(`zoomed e.transform: ${e.transform}`);
 
     //
     // < Standard XY Zoom >
@@ -501,18 +501,19 @@ function DataChart({
     // Here the shift key while wheel does work like:
     // for example: event.type === "wheel"
     // and event.shiftKey == true
-    console.log("d3 filter");
+    //console.log("d3 filter");
 
     // From eg:
     // https://observablehq.com/@d3/pan-zoom-axes
-    event.preventDefault();
+    // Prevent scrolling - but comment this out if you want for example 
+    // scroll to work when you've reached the zoom out limit for example - so control 
+    // passes then to scrolling
+    // < OPTION >
+    //event.preventDefault();
+    // </ OPTION >
 
     // return of something is needed to then fire the zoom event:
     // Either of below, and control will continue to the zoomed event
-    // but Shift still does not work - ie doesn't show in the e.sourceEvent.shiftKey within zoomed
-    //return (!event.ctrlKey || event.type === 'wheel') && !event.button;
-
-
     
     if ( event.type === 'wheel' && event.shiftKey ) {
       console.log(`shift + wheel`);
