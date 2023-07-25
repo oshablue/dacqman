@@ -5,9 +5,9 @@
 // https://d3js.org/api
 //
 //
-// Lovely tutorial:
+// 
 // https://www.dashingd3js.com/creating-svg-elements-based-on-data
-// Additional lovely references:
+// https://www.d3indepth.com/zoom-and-pan/
 // https://github.com/bignerdranch/music-frequency-d3/blob/master/app.js
 // https://www.bignerdranch.com/blog/music-visualization-with-d3-js/
 // http://square.github.io/crossfilter/
@@ -52,6 +52,8 @@ function DataChart({
   var doRenderLoops = false;
   var freshData = false;
 
+  var currentTransform;
+
   this._parentElementIdName = parentElementIdName;
   this._reqId = null;
   this._chartBuffer = chartBuffer;
@@ -78,11 +80,14 @@ function DataChart({
   // https://stackoverflow.com/questions/57007378/d3-zoom-and-drag-with-svg-axes-and-canvas-chart
   // As to why we are specifying all three of these below:
   var zoom;
+
   zoom = d3.zoom()
-    .scaleExtent([1, 20])
+    .scaleExtent([1, 40])
     // The pair of the next two together is what allows us the sensible
     // implementation of zoom and pan extents:
     //              [[left, top] , [right, bottom]]
+    // TODO we can expand this a bit like adding 10 so like [-10, -10] but need 
+    // then also to address the reset behavior and reset the translate
     .translateExtent([[0,0],[chartWidth, chartHeight]])
     .extent([[0,0],[chartWidth, chartHeight]])
     .filter(filter)
@@ -154,6 +159,8 @@ function DataChart({
 
   //var svg = d3.select('#chart')
   var svg;
+
+  // TODO svg should probably be just the parent svg? re: correct ele when handling zoom and pan?
   var svg = d3.select('#' + parentElementIdName)
     .append("div")
     .classed("svg-container", true)
@@ -167,6 +174,7 @@ function DataChart({
     .on("dblclick.zoom", null)          // cancels double-clicking to zoom
     .on("dblclick", ourDlbClick)
 
+    // Re above TODO - here - probably should not be part of the svg object returned above
     .append("svg")
     .attr("width", chartWidth) //width + margin.left + margin.right)
     .attr("height", chartHeight) //height + margin.top + margin.bottom)
@@ -329,7 +337,8 @@ function DataChart({
     //xScale.domain([0, n-1]);
     //console.log(xScale);
     // wow.
-    svg.select("g.x.axis").call(d3.axisBottom().scale(xScale));
+    //svg.select("g.x.axis").call(d3.axisBottom().scale(xScale));
+    gX.call(xAxis.scale(xScale));
 
     // Y-axis in a group tag
     // svg.append("g")
@@ -342,7 +351,8 @@ function DataChart({
     // svg.append("g")
     //   .attr("class", "y axis")
     //   .call(d3.axisLeft(yScale)); // Create an axis component with d3.axisLeft
-    svg.select("g.y.axis").call(d3.axisLeft().scale(yScale));
+    //svg.select("g.y.axis").call(d3.axisLeft().scale(yScale));
+    gY.call(yAxis.scale(yScale));
 
     // Data line in a path tag
     // svg.append("path")
@@ -358,7 +368,7 @@ function DataChart({
     .datum(dataset)
     .attr("class", "line")
     .attr("d", line)
-    //.style("stroke-width", strokeWidth)
+    .style("stroke-width", strokeWidth)
     ;
 
   }
@@ -366,28 +376,17 @@ function DataChart({
 
 
   function ourDlbClick(d) {
+
     // now to reset on the correct element so after scale reset, there isn't a 
-    // jump when a scroll changes an old remaining k != 1
-    // This grabs the correct source element
+    // jump when a scroll changes an old remaining k != 1 -- This grabs the correct source element
     zoom.scaleTo(d3.select(d.srcElement).transition(500), 1);
 
-    // Prior was:
-    // But see note in filter (shift case) and the svg this grabs vs the desired event source svg
-    //svg.transition().duration(500).call(zoom.transform, d3.zoomIdentity.scale(1));
-    
-    
-    
-    //.translate(margin.left + margin.right,0)); // already done in the zoomed() now
-
-
-
-    // TODONE WASBUG there is still a bug where after reset, the next (scroll wheel at least)
-    // attempt to zoom snaps right back to the last transform/zoom and thus doesn't make
-    // any UI sense ...
-    // Probably just add some capture and assign?
-
-
   }
+
+
+
+
+
 
 
   // NOTE:
@@ -395,10 +394,8 @@ function DataChart({
   // we see this indeed - as holding Shift + mouse wheel does not fire any zoom event at all
   // See also:
   // https://github.com/d3/d3/pull/1938
-  // I think now we move to d3 as an npm module perhaps?
-  //
+  // I think now we move to d3 as an npm module perhaps? Yes - done.  //
 
-  var currentTransform;
   function zoomed(e) {
     //console.log(d3.event.translate);  // v3
     //console.log(d3.event.scale);      // v3
@@ -550,7 +547,10 @@ function DataChart({
       zoom.scaleBy(d3.select(event.srcElement), Math.pow(2, -1.0*event.deltaX/10. * 0.002));
 
     } else {
-      return ( event.type === 'wheel' && !event.button );
+      //return ( event.type === 'wheel' && !event.button ); // this will prevent panning
+      // Below allows panning like drag - even though this event does not explicitly fire (?)
+      // but in zoomed it is the mousemoved after the click event (mousedown) fire this filter function
+      return (!event.ctrlKey || event.type === 'wheel') && !event.button; // this passes panning
     }
 
 
