@@ -107,7 +107,7 @@ function DataChart({
   //
   var xScale;
   xScale = d3.scaleLinear()
-      .domain([0, n-1]) // input
+      .domain([0, n-1]) // input  // TODO do just n, not n-1 ? for charting purposes?
       .range([0, width]); // output
 
   var xAxis;
@@ -134,11 +134,22 @@ function DataChart({
   //var yAxisGrid = d3.axisLeft(y).tickSize(-chartWidth).tickFormat('').ticks(10);
 
 
-  // d3 line generator'
+  // d3 line generator
+  // https://stackoverflow.com/questions/35782130/how-to-limit-a-d3-line-chart-from-showing-the-line-outside-of-the-range-of-the-a
   var line;
+  // var xMax, xMin, yMax, yMin;
+  // [xMin, xMax] = xScale.domain();
+  // [yMin, yMax] = yScale.domain();
   line = d3.line()
-      .x(function(d, i) { return xScale(i); }) // set the x values for the line generator
-      .y(function(d) { return yScale(d); }) // yScale(d.y); }) // set the y values for the line generator
+      // .defined( function(d, i) {
+      //   return (i <= xMax && i >= xMin) && (d <= yMax && d >= yMin);
+      // })
+      .x(function(d, i) { 
+        return xScale(i); 
+      }) // set the x values for the line generator
+      .y(function(d) { 
+        return yScale(d); 
+      }) // yScale(d.y); }) // set the y values for the line generator
       .curve(d3.curveMonotoneX) // apply smoothing to the line
       ;
 
@@ -155,34 +166,68 @@ function DataChart({
   }
 
 
-
+ 
 
   //var svg = d3.select('#chart')
   var svg;
 
   // TODO svg should probably be just the parent svg? re: correct ele when handling zoom and pan?
-  var svg = d3.select('#' + parentElementIdName)
+  svg = d3.select('#' + parentElementIdName)
     .append("div")
     .classed("svg-container", true)
     .append("svg")
     .attr("preserveAspectRatio", "xMinYMin meet")
     .attr("viewBox", "0 0 " + chartWidth + " " + chartHeight)
     .classed("svg-content-responsive", true)
-    //.call(zoom.on("zoom", zoomed))
-    //.call(zoom.on("start", zoomedfilter))
     .call(zoom) // defined above and yes required, enabled the defined zoom defs above
     .on("dblclick.zoom", null)          // cancels double-clicking to zoom
     .on("dblclick", ourDlbClick)
+    .append("g")
+    // https://stackoverflow.com/questions/51562401/d3-slow-zoomable-heatmap/51563890#51563890
+    .attr("transform", "translate(" + (margin.left + margin.right) + "," + chartBodyTranslateYTopPadding + ")")
+    ;
 
-    // Re above TODO - here - probably should not be part of the svg object returned above
-    .append("svg")
+  // Trying clip path instead of line().defined(..) 
+  // https://stackoverflow.com/questions/25142240/how-to-apply-d3-js-svg-clipping-after-zooming
+  var clip;
+  clip = 
+    //svg.append("defs")
+    svg
+    .append("clipPath")
+    .attr("id", "clip")
+    .append("rect")
+    //.attr("x", 40)
+    //.attr("y", 10)
+    .attr("width", chartWidth)
+    .attr("height", chartHeight-margin.bottom-margin.top)
+    ;
+
+  // var clippedContainer; 
+  // clippedContainer = svg.append("g")
+  //   .attr("clip-path", "url(#clip)")
+  //   ;
+
+  var chartBody;
+  chartBody = 
+    svg.append("g")
+    //.attr("clip-path", "url(#clip)")
+    //clippedContainer.append("g")
     .attr("width", chartWidth) //width + margin.left + margin.right)
     .attr("height", chartHeight) //height + margin.top + margin.bottom)
-
     .append("g")
     .classed("chartBody", true)
-    .attr("transform", "translate(" + (margin.left + margin.right) + "," + chartBodyTranslateYTopPadding + ")") // latter value was 0, but Y top gets cut off
+    //.attr("transform", "translate(" + (margin.left + margin.right) + "," + chartBodyTranslateYTopPadding + ")") // latter value was 0, but Y top gets cut off
     ;
+
+
+
+
+
+
+
+
+
+
 
 
   // Trying above responsive svg, per:
@@ -191,16 +236,26 @@ function DataChart({
   // http://thenewcode.com/744/Make-SVG-Responsive
 
 
+
+  
+
+
   // X-axis in a group tag
-  const gX = svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis); // Create an axis component with d3.axisBottom
+  const gX = 
+    //svg.append("g")
+    chartBody.append("g")
+    //clippedContainer.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis); // Create an axis component with d3.axisBottom
 
   
   // Y-axis in a group tag
   // Yes, the plain y axis needs to be appended first it seems
-  const gY = svg.append("g")
+  const gY = 
+    //svg.append("g")
+    chartBody.append("g")  
+    //clippedContainer.append("g")
     .attr("class", "y axis")
     //.attr("transform", "translate(0,0)") // added for trying to get y axis to track with zoom instead of going off screen eg
     .call(yAxis); // Create an axis component with d3.axisLeft
@@ -248,12 +303,40 @@ function DataChart({
     */
 
   // Data line in a path tag
-  svg.append("path")
-      .datum(dataset)
-      .attr("class", "line")
-      .attr("d", line)
-      .style("stroke-width", strokeWidth)
-      ;
+  // Now we are adding the path group as an appendage to the group clipped by path
+  //svg.append("path")
+  //chartBody.append("path")
+  // Good:
+  // chartBody.append("g")
+  //   .attr("clip-path", "url(#clip)")
+  //   .append("g")
+  //     .append("path")
+  //     .datum(dataset)
+  //     .attr("class", "line")
+  //     .attr("d", line)
+  //     .style("stroke-width", strokeWidth)
+  //     ;
+
+  var chartBodyClipped;
+  chartBodyClipped = 
+    chartBody.append("g")
+    .attr("clip-path", "url(#clip)")
+    .append("g")
+    ;
+
+  chartBodyClipped
+    .append("path")
+    .datum(dataset)
+    .attr("class", "line")
+    .attr("d", line)
+    .style("stroke-width", strokeWidth)
+    ;
+
+
+
+
+
+
 
 
 
@@ -364,12 +447,14 @@ function DataChart({
     //console.log(dataset);
 
     svg.selectAll("path.line").remove();
-    svg.append("path")
-    .datum(dataset)
-    .attr("class", "line")
-    .attr("d", line)
-    .style("stroke-width", strokeWidth)
-    ;
+    //svg.append("path")
+    chartBodyClipped
+      .append("path")
+      .datum(dataset)
+      .attr("class", "line")
+      .attr("d", line)
+      .style("stroke-width", strokeWidth)
+      ;
 
   }
 
@@ -448,9 +533,32 @@ function DataChart({
     //svg.select("g.y.axis").call(yAxis.scale(newY));
     gX.call(xAxis.scale(newX));
     gY.call(yAxis.scale(newY));
+
+    // This does work as an option to prevent plotting data outside of the zoomed 
+    // axes (outside the axes but still within the view window)
+    // However, things look weird on a continuous line when the outer data points go away 
+    // thereby making it look like a piece wise graph with gaps as some other points are 
+    // back within the chart ranges and the data points are what is connected by lines
+    // So the alternate is to use a clipping shape perhaps
+    // https://stackoverflow.com/questions/35782130/how-to-limit-a-d3-line-chart-from-showing-the-line-outside-of-the-range-of-the-a
+    // https://gist.github.com/mbostock/4015254
+    // However the items here connect to the line().defined(...) as implemented and commented below:
+    // < OPTION >
+    // var xMax, xMin, yMax, yMin;
+    // [xMin, xMax] = newX.domain();
+    // [yMin, yMax] = newY.domain();
+    // </ OPTION >
+
     line = d3.line()
-      .x(function(d, i) { return newX(i); }) // set the x values for the line generator
-      .y(function(d) { return newY(d); }) // yScale(d.y); }) // set the y values for the line generator
+      // .defined( function(d, i) {
+      //   return (i <= xMax && i >= xMin) && (d <= yMax && d >= yMin);
+      // })
+      .x(function(d, i) { 
+        return newX(i); 
+      }) // set the x values for the line generator
+      .y(function(d) { 
+        return newY(d); 
+      }) // yScale(d.y); }) // set the y values for the line generator
       .curve(d3.curveMonotoneX) // apply smoothing to the line
     ;
 
@@ -576,11 +684,14 @@ function DataChart({
   async function update(newdata) {
 
     svg.selectAll("path.line").remove();
-    svg.append("path")
-        .datum(newdata) // 10. Binds data to the line
-        .attr("class", "line") // Assign a class for styling
-        .attr("d", line)
-        ;
+    //svg.append("path")
+    chartBodyClipped 
+      .append("path")
+      .datum(newdata) // 10. Binds data to the line
+      .attr("class", "line") // Assign a class for styling
+      .attr("d", line)
+      ;
+
   } // update
 
 
@@ -613,7 +724,9 @@ function DataChart({
 
         // Get the latest data snapshot
         svg.selectAll("path.line").remove();
-        svg.append("path")
+        //svg.append("path")
+        chartBodyClipped 
+          .append("path")
           .datum(this._chartBuffer) // if you use this. here, the intended functionality of course breaks due to structure implemented here
           .attr("class", "line")
           .attr("d", line)
@@ -733,14 +846,16 @@ function DataChart({
     xScale = d3.scaleLinear()
         .domain([minx, maxx]) // input
         .range([0, width]); // output
-    svg.select("g.x.axis").call(d3.axisBottom().scale(xScale))
+    //svg.select("g.x.axis").call(d3.axisBottom().scale(xScale))
+    gX.call(xAxis.scale(xScale));
 
     let miny = Math.min(...newBufferY);
     let maxy = Math.max(...newBufferY);
     yScale = d3.scaleLinear()
         .domain([miny, maxy]) // input
         .range([height, 0]); // output
-    svg.select("g.y.axis").call(d3.axisLeft().scale(yScale));
+    //svg.select("g.y.axis").call(d3.axisLeft().scale(yScale));
+    gY.call(yAxis.scale(yScale));
 
     freshData = true;
 

@@ -1971,7 +1971,97 @@
       "buttons" : [
 
         {
-          "title": "FFT",
+          "title": "Get FW Rev (Wake)",
+          "command": {
+            "type": "hexCsvBytes",
+            "value": "0x53, 0x93, 0x00, 0x00, 0x50"
+          },
+          "description": "",
+          "returnDataTo" : "log"
+        },
+
+        {
+          "title": "BL: Reboot Module",
+          "command": {
+            "type": "hexCsvBytes",
+            "value": "0x53, 0xdd, 0x0F, 0x03, 0x50"
+          },
+          "description": "Test for sending back sequence of bytes - originally was a loopback",
+          "returnDataTo" : "log",
+          "options" : [
+            {
+              "key" : "replyTimeoutMs",
+              "value" : 6000 
+            },{
+              "key" : "singleCaptureBufferWithSpecificSizeBytes",
+              "value" : 64,
+              "note" : "64 byte loopback test"
+            }
+          ]
+        },
+
+        {
+          "title": "Test Loopback",
+          "command": {
+            "type": "hexCsvBytes",
+            "value": "0x53, 0xdd, 0x01, 0x01, 0x50"
+          },
+          "description": "Test for sending back sequence of bytes - originally was a loopback",
+          "returnDataTo" : "log",
+          "options" : [
+            {
+              "key" : "replyTimeoutMs",
+              "value" : 6000 
+            },{
+              "key" : "singleCaptureBufferWithSpecificSizeBytes",
+              "value" : 64,
+              "note" : "64 byte loopback test"
+            }
+          ]
+        },
+
+        {
+          "title": "ADC Test",
+          "command": {
+            "type": "hexCsvBytes",
+            "value": "0x53, 0xdd, 0x01, 0x02, 0x50"
+          },
+          "description": "Run some ADC test commands",
+          "returnDataTo" : "log",
+          "options" : [
+            {
+              "key" : "replyTimeoutMs",
+              "value" : 6000 
+            },{
+              "key" : "singleCaptureBufferWithSpecificSizeBytes",
+              "value" : 64,
+              "note" : "64 byte loopback test"
+            }
+          ]
+        },
+
+        {
+          "title": "Acq HRes WF VN2E UA",
+          "command": {
+            "type": "hexCsvBytes",
+            "value": "0x53, 0xdd, 0x01, 0x03, 0x50"
+          },
+          "description": "Get the high time resolution (nominally 2kHz) voltage (unattenuated) for N2E",
+          "returnDataTo" : "log",
+          "options" : [
+            {
+              "key" : "replyTimeoutMs",
+              "value" : 6000 
+            },{
+              "key" : "singleCaptureBufferWithSpecificSizeBytes",
+              "value" : 64,
+              "note" : "This is a DO command without returning a result"
+            }
+          ]
+        },
+
+        {
+          "title": "FFT [bin]",
           "command": {
             "type": "hexCsvBytes",
             "value": "0x53, 0xdd, 0x01, 0x05, 0x50"
@@ -1987,12 +2077,11 @@
               "value" : 12304,
               "note" : "3*4*1024+16 for 1024 FFT bins with 3 floats per bin and 4 bytes per float (32-bit) plus 16 bytes overhead of response DL ADMN5 CMD OK or whatever"
             }
-          ],
-          "parser" : "admn5-fft-bin"
+          ]
         },
 
         {
-          "title": "FFT (No DC)",
+          "title": "FFT (No DC) [bin]",
           "command": {
             "type": "hexCsvBytes",
             "value": "0x53, 0xdd, 0x01, 0x06, 0x50"
@@ -2013,7 +2102,7 @@
         },
 
         {
-          "title": "Chain: Acq + FFT",
+          "title": "Chain: Acq + FFT (Glitchy right now)",
           "command": {
             "type": "hexCsvBytesChained",
             "chainedCmdDelayMs" : "6000",
