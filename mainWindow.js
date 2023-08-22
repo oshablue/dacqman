@@ -364,7 +364,10 @@ var resetReadableStream = function(chunkMultiple, chunkSizeBytes) {
               var destInd = 0;
               var mag = 0.0;
               var NaNMagFlag = false;
-              while ( destInd*12+12+offs < chunk.length ) {
+              // In early testing we used format of 3 floats per data point
+              // Now it is just 2, the freq and normalized magnitude
+              //while ( destInd*12+12+offs < chunk.length ) {
+              while ( destInd*8+8+offs < chunk.length ) {
                 // See IEEE-754 Float format for NaN (like when /0.0 or when FFT has no data 
                 // yet and a waveform needs to be acquired first
                 // Then data coming in for the magniture looks like:
@@ -372,8 +375,11 @@ var resetReadableStream = function(chunkMultiple, chunkSizeBytes) {
                 // which as little endian is 0x7f c0 00 00 which is actually NaN 
                 // see: https://www.h-schmidt.net/FloatConverter/IEEE754.html for example
                 // float sets like [ binIndex, freq, magNormd ]
-                admn5ParsedBufX[destInd] = v.getFloat32(offs + destInd*12 + 4, true); // true = little endian - it matters
-                mag = v.getFloat32(offs + 12*destInd + 8, true);
+                // update: float sets like [ freq, magNormd ]
+                //admn5ParsedBufX[destInd] = v.getFloat32(offs + destInd*12 + 4, true); // true = little endian - it matters
+                admn5ParsedBufX[destInd] = v.getFloat32(offs + destInd*8, true); 
+                //mag = v.getFloat32(offs + 12*destInd + 8, true);
+                mag = v.getFloat32(offs + 8*destInd + 4, true);
                 if ( isNaN(mag) ) {
                   mag = 0.0;
                   NaNMagFlag = true;

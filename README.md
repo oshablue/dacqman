@@ -1059,6 +1059,8 @@ relying on the error-free data streams.
 - CRC implementation
 - B-Scan with customizable A-scan - to - position - in - space UI control (UI/UX bin here)
 - A million other things
+- Small items:
+  - Currently single-waveform mute control is not implemented - perhaps we may want that some time
 
 
 ## TDD

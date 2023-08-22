@@ -53,6 +53,7 @@ function DataChart({
   var freshData = false;
 
   var currentTransform;
+  var lastYDomain = [];
 
   this._parentElementIdName = parentElementIdName;
   this._reqId = null;
@@ -118,9 +119,12 @@ function DataChart({
   //
   var yInputMaxVal = 255;
   var yScale; 
+  lastYDomain = [0, yInputMaxVal]; // or just leave it as defined next ... gets otherwise stored in switch to log y scale
   yScale = d3.scaleLinear()
-      .domain([0, yInputMaxVal]) // input
+      .domain(lastYDomain) //[0, yInputMaxVal]) // input
       .range([height, 0]); // output
+      //.range([0, height])
+      ;
 
   var yAxis;
   // https://observablehq.com/@d3/pan-zoom-axes
@@ -128,6 +132,7 @@ function DataChart({
   yAxis = d3.axisLeft(yScale)
     .ticks(10)
     .tickSize(-chartWidth)
+    ;
 
 
   // Y Axis Grid Setup
@@ -260,6 +265,39 @@ function DataChart({
     //.attr("transform", "translate(0,0)") // added for trying to get y axis to track with zoom instead of going off screen eg
     .call(yAxis); // Create an axis component with d3.axisLeft
 
+  svg.selectAll(".y.axis")
+    .on("dblclick", function(d) {
+
+      var scaleType = guessScaleType(yScale);
+
+      if ( !scaleType ) {
+        // Currently allow propagation, ie below is commented out:
+        // d.stopPropagation();
+        return;
+      }
+
+
+      switch ( scaleType ) {
+
+        case 'linear':
+          switchYScaleToLog();
+          break;
+
+        case 'log':
+          switchYScaleToLinear();
+          break;
+
+        default:
+          // Currently allow propagation
+          return;
+
+      }
+
+      d.stopPropagation();
+
+    })
+    ; // end of: y axis on dblclick
+
     // ***
     // TODO TO TEST - alternately could try to implement like minor gridlines too 
     // as another Y axis and then in the zoom function(s) just scale and re-add both (?)
@@ -362,7 +400,9 @@ function DataChart({
     //var yScale; 
     yScale = d3.scaleLinear()
         .domain([0, yInputMaxVal]) // input
-        .range([height, 0]); // output
+        .range([height, 0]) // output
+        //.range([0, height])
+        ;
 
     // Y Axis Grid Setup
     //var yAxisGrid = d3.axisLeft(y).tickSize(-chartWidth).tickFormat('').ticks(10);
@@ -666,12 +706,129 @@ function DataChart({
   }
 
 
-  // function zoomedfilter() {
 
-  //   console.log("zoomedfilter");
 
-  // } // end of zoomedfilter
 
+
+
+
+  function switchYScaleToLinear() {
+
+    //console.log("dblclick");
+    var dmin, dmax, rmin, rmax;
+    [dmin, dmax] = lastYDomain; // yScale.domain();
+    [rmin, rmax] = yScale.range();
+
+    yScale = d3.scaleLinear()
+      .domain([dmin, dmax]) // input
+      .range([rmin, rmax]); // output
+    gY.call(yAxis.scale(yScale));
+    line = d3.line()
+      .x(function(d, i) { 
+        return xScale(i); 
+      })
+      .y(function(d) { 
+        return yScale(d); 
+      })
+      .curve(d3.curveMonotoneX) // apply smoothing to the line
+      ;
+
+    svg
+      .selectAll("path.line")
+      .style("stroke-width", strokeWidth ) //  / Math.sqrt(currentTransform.k) ) // strokeWidth now seems to scale ? v6
+      .attr("d", line)
+      ;
+
+  } // end of: switchYScaleToLinear
+
+
+
+
+
+
+
+
+
+  function switchYScaleToLog() {
+
+     //console.log("dblclick");
+     var dmin, dmax, rmin, rmax;
+     [dmin, dmax] = yScale.domain();
+     [rmin, rmax] = yScale.range();
+     lastYDomain = [dmin, dmax];
+     
+     // WARN this will not always work of course:
+     var addTinyOffsetAmount = Math.min(...[dmin, dmax]) * 1e-5 + 1e-5;
+
+     //dmin = Math.abs(dmin) + addTinyOffsetAmount; // + 0.0001
+
+     // Alternate minimum 
+     var datArrayY = svg.selectAll("path.line").data()[0]; // gets to the Float32Array[1024] eg
+
+    // Get the 2nd smallest value or whatever is greater than zero
+    dmin = Math.min.apply(null, datArrayY.map(Math.abs).filter( function(v) { return v > 0; }))
+    if ( isNaN(dmin) || !isFinite(dmin) ) {
+      dmin = addTinyOffsetAmount;
+    }
+
+     yScale = d3.scaleLog()
+       .domain([dmin, dmax]) // input // TODO floor to 1
+       .range([rmin, rmax]); // output
+     gY.call(yAxis.scale(yScale));
+     line = d3.line()
+       .x(function(d, i) { 
+         return xScale(i); 
+       }) // set the x values for the line generator
+       .y(function(d) { 
+         d = d > 0 ? d : Math.abs(d) + addTinyOffsetAmount; // + 0.0001
+         return yScale(d); 
+       }) // yScale(d.y); }) // set the y values for the line generator
+       .curve(d3.curveMonotoneX) // apply smoothing to the line
+       ;
+     //svg.selectAll("path.line").remove()
+     //  ;
+     //chartBodyClipped
+     svg
+       .selectAll("path.line")
+       .style("stroke-width", strokeWidth ) //  / Math.sqrt(currentTransform.k) ) // strokeWidth now seems to scale ? v6
+       .attr("d", line)
+       ;
+
+  } // end of: switchYScaleToLog
+
+
+
+
+
+
+
+
+
+
+
+  function guessScaleType(scale) {
+
+    // To find out if eg yScale is log or linear, could use like:
+    // typeof yScale.base === 'function' 
+    // and for a linear scale, this function does not exist and this test returns false 
+    // for for a log scale it will return 2 or 10 or whatever was set and this will be a function
+    // Or maybe like yScale.hasOwnProperty('base') [true for scaleLog, false for scaleLinear]
+    if (!scale) {
+      console.warn(`scale is nothing - returning.`);
+      return;
+    }
+
+    if ( typeof scale.base === 'function' || scale.hasOwnProperty('base') ) {
+      return 'log';
+    } 
+
+    if ( typeof scale.base !== 'function' || !scale.hasOwnProperty('base') ) {
+      return 'linear';
+    }
+
+    return null;
+
+  }
 
 
 

@@ -23,6 +23,7 @@
   "dependencies": {
     "audio-generator": "^2.1.2",
     "audio-speaker": "^1.5.1",
+    "crc": "^4.3.2",
     "csv": "^5.3.2",
     "d3": "^6.7.0",
     "data-table": "^2.0.0",

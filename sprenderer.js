@@ -2119,7 +2119,8 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
             admn5ParsedBufY = new Float32Array(1024).fill(0);
             // Trying - TODO - should implement from the button options
             // and or may not need if now the button options correctly fires
-            resetReadableStream(1, 1024*3*4+16); // 12 bytes per set + 16 overhead - but the FFT len will be graphed
+            // Still needed: ? or is it correctly set below
+            //resetReadableStream(1, 1024*3*4+16); // 12 bytes per set + 16 overhead - but the FFT len will be graphed
             // TODO actually - buf len should reflect the overhead of early conf of comd
           }
           // TODO now also clear out like the admn5 parser accumulator
@@ -2213,6 +2214,12 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
             launchProgressCountdown( commandReplyTimeoutMs );
 
             // Also this, as above (TODO DRY)
+            readableStreamBufferGraphIntervalUpdateId = // defined in mainWindow.js
+            setInterval( function() {
+              // TODO 
+              console.log(ourReadableStreamBuffer.size());
+            }, 500);
+
             // TODO also set diff b/w ow long to return all data vs how long to wait for any reply at all
             // which are 2 very different things for long data sets
             readableStreamBufferGraphCompleteTimeoutId = // defined in mainWindow.js
@@ -2230,13 +2237,15 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
                   console.log("ourReadableStreamBuffer.size(): " + ourReadableStreamBuffer.size());
                 }
               }
+
+              // Worst case, cancel this interval update at the end of the exptected time allowance
+              if ( readableStreamBufferGraphIntervalUpdateId ) {
+                clearTimeout(readableStreamBufferGraphIntervalUpdateId);
+                readableStreamBufferGraphIntervalUpdateId = null;
+              }
             }, commandReplyTimeoutMs);
 
-            readableStreamBufferGraphIntervalUpdateId = // defined in mainWindow.js
-            setInterval( function() {
-              // TODO 
-              console.log(ourReadableStreamBuffer.size());
-            }, 500);
+            
 
             break;
 

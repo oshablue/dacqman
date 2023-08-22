@@ -473,7 +473,7 @@ if (process.platform === 'darwin') {
 
   // Still shows "electron" top left on Mac unless re-package
   mainMenuTemplate.unshift({
-    label: app.getName(),
+    label: app.name, //getName(),
     submenu: [
       { role: 'about' },
       { type: 'separator' },

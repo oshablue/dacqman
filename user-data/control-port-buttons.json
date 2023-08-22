@@ -1979,6 +1979,58 @@
           "description": "",
           "returnDataTo" : "log"
         },
+        
+        {
+          "title": "Test While Loop Stuck for IWDG Reset Cause Check",
+          "command": {
+            "type": "hexCsvBytes",
+            "value": "0x53, 0xdd, 0x01, 0x0E, 0x50"
+          },
+          "description": "Get stuck for a while",
+          "returnDataTo" : "log",
+          "options" : [
+            {
+              "key" : "replyTimeoutMs",
+              "value" : 1000 
+            }
+          ]
+        },
+
+        {
+          "title": "Last Reset Cause",
+          "command": {
+            "type": "hexCsvBytes",
+            "value": "0x53, 0xdd, 0x01, 0x0F, 0x50"
+          },
+          "description": "Get last reset cause from the admn5 module",
+          "returnDataTo" : "log",
+          "options" : [
+            {
+              "key" : "replyTimeoutMs",
+              "value" : 6000 
+            },{
+              "key" : "singleCaptureBufferWithSpecificSizeBytes",
+              "value" : 64,
+              "note" : "64 byte char buf returned?"
+            }
+          ]
+        },
+        
+        {
+          "title": "Test CRC32 on a const test byte array",
+          "command": {
+            "type": "hexCsvBytes",
+            "value": "0x53, 0xdd, 0x01, 0x0D, 0x50"
+          },
+          "description": "Tests a pipelined byte to cast 32-bit CRC32 hardware functionality and returns as string the output",
+          "returnDataTo" : "log",
+          "options" : [
+            {
+              "key" : "replyTimeoutMs",
+              "value" : 1000 
+            }
+          ]
+        },
 
         {
           "title": "BL: Reboot Module",
@@ -1991,7 +2043,7 @@
           "options" : [
             {
               "key" : "replyTimeoutMs",
-              "value" : 6000 
+              "value" : 2000 
             },{
               "key" : "singleCaptureBufferWithSpecificSizeBytes",
               "value" : 64,
@@ -2074,8 +2126,11 @@
               "value" : 6000 
             },{
               "key" : "singleCaptureBufferWithSpecificSizeBytes",
-              "value" : 12304,
-              "note" : "3*4*1024+16 for 1024 FFT bins with 3 floats per bin and 4 bytes per float (32-bit) plus 16 bytes overhead of response DL ADMN5 CMD OK or whatever"
+              "value" : 8208,
+              "notes" : [
+                "12304 was for 3*4*1024+16 for 1024 FFT bins with 3 floats per bin and 4 bytes per float (32-bit) plus 16 bytes overhead of response DL ADMN5 CMD OK or whatever",
+                "8208 is for 2*4*1024+16 updated to have no index for row to shorten data transmission"
+              ]
             }
           ]
         },

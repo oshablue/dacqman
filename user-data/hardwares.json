@@ -111,6 +111,21 @@
       ]
     }
 
+  ],
+
+  "accessories" : [
+
+    {
+      "shortname" : "ADMN5",
+      "hresWfLenSamples" : 2048,
+      "fftLenBins" : 1024,
+      "fftBinDataLenBytes" : 12,
+      "comments" : [
+        "json this structure is not yet implemented in code"
+      ] 
+    }
+
+
   ]
 
 }
