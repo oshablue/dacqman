@@ -96,6 +96,21 @@
     },
 
     {
+      "fullname" : "DL-Series-by-Bluetooth",
+      "shortname" : "DL",
+      "numberOfChannels" : 8,
+      "waveformLengthSamples" : 2500,
+      "waveformBytesPerSample" : 1,
+      "numberOfMatchingComPorts" : 1,
+      "comPortDeviceIdTextTypicallyContains" : "UltraCouponDataLogger",
+      "dataPortType" : "SameAsControl",
+      "controlPortBaudRate" : 57600,
+      "comments" : [
+        "controlPort and dataPort are the same and thus only the one baud rate kvp is supplied in this hardware description"
+      ]
+    },
+
+    {
       "fullname" : "DL-Series-by-USB-TTLSerial-Adapter",
       "shortname" : "DL",
       "numberOfChannels" : 8,

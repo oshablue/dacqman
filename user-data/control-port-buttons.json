@@ -258,7 +258,7 @@
   "buttons" : [
 
     {
-      "title": "Get FW Rev",
+      "title": "Get FW Rev (legacy)",
       "command": {
         "type": "hexCsvBytes",
         "value": "0x53, 0x93, 0x00, 0x00, 0x50"
@@ -266,6 +266,21 @@
       "description": "",
       "returnDataTo" : "log"
     },
+
+    
+
+
+    {
+      "title": "Get FW Info (JSON)",
+      "command": {
+        "type": "hexCsvBytes",
+        "value": "0x53, 0x93, 0x01, 0x00, 0x50"
+      },
+      "description": "Arg1 as 0x01 means get the json implementation that includes the buildTime and buildDate hopefully",
+      "returnDataTo" : "log"
+    },
+
+
 
 
     {
@@ -1367,7 +1382,7 @@
 
 
   {
-    "name" : "ADMM Real Measurements Voltage",
+    "name" : "ADMM Real Measurements Potentials",
 
     "buttons": [
 
@@ -1429,6 +1444,32 @@
         },
         "description": "arg2 = (N2W = 0x03) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
         "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get N2S Voltage - Inactive Bridge Relay w Attenuation (to chart)",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x44, 0x50"
+        },
+        "description": "arg2 = (N2S = 0x04 for Instant Off N2S) | (BRIDGE_BIT = 0x80 = N/A for Instant Off) | (ATTEN_BIT = 0x40)",
+        "returnDataTo" : "chart",
+        "options" : [
+          {
+            "key" : "singleCaptureBuffer",
+            "value" : "true"
+          }
+        ]
+      },
+
+      {
+        "title": "Get N2S Voltage - Inactive Bridge Relay w Attenuation (to log)",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x44, 0x50"
+        },
+        "description": "arg2 = (N2S = 0x04 for Instant Off N2S) | (BRIDGE_BIT = 0x80 = N/A for Instant Off) | (ATTEN_BIT = 0x40)",
+        "returnDataTo" : "log"
       }
 
     ]
@@ -1436,6 +1477,41 @@
   },
 
 
+
+
+
+
+
+
+
+  {
+    "name" : "ADMM Instant Off (Voltage) Functions",
+
+    "buttons": [
+
+      {
+        "title": "Instant Off (N2S)",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x04, 0x50"
+        },
+        "description": "NOTE:",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Instant Off (N2S Attenuated)",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x44, 0x50"
+        },
+        "description": "NOTE: ",
+        "returnDataTo" : "log"
+      }
+
+    ]
+
+  },
 
 
 
@@ -1467,6 +1543,26 @@
         },
         "description": "arg2 = (E2SACRMS = 0x07) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
         "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get E2S Voltage (Current DC) High Range (Unamp) - Get E2S Voltage across jumpered R",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x0B, 0x50"
+        },
+        "description": "NOTE: Was same function as 0x0A but that has been changed to unimplemented at the moment.",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get E2S Voltage (Current AC Calc'd RMS) High Range (Unamp) - Get E2S Voltage WF & Process across jumpered R",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x09, 0x0C, 0x50"
+        },
+        "description": "NOT YET IMPLEMENTED: Get E2S across the measurement R as jumpered but no amplification and grab a WF and calc RMS",
+        "returnDataTo" : "log"
       }
 
     ]
@@ -1492,6 +1588,16 @@
     "name" : "ADMM QA & Cal",
 
     "buttons": [
+
+      {
+        "title": "Read ADC Registers",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x0a, 0x01, 0x50"
+        },
+        "description": "NOT YET IMPLEMENTED: Get E2S across the measurement R as jumpered but no amplification and grab a WF and calc RMS",
+        "returnDataTo" : "log"
+      },
 
       {
         "title": "Step 1: Chain: N2E/S 3x Each UA & AT",
@@ -1629,6 +1735,96 @@
           "value": "0x53, 0xD9, 0x09, 0x09, 0x50"
         },
         "description": "For offset or zero calibration purposes ... arg2 = (E2SACRMS = 0x07) | (BRIDGE_BIT = 0x80) | (ATTEN_BIT = 0x40)",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get E2S Internal Cal Current AINs Direct 250uA AMP",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x03, 0xbF, 0x50"
+        },
+        "description": "arg2 = 0x30 = 0b011 for current magnitude 250uA | do current cal | 0x80 for yes use current AMP signal output",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get E2S Internal Cal Current AINs Direct 500uA AMP",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x03, 0xcF, 0x50"
+        },
+        "description": "arg2 = 0x30 = 0b100 = 500uA for current magnitude | do current cal | 0x80 for yes use current AMP signal output",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get E2S Internal Cal Current AINs Direct 750uA AMP",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x03, 0xdF, 0x50"
+        },
+        "description": "arg2 = 0x30 = 0b101 for current magnitude | do current cal | 0x80 for yes use current AMP signal output",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get E2S Internal Cal Current AINs Direct 1000uA AMP",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x03, 0xeF, 0x50"
+        },
+        "description": "arg2 = 0x30 = 0b110 for current magnitude | do current cal | 0x80 for yes use current AMP signal output",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get E2S Internal Cal Current AINs Direct 1500uA AMP",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x03, 0xfF, 0x50"
+        },
+        "description": "arg2 = 0x30 = 0b111 for current magnitude | do current cal | 0x80 for yes use current AMP signal output",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get E2S Internal Cal Current AINs Direct 1000uA NO AMP",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x03, 0x6F, 0x50"
+        },
+        "description": "arg2 = 0x30 = 0b110 for current magnitude | do current cal",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get E2S Internal Cal Current AINs Direct 1500uA NO AMP",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x03, 0x7F, 0x50"
+        },
+        "description": "arg2 = 0x30 = 0b111 for current magnitude | do current cal",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Get E2S Internal Cal Current AINs Direct OFF",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x03, 0x0F, 0x50"
+        },
+        "description": "arg2 = 0x30 = 0b00 = OFF and disconnect IDAC| do current cal test",
+        "returnDataTo" : "log"
+      },
+
+      {
+        "title": "Current Cal Series (for Jumper Position Detect)",
+        "command": {
+          "type": "hexCsvBytes",
+          "value": "0x53, 0xD9, 0x03, 0x01, 0x50"
+        },
+        "description": "Runs the current cal series for jp posn detect inference using what used to be detect_connx comd that was never implemented",
         "returnDataTo" : "log"
       }
 
@@ -2007,7 +2203,7 @@
           "options" : [
             {
               "key" : "replyTimeoutMs",
-              "value" : 6000 
+              "value" : 1000 
             },{
               "key" : "singleCaptureBufferWithSpecificSizeBytes",
               "value" : 64,
@@ -2063,7 +2259,7 @@
           "options" : [
             {
               "key" : "replyTimeoutMs",
-              "value" : 6000 
+              "value" : 1000 
             },{
               "key" : "singleCaptureBufferWithSpecificSizeBytes",
               "value" : 64,
@@ -2083,7 +2279,7 @@
           "options" : [
             {
               "key" : "replyTimeoutMs",
-              "value" : 6000 
+              "value" : 3000 
             },{
               "key" : "singleCaptureBufferWithSpecificSizeBytes",
               "value" : 64,
@@ -2103,7 +2299,7 @@
           "options" : [
             {
               "key" : "replyTimeoutMs",
-              "value" : 6000 
+              "value" : 4000 
             },{
               "key" : "singleCaptureBufferWithSpecificSizeBytes",
               "value" : 64,
@@ -2129,7 +2325,14 @@
               "value" : 8208,
               "notes" : [
                 "12304 was for 3*4*1024+16 for 1024 FFT bins with 3 floats per bin and 4 bytes per float (32-bit) plus 16 bytes overhead of response DL ADMN5 CMD OK or whatever",
-                "8208 is for 2*4*1024+16 updated to have no index for row to shorten data transmission"
+                "8208 is for 2*4*1024+16 updated to have no index for row to shorten data transmission",
+                "should we add 4 bytes for CRC?"
+              ]
+            },{
+              "key" : "crc",
+              "value" : "byte-as-word32-mpeg2",
+              "notes" : [
+                "bytes in sequence, each byte cast to 32-bit word, using mpeg2 (mpeg in crc library in nodejs as of these versions"
               ]
             }
           ]

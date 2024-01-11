@@ -1,6 +1,6 @@
 {
   "name": "dacqman",
-  "version": "0.0.18",
+  "version": "0.24.1",
   "description": "Data Acquisition and Management Tool (Demo/R&D) especially for OshaBlue LLC Ultrasonic NDT scanning hardware (HDL-0108-RSCPT, RS104, DL-Series)",
   "main": "main.js",
   "repository": "https://github.com/oshablue/dacqman.git",

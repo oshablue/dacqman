@@ -46,6 +46,11 @@ const { UserInterface : YouFace } = require('./userInterface.js');
 const audioFdbkEmitter = require('./audioFdbk.js').AudioFdbkEmitter;
 
 
+const crc32 = require('crc');
+
+const os = require('os');
+
+
 // <PLUGINS>
 
 var plugins;
@@ -396,6 +401,11 @@ var resetReadableStream = function(chunkMultiple, chunkSizeBytes) {
               if ( NaNMagFlag ) {
                 console.warn(`Warning: At least one magnitude was converted to float32 as NaN. Maybe you need to initialize the WF first and then retreive the FFT?`);
               }
+              // Verify CRC if present
+              // 32-bit 0xqqqq nnnn
+              // TODO and framework button option or etc to check this 
+              // or accessory specific etc - 
+              // FFT bin now should come back with a CRC32 as the last 4 bytes
               break;
 
             case 'chart':
@@ -964,7 +974,10 @@ function getHardwareData() {
   return sprend.getHardwareData();
 }
 
-
+// Bluetooth testing - force open by passing a port path String
+function openControlPort(portPath) {
+  return sprend.openControlPort(portPath);
+}
 
 
 
@@ -1381,12 +1394,132 @@ $(document).ready(function(){ // is DOM (hopefully not img or css - TODO vfy jQu
   // setTimeout(() => {
   //   singleWfChart.DcCurrentCal(); // or AcCurrentCal(); 
   // }, 2000);
+
+
+
+  // Check platform and/or endianness -- this may matter for the implementation 
+  // of CRC
+  if (os.endianness() !== "LE" ) {
+    console.warn(`OS is not little endian. Please notify developer. CRC checks for some 
+    accessories may not work for example.`);
+  } else {
+    console.log(`OS is LE (little endian)`);
+  }
+
+
+
+  //
+  // < TEST CRC >
+  //
+  // Testing a CRC 
+  // ADMN5 uses the stm32 CRC32 hardware which uses the MPEG2 style 
+  // which is included in the npm i crc package apparently 
+  let crcTestDat = new Uint32Array([
+    0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,
+    0x08,0x09,0x10,0x11,0x12,0x13,0x14,0x15,
+    0x16,0x17,0x18,0x19,0x20,0x21,0x22,0x23,
+    0x24,0x25,0x26,0x27,0x28,0x29,0x30,0x31,
+    0x32,0x33,0x34,0x35,0x36,0x37,0x38,0x39
+  ]);
+
+  // CAUTION: Later npm modules apparently have the crc32mpeg2 as a renamed function
+  // but right now at this version apparently we access this as crc32mpeg only
+  // The version that the crccalc website comes up with for byte only representation 
+  // matches and is: 1391950b
+  // However we will need to match the 32-bit variant
+  let crcRes = crc32.crc32mpeg((crcTestDat));    //.crc32mpeg2(Buffer.from(crcTestDat));
+  console.log(`Startup dev test crc32 on byte array: 0x${crcRes.toString(16)}`);
   
+  // let rrr = crc32.crc32mpeg(new Uint32Array(crcTestDat[0]));
+  // for ( let iii = 1; iii < 40; iii++ ) {
+  //   rrr = crc32.crc32mpeg(new Uint32Array(crcTestDat[iii]), rrr);
+  // }
+  // console.log(`Startup dev test crc32 on byte array 2nd attempt: 0x${rrr.toString(16)}`);
+
+  // crc32.crc32mpeg(new Uint8Array(crcTestDat.buffer)).toString(16)
+  // "901a20c2"
+  // but endian ness on macos at least here is like 0x01 => 01 00 00 00 
+  // which is backwards from how it seems that the stm32 or the crccalc is processing it
+
+  // And endianness by default may be platform dependent, so we need alas to use like 
+  // a dataview to guarantee read and byte order ?
+
+  // This seems to work and illustrate things:
+  // Buffer(crcTestDat.buffer).writeUInt32BE(Buffer(crcTestDat.buffer).readUInt32LE(8), 8)
+  // This does for example change the crcTestDat.buffer to:
+  // [ 0 0 0 0   1 0 0 0    0 0 0 2   3 ....]
+
+  // So it would seem the stm32 is processing as 4 bytes and is big endian like 0x01
+  // becomes 0x00 0x00 0x00 0x01 and so does the crccalc page
+  // Whereas the representation here by default as defined in the init for crcTestDat 
+  // is little endian (as appropriate for this platform)
+
+  Buffer(crcTestDat.buffer).swap32(); // "swaps in place - see nodejs docs"
+  //crcRes = crc32.crc32mpeg(crcTestDat); // Doesn't match expected 
+  crcRes = crc32.crc32mpeg(crcTestDat.buffer); // however does match f1beef64
+  console.log(`Startup dev test crc32 on byte array, after swap32: 0x${crcRes.toString(16)}`);
+
+
+  //
+  // </ TEST CRC >
+  //
+
+
+
+
+
+  // < TESTING BLUETOOTH PORT >
+  /*
+  setTimeout( function() {
+
+    console.log( "Testing Bluetooth Port...");
+    var h = `<button id="serialPortGoButton" class="waves-effect waves-light btn-large" onclick="beginSerialComms(this)"><i class="material-icons left">device_hub</i>Connect to Ports and Begin Listening for Data</button>`;
+    $('#ports_go_button').html(h).removeClass('hide');
+    // port hash
+    // {"serialNumber":"DA01LO9T","locationId":"5140","description":"FT231X USB UART"
+    // make it now:
+    // sprenderer.js line ~ 1219:
+    // comName / path is chosen as: eg. /dev/tty.usbserial-DA01LO9T
+    // sprenderer.js: line 1810 ish 
+    // but:
+    // beginSerialComms(button)
+    // openDataPortThatIsChecked();
+    // setTimeout on openControlPortThatIsChecked
+    // 
+    // openControlPortThatIsChecked => 
+    //   controlPortHash = checkboxToPortHash()
+    //      => openControlPort(portHash)
+    //            comName = getVcpPortNameFromPortInfoHash(portHash)
+    sprend.setHardwareByFullname("DL-Series-by-Bluetooth");
+    openControlPort("/dev/tty.UltraCouponDataLogger-D"); // if pass string, forces this as comName
+    //       
+
+  }, 3000);
+  */
+   
+  //  
+  // </ TESTING BLUETOOTH PORT >
 
 }); // end of $(document).ready(...{...})
 // END OF DOCUMENT.READY(...)
 
 
+
+
+var calcCrc32Mpeg2 = function( byteBuffer ) { // aka chunk as used above is a Buffer
+
+  let datForCrc = new Uint32Array(byteBuffer); // will have same number of eles as byteBuffer
+
+  // Warning: depends on endianness of platform ??? maybe
+  // OS like Linux *nix may be an issue?
+  // change from little endian to big endian to match stm32 crc32
+  Buffer(datForCrc.buffer).swap32(); 
+
+  let crcRes = crc32.crc32mpeg(datForCrc.buffer);
+
+  return crcRes; // .toString(16) ???
+
+} // end of checkCrc32Mpeg2
 
 
 

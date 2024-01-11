@@ -75,6 +75,8 @@ Seems to still rebuild/install ok on darwin and win32.
 
 ### Revisions
 
+- **0.24.1** 2024. Interim commit. DO NOT DEPLOY. See commit message. Snapshot of work dev circa 1/11/24. Updated version in package.json. Capturing mostly recent dev and testing for ADMM R04 hardware rapid dev. On Mac os dev: macosx: 10.15.7 Catalina on 2012 macbook pro. nvm 0.34.0. npm 6.14.18. using $ npm start works for actively selected node -v v14.21.3. See user-data/control-port-buttons.json and search ADMM or jumper for more recent ADMM additions.
+
 - **0.0.18** 
   - merged UpdateSerialPort branch to master with bumps of several packages to engine node 12.8.1 electron 7.3.3 serialport 10.5.0 using alternate ftdi-d2xx (wrapped) etc etc - see package.json changes
   - add draft of popout separate (child) window for the multi-waveform graphs - works for various orders of operations and both "Regular" and DCF-UIs

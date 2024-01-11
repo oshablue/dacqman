@@ -1251,7 +1251,19 @@ var openControlPort = function(portHash) {
   // VCP instance, Mac OS X: /dev/tty.usbserial-serialNumber0/1 where the last
   // digit corresponds to A or B in the serialNumber for the FTDI device listing.
 
-  var comName = getVcpPortNameFromPortInfoHash(portHash);
+  // OB NKS 2023
+  // Forcing rapid dev / proof for  Bluetooth port 
+  var comName = ''
+  if ( portHash.constructor == String ) {
+    // Pass a string like /dev/tty.UltraCouponDataLogger-D to force open that 
+    comName = portHash;
+    // TODO check if exists!
+  } else {
+    // otherwise try to get it from the has 
+    comName = getVcpPortNameFromPortInfoHash(portHash);
+  }
+  // All of this was just:
+  //var comName = getVcpPortNameFromPortInfoHash(portHash);
   //var byteCount = 0;
 
   console.log("openControlPort: " + "opening hardware from hardwareOptions (hardwares.json): " + JSON.stringify(hw));
@@ -1338,7 +1350,10 @@ var openControlPort = function(portHash) {
       if ( gReturnDataTo === "console") {
         // Added to show data always for cport recieve in the UI display of text reply
         //showControlPortOutput(retD); 
-        $('#cmdOutput').append(retD+"\r\n"); // Device using SameAsControl lack a termination char?
+        // TODO PARSER for now like JSON responses -- cuz \r\n breaks JSON validity
+        // TODO can we add a JSON LINTER Validator??
+        // TODO what's a better time and way to line break for a new command? and/or pop out or break out the console log window?
+        $('#cmdOutput').append(retD); //+"\r\n"); // Device using SameAsControl lack a termination char?
         // TODO add div id for below - so only this one item does this if add more like it in the future
         $('pre.mini').scrollTop($('pre.mini').prop("scrollHeight"));
       } else {
@@ -2147,19 +2162,27 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
     var captureSizeBytes = null;
     var captureSizeNumberOfWaveformsPerFile = null;
     var commandReplyTimeoutMs = 500; // 500 ms default
+    var resetReadableStreamChunkMultiple = 0; 
+    var resetReadableStreamChunkSizeBytes = 0;
+    var doSetTimeoutCleanup = false;
+    var doSetIntervalCheckReadableStreamBuffer = false;
+    var launchProgressCountdownTime = 0;
     if ( button.options ) {
       button.options.forEach( function(o) {
         switch ( o.key ) {
+
           case "replyTimeoutMs":
             console.log("parsed command replyTimeoutMs " + o.value + " with button.option note: " + o.note);
             commandReplyTimeoutMs = o.value;
             break;
+          
           case "singleCaptureBuffer":
             //console.log("button option: singleCaptureBuffer is " + o.value);
             // TODO this is poor compartmentalized coding - this fcn is in the
             // mainWindow.html at the moment
             // Anyway, reset and just use a single chunksize buffer
-            resetReadableStream(1);
+            //resetReadableStream(1);
+            resetReadableStreamChunkMultiple = 1;
 
             // TODO also flush / empty the serial port if possible?
             // cport is what type of port to check API for this?
@@ -2174,79 +2197,97 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
             // for non-standard hardware, hardware in dev, or some scenario where not
             // all data is getting through, or some other test mode.  Hence:
             //if ( chunkMultiple == 1 ) {
-              setTimeout( function() {
-                if ( ourReadableStreamBuffer.size() < ourReadableStreamBuffer.chunkSize() ) { //ourReadableStreamBuffer.chunkSize ) {
-                  console.log( "mainWindow: ourReadableStreamBuffer.size()" + ourReadableStreamBuffer.size() + " is less than chunkSize " + ourReadableStreamBuffer.chunkSize() );
-                  if ( ourReadableStreamBuffer.size() < 1 ) {
-                    console.log("... looks like we got some dribble ... probably a CCC firmware DEV TODO ");
-                  } else {
-                    console.log ( "Appending zero data to push data to chart...");
-                    // BTW
-                    // https://stackoverflow.com/questions/1295584/most-efficient-way-to-create-a-zero-filled-javascript-array
-                    // See speed comparison entry circa 2020
-                    let n = ourReadableStreamBuffer.chunkSize() - ourReadableStreamBuffer.size();
-                    //let a = new Array(n);
-                    //for (let i=0; i<n; ++i) a[i] = 0;
-                    let a = Buffer.alloc(n, 0);
-                    console.log("adding " + n + " elements ...");
-                    ourReadableStreamBuffer.put(a);
-                    console.log("ourReadableStreamBuffer.size(): " + ourReadableStreamBuffer.size());
-                  }
-                }
-              }, commandReplyTimeoutMs); // 500); // was 500 - but cutting short cont PAQ 2nd Start Req for DL0100A1
+
+              // setTimeout( function() {
+              //   if ( ourReadableStreamBuffer.size() < ourReadableStreamBuffer.chunkSize() ) { //ourReadableStreamBuffer.chunkSize ) {
+              //     console.log( "mainWindow: ourReadableStreamBuffer.size()" + ourReadableStreamBuffer.size() + " is less than chunkSize " + ourReadableStreamBuffer.chunkSize() );
+              //     if ( ourReadableStreamBuffer.size() < 1 ) {
+              //       console.log("... looks like we got some dribble ... probably a CCC firmware DEV TODO ");
+              //     } else {
+              //       console.log ( "Appending zero data to push data to chart...");
+              //       // BTW
+              //       // https://stackoverflow.com/questions/1295584/most-efficient-way-to-create-a-zero-filled-javascript-array
+              //       // See speed comparison entry circa 2020
+              //       let n = ourReadableStreamBuffer.chunkSize() - ourReadableStreamBuffer.size();
+              //       //let a = new Array(n);
+              //       //for (let i=0; i<n; ++i) a[i] = 0;
+              //       let a = Buffer.alloc(n, 0);
+              //       console.log("adding " + n + " elements ...");
+              //       ourReadableStreamBuffer.put(a);
+              //       console.log("ourReadableStreamBuffer.size(): " + ourReadableStreamBuffer.size());
+              //     }
+              //   }
+              // }, commandReplyTimeoutMs); // 500); // was 500 - but cutting short cont PAQ 2nd Start Req for DL0100A1
+              
               // 2023 Q1 lengthened to 2000 in DL0100A1 radio testing was getting some long WF 
               // transmission times ... TODO make configurable?  Based on the hardware?
               // But right that 2000 delays a long WF single grab for the HDL like that comes back 4094 instead of 4095 
 
             //}
 
+            doSetTimeoutCleanup = true;
+
+            break;
+
+          case "crc":
+            if ( o.value.indexOf('32') > -1 ) {
+              console.warn(`button option crc encountered to be interpreted with 32-bit word but not yet handled`);
+            } else {
+              console.warn(`button option crc encountered with non 32-containing but not yet handled`);
+            }
             break;
 
           case "captureBufferMultiple":
-            resetReadableStream(parseInt(o.value));
+            //resetReadableStream(parseInt(o.value));
+            resetReadableStreamChunkMultiple = parseInt(o.value);
             break;
 
           case "singleCaptureBufferWithSpecificSizeBytes":
 
             // Important for this special case of FFT and different length - large single buffer
-            resetReadableStream(1, parseInt(o.value));
+            //resetReadableStream(1, parseInt(o.value));
+            resetReadableStreamChunkMultiple = 1;
+            resetReadableStreamChunkSizeBytes = parseInt(o.value);
 
-            launchProgressCountdown( commandReplyTimeoutMs );
+            //launchProgressCountdown( commandReplyTimeoutMs );
+            launchProgressCountdownTime = commandReplyTimeoutMs;
+
+            doSetIntervalCheckReadableStreamBuffer = true;
 
             // Also this, as above (TODO DRY)
-            readableStreamBufferGraphIntervalUpdateId = // defined in mainWindow.js
-            setInterval( function() {
-              // TODO 
-              console.log(ourReadableStreamBuffer.size());
-            }, 500);
+            // readableStreamBufferGraphIntervalUpdateId = // defined in mainWindow.js
+            // setInterval( function() {
+            //   // TODO 
+            //   console.log(ourReadableStreamBuffer.size());
+            // }, 500);
+
+            doSetTimeoutCleanup = true;
+            
 
             // TODO also set diff b/w ow long to return all data vs how long to wait for any reply at all
             // which are 2 very different things for long data sets
-            readableStreamBufferGraphCompleteTimeoutId = // defined in mainWindow.js
-            setTimeout( function() {
-              if ( ourReadableStreamBuffer.size() < ourReadableStreamBuffer.chunkSize() ) { //ourReadableStreamBuffer.chunkSize ) {
-                console.log( "mainWindow: ourReadableStreamBuffer.size()" + ourReadableStreamBuffer.size() + " is less than chunkSize " + ourReadableStreamBuffer.chunkSize() );
-                if ( ourReadableStreamBuffer.size() < 1 ) {
-                  console.log("... looks like we got some dribble ... probably a CCC firmware DEV TODO ");
-                } else {
-                  console.log ( "Appending zero data to push data to chart...");
-                  let n = ourReadableStreamBuffer.chunkSize() - ourReadableStreamBuffer.size();
-                  let a = Buffer.alloc(n, 0);
-                  console.log("adding " + n + " elements ...");
-                  ourReadableStreamBuffer.put(a);
-                  console.log("ourReadableStreamBuffer.size(): " + ourReadableStreamBuffer.size());
-                }
-              }
+            // readableStreamBufferGraphCompleteTimeoutId = // defined in mainWindow.js
+            //   setTimeout( function() {
+            //     if ( ourReadableStreamBuffer.size() < ourReadableStreamBuffer.chunkSize() ) { //ourReadableStreamBuffer.chunkSize ) {
+            //       console.log( "mainWindow: ourReadableStreamBuffer.size()" + ourReadableStreamBuffer.size() + " is less than chunkSize " + ourReadableStreamBuffer.chunkSize() );
+            //       if ( ourReadableStreamBuffer.size() < 1 ) {
+            //         console.log("... looks like we got some dribble ... probably a CCC firmware DEV TODO ");
+            //       } else {
+            //         console.log ( "Appending zero data to push data to chart...");
+            //         let n = ourReadableStreamBuffer.chunkSize() - ourReadableStreamBuffer.size();
+            //         let a = Buffer.alloc(n, 0);
+            //         console.log("adding " + n + " elements ...");
+            //         ourReadableStreamBuffer.put(a);
+            //         console.log("ourReadableStreamBuffer.size(): " + ourReadableStreamBuffer.size());
+            //       }
+            //     }
 
-              // Worst case, cancel this interval update at the end of the exptected time allowance
-              if ( readableStreamBufferGraphIntervalUpdateId ) {
-                clearTimeout(readableStreamBufferGraphIntervalUpdateId);
-                readableStreamBufferGraphIntervalUpdateId = null;
-              }
-            }, commandReplyTimeoutMs);
-
-            
-
+            //     // Worst case, cancel this interval update at the end of the exptected time allowance
+            //     if ( readableStreamBufferGraphIntervalUpdateId ) {
+            //       clearTimeout(readableStreamBufferGraphIntervalUpdateId);
+            //       readableStreamBufferGraphIntervalUpdateId = null;
+            //     }
+            //   }, commandReplyTimeoutMs);
             break;
 
           case "captureSizeBytes":
@@ -2273,6 +2314,57 @@ var controlPortSendData = async function ( commandAndType, returnDataTo, button,
 
     // Done parsing button options, now run any setups if needed with the
     // garnered items
+
+    // mainWindow.js: var resetReadableStream = function(chunkMultiple, chunkSizeBytes) {
+    if ( resetReadableStreamChunkMultiple > 0 && resetReadableStreamChunkSizeBytes > 0 ) {
+      resetReadableStream( resetReadableStreamChunkMultiple, resetReadableStreamChunkSizeBytes);
+    } else if ( resetReadableStreamChunkMultiple > 0 ) {
+      resetReadableStream( resetReadableStreamChunkMultiple );
+    }
+
+    if ( doSetIntervalCheckReadableStreamBuffer === true ) {
+      readableStreamBufferGraphIntervalUpdateId = // defined in mainWindow.js
+        setInterval( function() {
+          // TODO 
+          console.log(ourReadableStreamBuffer.size());
+        }, 500);
+    }
+
+    if ( launchProgressCountdownTime > 0 ) {
+      launchProgressCountdown( commandReplyTimeoutMs );
+    }
+
+    if ( doSetTimeoutCleanup === true ) {
+      readableStreamBufferGraphCompleteTimeoutId =
+        setTimeout( function() {
+          if ( ourReadableStreamBuffer.size() < ourReadableStreamBuffer.chunkSize() ) { //ourReadableStreamBuffer.chunkSize ) {
+            console.log( "mainWindow: ourReadableStreamBuffer.size()" + ourReadableStreamBuffer.size() + " is less than chunkSize " + ourReadableStreamBuffer.chunkSize() );
+            if ( ourReadableStreamBuffer.size() < 1 ) {
+              console.log("... looks like we got some dribble ... probably a CCC firmware DEV TODO ");
+            } else {
+              console.log ( "Appending zero data to push data to chart...");
+              // BTW
+              // https://stackoverflow.com/questions/1295584/most-efficient-way-to-create-a-zero-filled-javascript-array
+              // See speed comparison entry circa 2020
+              let n = ourReadableStreamBuffer.chunkSize() - ourReadableStreamBuffer.size();
+              //let a = new Array(n);
+              //for (let i=0; i<n; ++i) a[i] = 0;
+              let a = Buffer.alloc(n, 0);
+              console.log("adding " + n + " elements ...");
+              ourReadableStreamBuffer.put(a);
+              console.log("ourReadableStreamBuffer.size(): " + ourReadableStreamBuffer.size());
+            }
+          }
+
+          // Worst case, cancel this interval update at the end of the exptected time allowance
+          if ( readableStreamBufferGraphIntervalUpdateId ) {
+            clearTimeout(readableStreamBufferGraphIntervalUpdateId);
+            readableStreamBufferGraphIntervalUpdateId = null;
+          }
+
+        }, commandReplyTimeoutMs); // 500); // was 500 - but cutting short cont PAQ 2nd Start Req for DL0100A1
+         
+    } // end of if doSetTimeoutCleanup
 
     if (!doFileCapture && !doFileCaptureCustomToDirectory ) {
       console.log("Neither file capture setup nor capture custom to files is selected. First controlPortSendData_SetupAndSendCommands about to be called");
@@ -2888,4 +2980,5 @@ module.exports = {
   setupModalHardwareSelect: setupModalHardwareSelect,
   setHardwareByFullname : setHardwareByFullname,
   getHardwareData : getHardwareData,
+  openControlPort : openControlPort, // For adding direct access to force test open with port path String
 };
